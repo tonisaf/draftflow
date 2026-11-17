@@ -19,19 +19,6 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
-subprojects {
-    val disableAar = {
-        tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-            enabled = false
-        }
-    }
-    if (project.state.executed) {
-        disableAar()
-    } else {
-        project.afterEvaluate { disableAar() }
-    }
-}
-
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
