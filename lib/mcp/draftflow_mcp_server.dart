@@ -70,7 +70,7 @@ class DraftFlowMcpServer {
             },
             'serverInfo': {
               'name': 'draftflow',
-              'version': '1.0.7',
+              'version': '1.0.8',
             },
             'instructions':
                 'DraftFlow is a minimalist notes and Notion-like relational database workspace. '
