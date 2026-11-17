@@ -205,9 +205,11 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    const Text(
-                                      'Загрузка обновления...',
-                                      style: TextStyle(fontSize: UiType.micro),
+                                    Text(
+                                      _service.downloadProgress >= 1.0
+                                          ? 'Подготовка к установке…'
+                                          : 'Загрузка обновления...',
+                                      style: const TextStyle(fontSize: UiType.micro),
                                     ),
                                     Text(
                                       '${(_service.downloadProgress * 100).toInt()}%',
@@ -283,6 +285,42 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
                                 ),
                               ],
                             ),
+                          ] else if (asset == null) ...[
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _service.openReleasePage(),
+                                    icon: const Icon(Icons.hourglass_top, size: 16),
+                                    label: Text(
+                                      'Сборка для ${Platform.isMacOS ? "macOS" : Platform.isWindows ? "Windows" : "Android"} ещё формируется…',
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: skin.muted,
+                                      side: BorderSide(color: skin.hairlineBorder),
+                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(UiRadius.action),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                OutlinedButton(
+                                  onPressed: () => _service.openReleasePage(),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: skin.text,
+                                    side: BorderSide(color: skin.hairlineBorder),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(UiRadius.action),
+                                    ),
+                                  ),
+                                  child: const Text('GitHub'),
+                                ),
+                              ],
+                            ),
                           ] else ...[
                             Row(
                               children: [
@@ -293,7 +331,7 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
                                     label: Text(
                                       Platform.isMacOS || Platform.isWindows
                                           ? 'Обновить и перезапустить'
-                                          : (asset != null ? 'Скачать (${asset.name})' : 'Скачать обновление'),
+                                          : 'Скачать (${asset.name})',
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Palette.accent,

@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../modules/core/url_utils.dart';
 
-const String currentAppVersion = '1.0.5';
+const String currentAppVersion = '1.0.7';
 const String gitHubRepoOwner = 'tonisaf';
 const String gitHubRepoName = 'draftflow';
 
@@ -88,29 +88,33 @@ class AppReleaseInfo {
     if (assets.isEmpty) return null;
 
     if (Platform.isMacOS) {
-      return assets.firstWhere(
-        (a) => a.name.toLowerCase().contains('mac') && a.name.endsWith('.zip'),
-        orElse: () => assets.firstWhere(
-          (a) => a.name.endsWith('.zip') || a.name.endsWith('.dmg'),
-          orElse: () => assets.first,
-        ),
-      );
+      for (final a in assets) {
+        final name = a.name.toLowerCase();
+        if ((name.contains('mac') || name.contains('darwin')) &&
+            (name.endsWith('.zip') || name.endsWith('.dmg'))) {
+          return a;
+        }
+      }
+      return null;
     } else if (Platform.isWindows) {
-      return assets.firstWhere(
-        (a) => a.name.toLowerCase().contains('win') && a.name.endsWith('.zip'),
-        orElse: () => assets.firstWhere(
-          (a) => a.name.endsWith('.zip') || a.name.endsWith('.exe') || a.name.endsWith('.msix'),
-          orElse: () => assets.first,
-        ),
-      );
+      for (final a in assets) {
+        final name = a.name.toLowerCase();
+        if ((name.contains('win') || name.contains('windows')) &&
+            (name.endsWith('.zip') || name.endsWith('.exe') || name.endsWith('.msix'))) {
+          return a;
+        }
+      }
+      return null;
     } else if (Platform.isAndroid) {
-      return assets.firstWhere(
-        (a) => a.name.endsWith('.apk'),
-        orElse: () => assets.first,
-      );
+      for (final a in assets) {
+        if (a.name.toLowerCase().endsWith('.apk')) {
+          return a;
+        }
+      }
+      return null;
     }
 
-    return assets.first;
+    return null;
   }
 
   static bool isNewer(String latest, String current) {
@@ -245,18 +249,24 @@ class AppUpdateService extends ChangeNotifier {
         var receivedBytes = 0;
         final sink = file.openWrite();
 
-        await response.stream.listen((chunk) {
-          sink.add(chunk);
-          receivedBytes += chunk.length;
-          if (totalBytes > 0) {
-            _downloadProgress = receivedBytes / totalBytes;
-            notifyListeners();
+        try {
+          await for (final chunk in response.stream.timeout(const Duration(seconds: 45))) {
+            sink.add(chunk);
+            receivedBytes += chunk.length;
+            if (totalBytes > 0) {
+              _downloadProgress = (receivedBytes / totalBytes).clamp(0.0, 1.0);
+              notifyListeners();
+              if (receivedBytes >= totalBytes) {
+                break;
+              }
+            }
           }
-        }).asFuture<void>();
+        } finally {
+          await sink.flush();
+          await sink.close();
+        }
 
-        await sink.flush();
-        await sink.close();
-
+        _downloadProgress = 1.0;
         _downloadedFilePath = file.path;
         _status = UpdateCheckStatus.downloaded;
         notifyListeners();
@@ -368,11 +378,13 @@ rm -rf "\$TEMP_DIR"
 
   Future<void> _installAndRestartWindows(String zipPath) async {
     final tempDir = Directory.systemTemp.createTempSync('draftflow_update_');
+    final normalizedZip = zipPath.replaceAll('/', '\\');
+    final normalizedTemp = tempDir.path.replaceAll('/', '\\');
 
     // 1. Extract zip via tar or PowerShell (hidden)
     var extractOk = false;
     try {
-      final tarRes = await Process.run('tar', ['-xf', zipPath, '-C', tempDir.path]);
+      final tarRes = await Process.run('tar', ['-xf', normalizedZip, '-C', normalizedTemp]);
       if (tarRes.exitCode == 0) {
         extractOk = true;
       }
@@ -385,7 +397,7 @@ rm -rf "\$TEMP_DIR"
         '-NoProfile',
         '-NonInteractive',
         '-Command',
-        'Expand-Archive -LiteralPath "$zipPath" -DestinationPath "${tempDir.path}" -Force',
+        'Expand-Archive -LiteralPath "$normalizedZip" -DestinationPath "$normalizedTemp" -Force',
       ]);
       if (psRes.exitCode != 0) {
         throw Exception('Не удалось распаковать архив обновления: ${psRes.stderr}');
