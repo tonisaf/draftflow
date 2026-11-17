@@ -20,10 +20,15 @@ subprojects {
 }
 
 subprojects {
-    afterEvaluate {
+    val disableAar = {
         tasks.matching { it.name.contains("AarMetadata") }.configureEach {
             enabled = false
         }
+    }
+    if (project.state.executed) {
+        disableAar()
+    } else {
+        project.afterEvaluate { disableAar() }
     }
 }
 

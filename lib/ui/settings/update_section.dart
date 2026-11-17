@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../services/app_update_service.dart';
@@ -225,14 +227,36 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
                                 ),
                               ],
                             ),
+                          ] else if (status == UpdateCheckStatus.installing) ...[
+                            Row(
+                              children: [
+                                const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Palette.accent,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Установка обновления и перезапуск…',
+                                  style: TextStyle(
+                                    fontSize: UiType.caption,
+                                    color: skin.text,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ] else if (status == UpdateCheckStatus.downloaded) ...[
                             Row(
                               children: [
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: () => _service.openDownloadedFile(),
-                                    icon: const Icon(Icons.folder_open, size: 16),
-                                    label: const Text('Открыть файл обновления'),
+                                    onPressed: () => _service.installAndRestart(),
+                                    icon: const Icon(Icons.restart_alt, size: 16),
+                                    label: const Text('Перезапустить и обновить'),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Palette.accent,
                                       foregroundColor: Colors.white,
@@ -243,6 +267,20 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
                                     ),
                                   ),
                                 ),
+                                const SizedBox(width: 8),
+                                OutlinedButton.icon(
+                                  onPressed: () => _service.openDownloadedFile(),
+                                  icon: const Icon(Icons.folder_open, size: 16),
+                                  label: const Text('Файл'),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: skin.text,
+                                    side: BorderSide(color: skin.hairlineBorder),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(UiRadius.action),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ] else ...[
@@ -250,10 +288,12 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
                               children: [
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: () => _service.downloadUpdate(release),
-                                    icon: const Icon(Icons.download, size: 16),
+                                    onPressed: () => _service.downloadAndInstall(release),
+                                    icon: const Icon(Icons.system_update_alt, size: 16),
                                     label: Text(
-                                      asset != null ? 'Скачать (${asset.name})' : 'Скачать обновление',
+                                      Platform.isMacOS || Platform.isWindows
+                                          ? 'Обновить и перезапустить'
+                                          : (asset != null ? 'Скачать (${asset.name})' : 'Скачать обновление'),
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Palette.accent,

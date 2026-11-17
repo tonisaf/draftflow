@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../modules/core/url_utils.dart';
 
-const String currentAppVersion = '1.0.0';
+const String currentAppVersion = '1.0.2';
 const String gitHubRepoOwner = 'tonisaf';
 const String gitHubRepoName = 'draftflow';
 
@@ -142,6 +142,7 @@ enum UpdateCheckStatus {
   updateAvailable,
   downloading,
   downloaded,
+  installing,
   error,
 }
 
@@ -270,6 +271,156 @@ class AppUpdateService extends ChangeNotifier {
       notifyListeners();
       return null;
     }
+  }
+
+  Future<void> downloadAndInstall(AppReleaseInfo release) async {
+    final path = await downloadUpdate(release);
+    if (path != null) {
+      await installAndRestart(zipFilePath: path);
+    }
+  }
+
+  Future<void> installAndRestart({String? zipFilePath}) async {
+    final targetPath = zipFilePath ?? _downloadedFilePath;
+    if (targetPath == null || !File(targetPath).existsSync()) {
+      throw Exception('Файл обновления не найден');
+    }
+
+    _status = UpdateCheckStatus.installing;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      if (Platform.isMacOS) {
+        await _installAndRestartMac(targetPath);
+      } else if (Platform.isWindows) {
+        await _installAndRestartWindows(targetPath);
+      } else {
+        await openDownloadedFile();
+      }
+    } catch (e) {
+      debugPrint('AppUpdateService: Install error: $e');
+      _status = UpdateCheckStatus.error;
+      _errorMessage = 'Ошибка установки: $e';
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  Future<void> _installAndRestartMac(String zipPath) async {
+    final tempDir = Directory.systemTemp.createTempSync('draftflow_update_');
+
+    // 1. Unzip
+    final unzipRes = await Process.run('unzip', ['-q', '-o', zipPath, '-d', tempDir.path]);
+    if (unzipRes.exitCode != 0) {
+      throw Exception('Не удалось распаковать архив обновления: ${unzipRes.stderr}');
+    }
+
+    // 2. Locate extracted DraftFlow.app
+    FileSystemEntity? extractedApp;
+    for (final entity in tempDir.listSync()) {
+      if (entity.path.endsWith('.app')) {
+        extractedApp = entity;
+        break;
+      }
+    }
+    if (extractedApp == null) {
+      throw Exception('В архиве обновления не найден .app бандл');
+    }
+
+    // 3. Locate current running DraftFlow.app
+    final resolvedExe = Platform.resolvedExecutable;
+    final currentAppBundle = Directory(resolvedExe).parent.parent.parent.path;
+    if (!currentAppBundle.endsWith('.app')) {
+      // In dev mode or direct binary run, launch the extracted app
+      await Process.start('open', [extractedApp.path], mode: ProcessStartMode.detached);
+      exit(0);
+    }
+
+    // 4. Create update.sh
+    final scriptFile = File('${tempDir.path}/update.sh');
+    final currentPid = pid;
+    final scriptContent = '''#!/bin/bash
+PID=$currentPid
+TARGET_APP="${currentAppBundle.replaceAll('"', r'\"')}"
+NEW_APP="${extractedApp.path.replaceAll('"', r'\"')}"
+TEMP_DIR="${tempDir.path.replaceAll('"', r'\"')}"
+
+while kill -0 "\$PID" 2>/dev/null; do
+  sleep 0.2
+done
+
+# Remove quarantine attribute so Gatekeeper allows the app
+xattr -dr com.apple.quarantine "\$NEW_APP" 2>/dev/null || true
+
+rm -rf "\$TARGET_APP"
+cp -R "\$NEW_APP" "\$TARGET_APP"
+open "\$TARGET_APP"
+rm -rf "\$TEMP_DIR"
+''';
+    await scriptFile.writeAsString(scriptContent);
+    await Process.run('chmod', ['+x', scriptFile.path]);
+
+    // 5. Run detached script & exit
+    await Process.start('/bin/bash', [scriptFile.path], mode: ProcessStartMode.detached);
+    exit(0);
+  }
+
+  Future<void> _installAndRestartWindows(String zipPath) async {
+    final tempDir = Directory.systemTemp.createTempSync('draftflow_update_');
+
+    // 1. Extract zip via tar or PowerShell
+    var extractOk = false;
+    try {
+      final tarRes = await Process.run('tar', ['-xf', zipPath, '-C', tempDir.path]);
+      if (tarRes.exitCode == 0) {
+        extractOk = true;
+      }
+    } catch (_) {}
+
+    if (!extractOk) {
+      final psRes = await Process.run('powershell', [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        'Expand-Archive -Path "$zipPath" -DestinationPath "${tempDir.path}" -Force',
+      ]);
+      if (psRes.exitCode != 0) {
+        throw Exception('Не удалось распаковать архив обновления: ${psRes.stderr}');
+      }
+    }
+
+    // 2. Identify current installation directory
+    final resolvedExe = File(Platform.resolvedExecutable);
+    final installDir = resolvedExe.parent.path;
+    final exeName = resolvedExe.uri.pathSegments.last;
+
+    // 3. Create update.bat
+    final batFile = File('${tempDir.path}\\update.bat');
+    final currentPid = pid;
+    final batContent = '''@echo off
+set PID=$currentPid
+set SOURCE_DIR=${tempDir.path}
+set TARGET_DIR=$installDir
+set EXE_NAME=$exeName
+
+:wait_loop
+timeout /t 1 /nobreak > nul
+tasklist /fi "PID eq %PID%" 2>nul | findstr "%PID%" > nul
+if not errorlevel 1 (
+    goto wait_loop
+)
+
+xcopy /s /e /y "%SOURCE_DIR%\\*" "%TARGET_DIR%\\"
+start "" "%TARGET_DIR%\\%EXE_NAME%"
+rmdir /s /q "%SOURCE_DIR%"
+del "%~f0"
+''';
+    await batFile.writeAsString(batContent);
+
+    // 4. Launch detached batch file & exit
+    await Process.start('cmd.exe', ['/c', batFile.path], mode: ProcessStartMode.detached);
+    exit(0);
   }
 
   Future<void> openDownloadedFile() async {
