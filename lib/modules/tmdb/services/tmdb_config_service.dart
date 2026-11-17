@@ -31,7 +31,7 @@ class TmdbConfigService extends ChangeNotifier {
   static const _keyAvatar = 'tmdb_avatar';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
-    mOptions: MacOsOptions(usesDataProtectionKeychain: true),
+    mOptions: MacOsOptions(usesDataProtectionKeychain: false),
   );
 
   String? _apiToken;
