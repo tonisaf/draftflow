@@ -81,11 +81,9 @@ class DataCell extends StatefulWidget {
     required this.onUpdateTitle,
     required this.onUpdateValue,
     required this.onOpenPage,
-    this.contentPadding = const EdgeInsets.fromLTRB(
-      UiSpace.s8,
-      UiSpace.s6,
-      UiSpace.s8,
-      UiSpace.s2,
+    this.contentPadding = const EdgeInsets.symmetric(
+      horizontal: UiSpace.s8,
+      vertical: UiSpace.s6,
     ),
   });
 

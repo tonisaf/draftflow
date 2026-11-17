@@ -221,7 +221,7 @@ class _DataRowViewState extends State<DataRowView> {
   Widget build(BuildContext context) {
     final navigation = DatabaseGridScope.maybeOf(context);
     final skin = context.skin;
-    final thinBorderColor = widget.borderColor;
+    final thinBorderColor = widget.borderColor ?? skin.divider;
 
     final shouldFreeze = widget.freezeTitle &&
         widget.columns.isNotEmpty &&
@@ -240,7 +240,7 @@ class _DataRowViewState extends State<DataRowView> {
             decoration: BoxDecoration(
               color: _isHovered ? skin.hover : Palette.transparent,
               border: Border(
-                bottom: BorderSide(color: thinBorderColor, width: UiSpace.s0_8),
+                bottom: BorderSide(color: thinBorderColor, width: UiSpace.s1),
               ),
             ),
             child: IntrinsicHeight(
@@ -275,7 +275,7 @@ class _DataRowViewState extends State<DataRowView> {
           decoration: BoxDecoration(
             color: _isHovered ? skin.hover : Palette.transparent,
             border: Border(
-              bottom: BorderSide(color: thinBorderColor, width: UiSpace.s0_8),
+              bottom: BorderSide(color: thinBorderColor, width: UiSpace.s1),
             ),
           ),
           child: IntrinsicHeight(
