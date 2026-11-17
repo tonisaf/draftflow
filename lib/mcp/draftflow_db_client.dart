@@ -174,17 +174,31 @@ class DraftFlowDbClient {
     }).toList();
   }
 
-  Map<String, dynamic>? getPage(String pageId) {
-    final pageRes = db.select(
+  Map<String, dynamic>? getPage(String pageIdOrTitle) {
+    var pageRes = db.select(
       'SELECT id, title, icon, cover, parent_id, database_id, created_at FROM pages WHERE id = ? AND trashed_at IS NULL',
-      [pageId],
+      [pageIdOrTitle],
     );
+    if (pageRes.isEmpty) {
+      final folded = pageIdOrTitle.trim().toLowerCase();
+      pageRes = db.select(
+        '''
+        SELECT id, title, icon, cover, parent_id, database_id, created_at
+        FROM pages
+        WHERE (title = ? OR title_folded = ?) AND trashed_at IS NULL
+        ORDER BY created_at DESC
+        LIMIT 1
+        ''',
+        [pageIdOrTitle.trim(), folded],
+      );
+    }
     if (pageRes.isEmpty) return null;
 
     final pageRow = pageRes.first;
+    final realPageId = pageRow['id'] as String;
     final blockRows = db.select(
       'SELECT id, type, content, order_key FROM blocks WHERE page_id = ? AND trashed_at IS NULL ORDER BY order_key',
-      [pageId],
+      [realPageId],
     );
 
     final sb = StringBuffer();

@@ -294,13 +294,13 @@ ${page['markdown']}
     },
     {
       'name': 'get_page',
-      'description': 'Get full content of a note page formatted in Markdown with metadata in DraftFlow',
+      'description': 'Get full content of a note page formatted in Markdown. Accepts either the page UUID or the page title (e.g. "Rules" or "Описание проекта").',
       'inputSchema': {
         'type': 'object',
         'properties': {
           'pageId': {
             'type': 'string',
-            'description': 'UUID of the page to retrieve',
+            'description': 'UUID or title of the page to retrieve',
           },
         },
         'required': ['pageId'],
