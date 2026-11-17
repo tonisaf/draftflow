@@ -1147,6 +1147,7 @@ class _TitleCellInputState extends State<TitleCellInput> {
       onTap: expand,
       controller: _controller,
       focusNode: _focusNode,
+      selectAllOnFocus: false,
       style: TextStyle(
         fontSize: UiType.editorTitle,
         fontWeight: FontWeight.w600,
@@ -1304,6 +1305,7 @@ class _InlineCellInputState extends State<InlineCellInput> {
       onTap: expand,
       controller: _controller,
       focusNode: _focusNode,
+      selectAllOnFocus: false,
       keyboardType: widget.isNumber ? TextInputType.number : TextInputType.text,
       style: TextStyle(
         fontSize: UiType.body,

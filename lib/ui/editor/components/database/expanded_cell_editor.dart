@@ -177,62 +177,64 @@ Future<String?> showExpandedCellEditor(
                     maxHeight: math.max(DesktopUx.databaseRowHeight, height),
                   ),
                   child: SingleChildScrollView(
-                    child: ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: controller,
-                      builder: (context, value, _) {
-                        final error = validationMessage?.call(value.text);
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    key: const Key('expanded_database_cell'),
-                                    focusNode: focus,
-                                    autofocus: true,
-                                    controller: controller,
-                                    minLines: 1,
-                                    maxLines: null,
-                                    keyboardType:
-                                        keyboardType ?? TextInputType.multiline,
-                                    textInputAction: multiline
-                                        ? TextInputAction.newline
-                                        : TextInputAction.done,
-                                    onSubmitted: multiline
-                                        ? null
-                                        : (_) => close(keyboard: true),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          fontSize: title
-                                              ? UiType.editorTitle
-                                              : UiType.body,
-                                          height: 1.4,
-                                          fontWeight: title
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                          color: skin.text,
-                                        ),
-                                    decoration: const InputDecoration(
-                                      isDense: true,
-                                      visualDensity: VisualDensity.standard,
-                                      border: InputBorder.none,
-                                      contentPadding: EdgeInsets.all(
-                                        UiSpace.s8,
-                                      ),
+                            Expanded(
+                              child: TextField(
+                                key: const Key('expanded_database_cell'),
+                                focusNode: focus,
+                                autofocus: true,
+                                selectAllOnFocus: false,
+                                controller: controller,
+                                minLines: 1,
+                                maxLines: null,
+                                keyboardType:
+                                    keyboardType ?? TextInputType.multiline,
+                                textInputAction: multiline
+                                    ? TextInputAction.newline
+                                    : TextInputAction.done,
+                                onSubmitted: multiline
+                                    ? null
+                                    : (_) => close(keyboard: true),
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(
+                                      fontSize: title
+                                          ? UiType.editorTitle
+                                          : UiType.body,
+                                      height: 1.4,
+                                      fontWeight: title
+                                          ? FontWeight.w600
+                                          : FontWeight.w400,
+                                      color: skin.text,
                                     ),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  visualDensity: VisualDensity.standard,
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.all(
+                                    UiSpace.s8,
                                   ),
                                 ),
-                                if (accessoryBuilder != null)
-                                  accessoryBuilder(context, controller, close),
-                              ],
+                              ),
                             ),
-                            if (error != null)
-                              Padding(
+                            if (accessoryBuilder != null)
+                              accessoryBuilder(context, controller, close),
+                          ],
+                        ),
+                        if (validationMessage != null)
+                          ValueListenableBuilder<TextEditingValue>(
+                            valueListenable: controller,
+                            builder: (context, value, _) {
+                              final error = validationMessage(value.text);
+                              if (error == null) return const SizedBox.shrink();
+                              return Padding(
                                 padding: const EdgeInsets.fromLTRB(
                                   UiSpace.s8,
                                   0,
@@ -262,10 +264,10 @@ Future<String?> showExpandedCellEditor(
                                     ),
                                   ],
                                 ),
-                              ),
-                          ],
-                        );
-                      },
+                              );
+                            },
+                          ),
+                      ],
                     ),
                   ),
                 ),

@@ -383,6 +383,7 @@ void showFilterDialog({
                   const SizedBox(height: UiSpace.s10),
                   TextField(
                     autofocus: true,
+                    selectAllOnFocus: false,
                     style: TextStyle(fontSize: UiType.body, color: skin.text),
                     decoration: modernInputDecoration(
                       skin: skin,
@@ -394,6 +395,7 @@ void showFilterDialog({
               ] else ...[
                 TextField(
                   autofocus: true,
+                  selectAllOnFocus: false,
                   style: TextStyle(fontSize: UiType.body, color: skin.text),
                   decoration: modernInputDecoration(
                     skin: skin,
@@ -516,6 +518,7 @@ void showAddTagDialog({
               TextField(
                 controller: nameController,
                 autofocus: true,
+                selectAllOnFocus: false,
                 style: TextStyle(fontSize: UiType.body, color: skin.text),
                 decoration: modernInputDecoration(
                   skin: skin,

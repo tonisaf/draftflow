@@ -77,8 +77,8 @@ class _PageLinkPickerModalState extends State<_PageLinkPickerModal> {
     });
   }
 
-  void _handleKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return;
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
       if (_results.isNotEmpty) {
@@ -87,6 +87,7 @@ class _PageLinkPickerModalState extends State<_PageLinkPickerModal> {
         });
         _scrollToSelected();
       }
+      return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
       if (_results.isNotEmpty) {
         setState(() {
@@ -95,13 +96,17 @@ class _PageLinkPickerModalState extends State<_PageLinkPickerModal> {
         });
         _scrollToSelected();
       }
+      return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.enter) {
       if (_results.isNotEmpty && _selectedIndex < _results.length) {
         Navigator.of(context).pop(_results[_selectedIndex].page);
+        return KeyEventResult.handled;
       }
     } else if (event.logicalKey == LogicalKeyboardKey.escape) {
       Navigator.of(context).pop();
+      return KeyEventResult.handled;
     }
+    return KeyEventResult.ignored;
   }
 
   void _scrollToSelected() {
@@ -126,9 +131,8 @@ class _PageLinkPickerModalState extends State<_PageLinkPickerModal> {
   Widget build(BuildContext context) {
     final skin = context.skin;
 
-    return KeyboardListener(
-      focusNode: _focusNode,
-      autofocus: true,
+    return Focus(
+      canRequestFocus: false,
       onKeyEvent: _handleKeyEvent,
       child: Dialog(
         insetAnimationDuration: Motion.of(context, Motion.micro),
@@ -169,8 +173,10 @@ class _PageLinkPickerModalState extends State<_PageLinkPickerModal> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
-                        onChanged: _onQueryChanged,
+                        focusNode: _focusNode,
                         autofocus: true,
+                        selectAllOnFocus: false,
+                        onChanged: _onQueryChanged,
                         style: TextStyle(
                           fontSize: UiType.title,
                           color: skin.text,

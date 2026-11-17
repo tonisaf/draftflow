@@ -198,6 +198,7 @@ class _LabeledFieldState extends State<LabeledField> {
               onFocusChange: (f) => setState(() => _focused = f),
               child: TextField(
                 controller: widget.controller,
+                selectAllOnFocus: false,
                 enabled: widget.enabled,
                 obscureText: widget.secret,
                 enableSuggestions: !widget.secret,

@@ -300,8 +300,8 @@ class _QuickSearchModalState extends State<_QuickSearchModal> {
     });
   }
 
-  void _handleKeyEvent(KeyEvent event) {
-    if (event is! KeyDownEvent) return;
+  KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
       if (_totalItems > 0) {
@@ -310,6 +310,7 @@ class _QuickSearchModalState extends State<_QuickSearchModal> {
         });
         _scrollToSelected();
       }
+      return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
       if (_totalItems > 0) {
         setState(() {
@@ -317,11 +318,15 @@ class _QuickSearchModalState extends State<_QuickSearchModal> {
         });
         _scrollToSelected();
       }
+      return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.enter) {
       _activateCurrent();
+      return KeyEventResult.handled;
     } else if (event.logicalKey == LogicalKeyboardKey.escape) {
       Navigator.of(context).pop();
+      return KeyEventResult.handled;
     }
+    return KeyEventResult.ignored;
   }
 
   void _scrollToSelected() {
@@ -367,9 +372,8 @@ class _QuickSearchModalState extends State<_QuickSearchModal> {
     final isQueryEmpty = _queryController.text.trim().isEmpty;
     final currentQuery = _queryController.text.trim();
 
-    return KeyboardListener(
-      focusNode: _focusNode,
-      autofocus: true,
+    return Focus(
+      canRequestFocus: false,
       onKeyEvent: _handleKeyEvent,
       child: Dialog(
         insetAnimationDuration: Motion.of(context, Motion.micro),
@@ -407,8 +411,10 @@ class _QuickSearchModalState extends State<_QuickSearchModal> {
                     Expanded(
                       child: TextField(
                         controller: _queryController,
-                        onChanged: _onQueryChanged,
+                        focusNode: _focusNode,
                         autofocus: true,
+                        selectAllOnFocus: false,
+                        onChanged: _onQueryChanged,
                         style: TextStyle(
                           fontSize: UiType.title,
                           fontWeight: FontWeight.w500,

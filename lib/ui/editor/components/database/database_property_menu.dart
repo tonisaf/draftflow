@@ -209,6 +209,7 @@ Future<void> showDatabasePropertyMenu(
                   key: const ValueKey('database_property_name'),
                   controller: controller,
                   autofocus: true,
+                  selectAllOnFocus: false,
                   enabled: !busy,
                   style: TextStyle(fontSize: UiType.body, color: skin.text),
                   decoration: modernInputDecoration(
@@ -509,6 +510,7 @@ class _DivideByRowState extends State<_DivideByRow> {
             height: 28,
             child: TextField(
               controller: _controller,
+              selectAllOnFocus: false,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -577,6 +579,7 @@ class _NumberFormatPickerState extends State<_NumberFormatPicker> {
             key: const ValueKey('number_format_filter_input'),
             controller: _searchController,
             autofocus: true,
+            selectAllOnFocus: false,
             style: TextStyle(fontSize: UiType.body, color: skin.text),
             decoration: modernInputDecoration(
               skin: skin,

@@ -534,6 +534,7 @@ class _CodeBlockComponentWidgetState extends State<CodeBlockComponentWidget>
                             key: const Key('code_block_title'),
                             controller: _titleController,
                             focusNode: _titleFocus,
+                            selectAllOnFocus: false,
                             readOnly: !editorState.editable,
                             contextMenuBuilder: (context, state) =>
                                 appTextMenu(context, state),

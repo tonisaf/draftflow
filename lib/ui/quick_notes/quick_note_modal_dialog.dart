@@ -215,6 +215,7 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                         Expanded(
                           child: TextField(
                             controller: _titleController,
+                            selectAllOnFocus: false,
                             style: TextStyle(
                               fontSize: UiType.pageTitle * 0.75,
                               fontWeight: FontWeight.w700,

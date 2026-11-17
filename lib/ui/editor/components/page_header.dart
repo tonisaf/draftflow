@@ -476,6 +476,7 @@ class _PageHeaderState extends State<PageHeader> {
                           key: const Key('page_title_input'),
                           controller: widget.titleController,
                           focusNode: widget.titleFocusNode,
+                          selectAllOnFocus: false,
                           onSubmitted: (_) => widget.onTitleSubmitted?.call(),
                           onChanged: widget.onTitleChanged,
                           contextMenuBuilder: (context, state) =>

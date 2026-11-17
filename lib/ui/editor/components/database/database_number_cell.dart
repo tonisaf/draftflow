@@ -522,6 +522,7 @@ class _DurationPickerContentState extends State<DurationPickerContent> {
                   child: TextField(
                     key: key,
                     controller: controller,
+                    selectAllOnFocus: false,
                     keyboardType: TextInputType.number,
                     textAlign: TextAlign.left,
                     style: TextStyle(fontSize: UiType.body, color: skin.text),

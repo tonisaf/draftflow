@@ -154,6 +154,7 @@ class _AccountDialogState extends State<_AccountDialog> {
                   const SizedBox(height: UiSpace.s16),
                   TextFormField(
                     controller: _email,
+                    selectAllOnFocus: false,
                     enabled: !c.busy,
                     keyboardType: TextInputType.emailAddress,
                     autofillHints: const [AutofillHints.email],
@@ -171,6 +172,7 @@ class _AccountDialogState extends State<_AccountDialog> {
                   const SizedBox(height: UiSpace.s10),
                   TextFormField(
                     controller: _password,
+                    selectAllOnFocus: false,
                     enabled: !c.busy,
                     obscureText: true,
                     enableSuggestions: false,

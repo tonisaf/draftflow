@@ -337,6 +337,7 @@ class _EmojiPickerModalState extends State<_EmojiPickerModal> {
                     Expanded(
                       child: TextField(
                         controller: _searchController,
+                        selectAllOnFocus: false,
                         style: TextStyle(
                           fontSize: UiType.body,
                           color: skin.text,

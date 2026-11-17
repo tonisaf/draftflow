@@ -801,6 +801,7 @@ class _ExportImportModalState extends State<_ExportImportModal> {
               Expanded(
                 child: TextField(
                   controller: _filePathController,
+                  selectAllOnFocus: false,
                   style: TextStyle(fontSize: UiType.caption, color: skin.text),
                   decoration: _dialogInputDecoration(
                     skin,
@@ -901,6 +902,7 @@ class _ExportImportModalState extends State<_ExportImportModal> {
               Expanded(
                 child: TextField(
                   controller: _csvFilePathController,
+                  selectAllOnFocus: false,
                   style: TextStyle(fontSize: UiType.caption, color: skin.text),
                   decoration: _dialogInputDecoration(
                     skin,
@@ -953,6 +955,7 @@ class _ExportImportModalState extends State<_ExportImportModal> {
                       Expanded(
                         child: TextField(
                           controller: _csvTitleController,
+                          selectAllOnFocus: false,
                           style: TextStyle(
                             fontSize: UiType.body,
                             fontWeight: FontWeight.w600,

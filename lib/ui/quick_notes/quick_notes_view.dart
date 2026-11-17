@@ -354,6 +354,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                               Expanded(
                                 child: TextField(
                                   controller: _searchController,
+                                  selectAllOnFocus: false,
                                   onChanged: (val) => setState(() => _searchQuery = val),
                                   style: TextStyle(fontSize: UiType.title, color: skin.text),
                                   decoration: InputDecoration(
@@ -924,6 +925,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
             child: TextField(
               controller: _inputController,
               focusNode: _inputFocusNode,
+              selectAllOnFocus: false,
               style: TextStyle(
                 fontSize: UiType.title,
                 fontFamily: _createAsCode ? 'Consolas' : null,

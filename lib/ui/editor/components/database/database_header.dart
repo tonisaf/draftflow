@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import '../../../common/app_icons.dart';
 
 import 'package:flutter/material.dart' hide Page;
@@ -57,6 +58,7 @@ class DatabaseHeader extends StatefulWidget {
 class _DatabaseHeaderState extends State<DatabaseHeader> {
   late final TextEditingController _titleController;
   final FocusNode _focusNode = FocusNode();
+  final FocusNode _searchFocusNode = FocusNode();
   String _lastCommittedTitle = '';
   String? _deferredTitle;
   bool _editedWhileFocused = false;
@@ -112,7 +114,13 @@ class _DatabaseHeaderState extends State<DatabaseHeader> {
     }
     if (oldWidget.searchQuery != widget.searchQuery &&
         _searchController.text != widget.searchQuery) {
+      final oldSelection = _searchController.selection;
       _searchController.text = widget.searchQuery;
+      if (oldSelection.isValid) {
+        _searchController.selection = TextSelection.collapsed(
+          offset: math.min(oldSelection.baseOffset, widget.searchQuery.length),
+        );
+      }
     }
   }
 
@@ -122,6 +130,7 @@ class _DatabaseHeaderState extends State<DatabaseHeader> {
     _focusNode.removeListener(_onTitleFocusChange);
     _titleController.dispose();
     _focusNode.dispose();
+    _searchFocusNode.dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -287,6 +296,7 @@ class _DatabaseHeaderState extends State<DatabaseHeader> {
     final title = TextField(
       controller: _titleController,
       focusNode: _focusNode,
+      selectAllOnFocus: false,
       style: TextStyle(
         fontSize: DesktopUx.databaseTitleSize,
         fontWeight: FontWeight.w600,
@@ -437,7 +447,9 @@ class _DatabaseHeaderState extends State<DatabaseHeader> {
               ),
               child: TextField(
                 controller: _searchController,
+                focusNode: _searchFocusNode,
                 autofocus: true,
+                selectAllOnFocus: false,
                 style: TextStyle(fontSize: UiType.body, color: skin.text),
                 decoration: InputDecoration(
                   isDense: true,

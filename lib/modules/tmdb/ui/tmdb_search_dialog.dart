@@ -294,6 +294,7 @@ class _TmdbSearchDialogState extends State<TmdbSearchDialog> {
                         child: TextField(
                           controller: _controller,
                           autofocus: true,
+                          selectAllOnFocus: false,
                           style: TextStyle(fontSize: 12.5, color: skin.text, height: 1.25),
                           decoration: InputDecoration(
                             isDense: true,
