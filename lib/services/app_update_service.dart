@@ -233,12 +233,17 @@ class AppUpdateService extends ChangeNotifier {
     try {
       Directory? targetDir;
       try {
-        targetDir = await getDownloadsDirectory();
+        targetDir = await getTemporaryDirectory();
       } catch (_) {}
-      targetDir ??= await getTemporaryDirectory();
+      targetDir ??= Directory.systemTemp;
 
       final fileName = asset.name.isNotEmpty ? asset.name : 'DraftFlow-Update.zip';
       final file = File('${targetDir.path}/$fileName');
+      if (file.existsSync()) {
+        try {
+          file.deleteSync();
+        } catch (_) {}
+      }
 
       final request = http.Request('GET', Uri.parse(asset.downloadUrl));
       request.headers['User-Agent'] = 'DraftFlow-App-Updater';
@@ -248,9 +253,14 @@ class AppUpdateService extends ChangeNotifier {
         final totalBytes = response.contentLength ?? asset.size;
         var receivedBytes = 0;
         final sink = file.openWrite();
+        dynamic sinkError;
+        sink.done.catchError((e) {
+          sinkError = e;
+        });
 
         try {
           await for (final chunk in response.stream.timeout(const Duration(seconds: 45))) {
+            if (sinkError != null) throw sinkError;
             sink.add(chunk);
             receivedBytes += chunk.length;
             if (totalBytes > 0) {
@@ -262,8 +272,13 @@ class AppUpdateService extends ChangeNotifier {
             }
           }
         } finally {
-          await sink.flush();
-          await sink.close();
+          await sink.flush().timeout(const Duration(seconds: 5), onTimeout: () {});
+          await sink.close().timeout(const Duration(seconds: 5), onTimeout: () {});
+        }
+
+        if (sinkError != null) throw sinkError;
+        if (!file.existsSync() || file.lengthSync() == 0) {
+          throw Exception('Файл обновления не был записан на диск');
         }
 
         _downloadProgress = 1.0;
@@ -356,8 +371,11 @@ TARGET_APP="${currentAppBundle.replaceAll('"', r'\"')}"
 NEW_APP="${extractedApp.path.replaceAll('"', r'\"')}"
 TEMP_DIR="${tempDir.path.replaceAll('"', r'\"')}"
 
-while kill -0 "\$PID" 2>/dev/null; do
-  sleep 0.2
+for i in {1..50}; do
+  if ! kill -0 "\$PID" 2>/dev/null; then
+    break
+  fi
+  sleep 0.1
 done
 
 # Remove quarantine attribute so Gatekeeper allows the app
@@ -365,6 +383,7 @@ xattr -dr com.apple.quarantine "\$NEW_APP" 2>/dev/null || true
 
 rm -rf "\$TARGET_APP"
 cp -R "\$NEW_APP" "\$TARGET_APP"
+xattr -dr com.apple.quarantine "\$TARGET_APP" 2>/dev/null || true
 open "\$TARGET_APP"
 rm -rf "\$TEMP_DIR"
 ''';
