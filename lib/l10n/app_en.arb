@@ -1,0 +1,594 @@
+{
+  "@@locale": "en",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "apply": "Apply",
+  "retry": "Retry",
+  "close": "Close",
+  "copy": "Copy",
+  "cut": "Cut",
+  "paste": "Paste",
+  "selectAll": "Select all",
+  "clearAll": "Clear all",
+  "clear": "Clear",
+  "language": "Language",
+  "languageSystem": "System default",
+  "languageEn": "English",
+  "languageRu": "Русский",
+  "themeSystem": "Theme: System",
+  "themeLight": "Theme: Light",
+  "themeDark": "Theme: Dark",
+  "themeCycleTooltip": "click to cycle",
+  "newPage": "New page",
+  "newSubpage": "New subpage",
+  "search": "Search",
+  "quickNotes": "Notes",
+  "@quickNotes": {
+    "description": "Label for the Notes panel"
+  },
+  "pinned": "Pinned",
+  "@pinned": {
+    "description": "Section header for pinned notes"
+  },
+  "otherNotes": "Other notes",
+  "@otherNotes": {
+    "description": "Section header for other notes"
+  },
+  "quickNotePlaceholder": "New note...",
+  "@quickNotePlaceholder": {
+    "description": "Placeholder for quick note creation bar"
+  },
+  "copiedToClipboard": "Copied to clipboard",
+  "@copiedToClipboard": {
+    "description": "Notification message when text is copied"
+  },
+  "pin": "Pin",
+  "@pin": {
+    "description": "Action to pin a note"
+  },
+  "unpin": "Unpin",
+  "@unpin": {
+    "description": "Action to unpin a note"
+  },
+  "trash": "Trash",
+  "workspaceBackup": "Workspace Backup & Restore",
+  "duplicate": "Duplicate",
+  "rename": "Rename",
+  "moveToTrash": "Move to trash",
+  "exportMarkdown": "Export Markdown",
+  "importNotionCsv": "Import Notion CSV",
+  "untitled": "Untitled",
+  "addIcon": "Add icon",
+  "changeIcon": "Change icon",
+  "removeIcon": "Remove icon",
+  "addCover": "Add cover",
+  "changeCover": "Change cover",
+  "removeCover": "Remove cover",
+  "compareVersions": "Compare versions",
+  "retryTitleSave": "Retry title save",
+  "couldNotLoadPage": "Could not load this page. Retry",
+  "markdownCopied": "Markdown copied to clipboard",
+  "savedTo": "Saved to {path}",
+  "@savedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePage": "Delete page",
+  "subpagesCount": "Subpages  {count}",
+  "@subpagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "creating": "Creating…",
+  "failedToCreatePage": "Could not create page. Please try again.",
+  "backlinks": "Linked mentions",
+  "noBacklinks": "No backlinks to this page yet",
+  "menuCodeBlock": "Code block",
+  "menuLinkToPage": "Link to page",
+  "menuPageCard": "Page card",
+  "menuTableView": "Table view / Database",
+  "untitledDatabase": "Untitled Database",
+  "untitledTable": "Untitled Table",
+  "loadingTable": "Loading table…",
+  "couldNotLoadTable": "Could not load table. Retry",
+  "newRow": "New",
+  "calculate": "Calculate",
+  "calcSum": "Sum",
+  "calcAverage": "Average",
+  "calcMin": "Min",
+  "calcMax": "Max",
+  "calcRange": "Range",
+  "calcCount": "Count",
+  "calcChecked": "Checked",
+  "calcUnchecked": "Unchecked",
+  "calcPercentChecked": "% Checked",
+  "calcEmpty": "Empty",
+  "calcNotEmpty": "Not empty",
+  "calcUnique": "Unique",
+  "calcNone": "None",
+  "createTag": "Create Tag",
+  "tagName": "Tag name",
+  "tagColor": "Color",
+  "trashTitle": "Trash",
+  "emptyTrash": "Empty Trash",
+  "emptyTrashConfirmTitle": "Empty Trash?",
+  "emptyTrashConfirmContent": "All pages, databases, rows and blocks in the trash will be permanently erased. This action cannot be undone.",
+  "trashEmptyState": "Trash is empty",
+  "restore": "Restore",
+  "deletePermanently": "Delete permanently",
+  "accountTitle": "Account",
+  "yourAccount": "Your Account",
+  "signIn": "Sign In",
+  "createAccount": "Create account",
+  "signInToAccount": "Sign in to account",
+  "email": "Email",
+  "password": "Password",
+  "specifyEmail": "Specify email",
+  "enterPassword": "Enter password",
+  "passwordMinLength": "At least 8 characters",
+  "alreadyHaveAccount": "Already have an account? Sign In",
+  "logOutAndOpenLocal": "Sign out and open local notes",
+  "accountGuestNotice": "Use your account. Local notes will stay in guest space.",
+  "reauthNotice": "To connect to server, please sign in again. Notes are available locally.",
+  "unconfiguredNotice": "Sign in is not configured in this build. You can continue working locally.",
+  "emailConfirmationNotice": "Confirm your email using the link in the message, then sign in.",
+  "localNotes": "Local notes",
+  "syncReady": "Ready to sync",
+  "syncing": "Syncing…",
+  "synced": "Synced",
+  "syncOffline": "No network · saved locally",
+  "syncConflict": "Version conflict",
+  "syncSetupRequired": "Sync server is not configured",
+  "syncAuthRequired": "Sign in required",
+  "syncError": "Could not sync",
+  "syncNow": "Sync now",
+  "resolveConflicts": "Resolve conflicts",
+  "backupBeforeConflict": "Backup before resolving conflict",
+  "waitingToSend": "Pending changes: {count}",
+  "@waitingToSend": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "conflictDialogTitle": "Version Conflict",
+  "conflictDialogSubtitle": "Both versions are saved. A local workspace backup is created before choosing.",
+  "onThisDevice": "On this device",
+  "inCloud": "In the cloud",
+  "acceptCloud": "Accept cloud",
+  "keepLocal": "Keep mine",
+  "noBackupsYet": "No saved backups yet.",
+  "backupSavedSuccess": "Backup saved. It can be restored via workspace import.",
+  "failedToSaveBackup": "Could not save backup file.",
+  "exportImportTitle": "Backup & Restore",
+  "tabExport": "Export",
+  "tabImport": "Import",
+  "tabNotionCsv": "Notion / CSV",
+  "tabWorkspace": "Workspace",
+  "copyMarkdown": "Copy Markdown",
+  "copied": "Copied!",
+  "saveMarkdownToFile": "Save to File",
+  "createWorkspaceBackup": "Create Backup",
+  "restoreWorkspaceBackup": "Restore Backup",
+  "noNoteSelected": "No Note Selected",
+  "noNoteSelectedSubtitle": "Select a note from the sidebar or create a new one",
+  "newNote": "New Note",
+  "pageOptions": "Page options",
+  "styleSection": "Style",
+  "smallText": "Small text",
+  "fullWidth": "Full width",
+  "failedToSavePageSettings": "Failed to save page settings",
+  "noNotesYet": "No notes yet\nClick + to create",
+  "moveToRoot": "Move to Root",
+  "pageSection": "Page",
+  "copyLinkToPage": "Copy link to page",
+  "subpagesSection": "Subpages",
+  "layoutList": "List",
+  "layoutCards": "Cards",
+  "databaseUnknownTag": "Unknown tag",
+  "databaseCellChangedAgain": "This cell changed again. Review the new value before saving.",
+  "databaseCellConflictTitle": "Cell changed elsewhere",
+  "databaseCellConflictBase": "Before editing",
+  "databaseCellConflictRemote": "Current database value",
+  "databaseCellConflictLocal": "Your draft",
+  "databaseCellKeepLocal": "Save my version",
+  "databaseCellUseRemote": "Use the new value",
+  "databaseCellConflicts": "Cell conflicts: {count}",
+  "databaseUnsavedCellsTitle": "Unsaved cells",
+  "databaseUnsavedCellsHelp": "Copy the draft text below if needed. Retry saving, or discard failed edits and use the values stored in the database.",
+  "databaseCellSavesPending": "Saving cells: {count}",
+  "databaseCellSavesFailed": "Unsaved cells: {count}",
+  "databaseSummaryScope": "All rows in the current selection, across every page",
+  "importExportSection": "Import and export",
+  "exportSection": "Export Page",
+  "exportMarkdownEllipsis": "Export Markdown...",
+  "saveMdToDownloads": "Save .md to Downloads",
+  "importSection": "Import Content",
+  "importNotionCsvEllipsis": "Import Notion / CSV...",
+  "importMarkdownEllipsis": "Import Markdown (.md)...",
+  "backupRestoreEllipsis": "Backup & Restore...",
+  "workspaceSection": "Workspace",
+  "decideLater": "Decide later",
+  "useSavedVersion": "Use saved version",
+  "useLocalDraft": "Use local draft",
+  "wipeExistingWorkspace": "Erase existing pages before restore",
+  "searchPlaceholder": "Search pages or type to create...",
+  "recentPages": "RECENT PAGES",
+  "pagesCategory": "PAGES",
+  "noMatchingNotes": "No matching notes",
+  "createPageAction": "Create page ",
+  "navigateShortcut": "Navigate",
+  "openShortcut": "Open",
+  "closeShortcut": "Close",
+  "itemsFound": "{count} found",
+  "@itemsFound": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "pageCoverTitle": "Page Cover",
+  "tabGradients": "Gradients",
+  "tabSolidColors": "Solid Colors",
+  "selectIconTitle": "Select Icon",
+  "randomIcon": "Random",
+  "filterEmojiHint": "Filter emoji or paste custom...",
+  "categoryAll": "All",
+  "currentIcon": "Current: {emoji}",
+  "@currentIcon": {
+    "placeholders": {
+      "emoji": {
+        "type": "String"
+      }
+    }
+  },
+  "linkToPageHint": "Link to page...",
+  "loading": "Loading...",
+  "noPagesFound": "No pages found",
+  "selectShortcut": "Select",
+  "cancelShortcut": "Cancel",
+  "tabExportMd": "Export (.md)",
+  "tabImportMd": "Import (.md)",
+  "tabBackupJson": "Backup (JSON)",
+  "selectPageToExport": "Select a page to export as Markdown",
+  "copyToClipboard": "Copy to Clipboard",
+  "importAsNewPage": "Import as New Page",
+  "loadFile": "Load File",
+  "importAsNewDatabasePage": "Import as New Database Page",
+  "browse": "Browse...",
+  "tablePreview": "Table Preview",
+  "rawCsv": "Raw CSV",
+  "exportWorkspaceBackup": "Export Workspace Backup",
+  "restoreWorkspaceFromJson": "Restore Workspace from JSON",
+  "saveBackupToDownloads": "Save Backup to Downloads",
+  "restoreWorkspace": "Restore Workspace",
+  "databaseAddProperty": "Add property",
+  "databaseRename": "Rename database",
+  "databaseSearch": "Search database",
+  "databaseFilter": "Filter",
+  "databaseSort": "Sort",
+  "databaseOptions": "Database options",
+  "databaseSearchPlaceholder": "Search...",
+  "databaseCloseSearch": "Close search",
+  "databaseFilterCount": "Filter ({count})",
+  "@databaseFilterCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "databaseClearSort": "Clear sort",
+  "databaseSortAscending": "Ascending ↑",
+  "databaseSortDescending": "Descending ↓",
+  "databaseMoreCreationOptions": "More creation options",
+  "columnMoveLeft": "Move left",
+  "columnMoveRight": "Move right",
+  "columnSortAscending": "Sort ascending",
+  "columnSortDescending": "Sort descending",
+  "columnDelete": "Delete column",
+  "propTypeText": "Text",
+  "propTypeNumber": "Number",
+  "propTypeSelect": "Select (Tags)",
+  "propTypeMultiSelect": "Multi-select",
+  "propTypeStatus": "Status",
+  "propTypeCheckbox": "Checkbox",
+  "propTypeDate": "Date",
+  "propTypeUrl": "URL Link",
+  "statusNotStarted": "Not started",
+  "statusInProgress": "In progress",
+  "statusDone": "Done",
+  "propertyNameHint": "Property name",
+  "propertyDefault": "Default",
+  "propertyNumberFormat": "Number format",
+  "propertyDecimalPlaces": "Decimal places",
+  "propertyShowAs": "Show as",
+  "propertyShowAsNumber": "Number",
+  "propertyShowAsBar": "Bar",
+  "propertyShowAsRing": "Ring",
+  "propertyDivideBy": "Divide by",
+  "propertyFilterFormats": "Filter formats...",
+  "propertyScopeHint": "Changes apply to all views showing this property.",
+  "propertyAdding": "Adding...",
+  "propertyError": "Could not add property. Try again.",
+  "cellClearSelection": "Clear selection",
+  "cellNewTag": "New tag...",
+  "cellNewStatus": "New status...",
+  "cellAddStatus": "+ Status",
+  "cellAddMultiSelect": "+ Tags",
+  "cellUntitledPage": "Untitled page",
+  "cellTypeText": "Type text...",
+  "cellCouldNotSave": "Could not save this cell. Check that the row and column still exist, then try again.",
+  "filterDialogTitle": "Filter Database",
+  "filterActiveRules": "Active Rules",
+  "filterAddFilter": "Add Filter",
+  "filterCheckedOnly": "Checked only",
+  "filterUncheckedOnly": "Unchecked only",
+  "filterHasDate": "Has date",
+  "filterNoDate": "No date",
+  "filterHasTag": "Has tag (Not empty)",
+  "filterNoTag": "No tag (Empty)",
+  "filterContainsUrl": "Contains URL / domain",
+  "durationTitle": "Duration",
+  "durationDays": "Days",
+  "durationHours": "Hours",
+  "durationMins": "Mins",
+  "durationSecs": "Secs",
+  "rowOpenAsPage": "Open as page",
+  "rowOpenFullPage": "Open full page",
+  "rowMoveToTrash": "Move row to trash",
+  "databaseItemsCount": "{count} items",
+  "@databaseItemsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "databaseFilteredItemsCount": "{filtered} of {total}",
+  "@databaseFilteredItemsCount": {
+    "placeholders": {
+      "filtered": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "databasePreviousRows": "Previous rows",
+  "databaseNextRows": "Next rows",
+  "databasePageRange": "{from}–{to} of {total}",
+  "@databasePageRange": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "databaseAddTextAbove": "Add text above",
+  "databaseAddTextBelow": "Add text below",
+  "databaseLoadError": "Could not load rows. Retry",
+  "codeCopy": "Copy code",
+  "codePaste": "Paste code",
+  "codeCollapse": "Collapse code",
+  "codeExpand": "Expand code",
+  "codeShowMore": "Show more ({count} lines)",
+  "@codeShowMore": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "codePlaceholder": "// Type code here...",
+  "codeLanguageTooltip": "Language: {language}",
+  "@codeLanguageTooltip": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "savingStatus": "Saving...",
+  "savedStatus": "Saved",
+  "saveConflictDraft": "Conflict — draft kept locally",
+  "saveError": "Save error",
+  "failedToSaveSubpageLayout": "Could not save subpages layout. Please try again.",
+  "failedToSaveBeforeAccountSwitch": "Could not save note. Please retry saving before switching accounts.",
+  "collapsePage": "Collapse page",
+  "expandPage": "Expand page",
+  "urlAdd": "Add URL",
+  "urlOpenInBrowser": "Open in browser",
+  "urlCopyLink": "Copy link",
+  "urlCopied": "Copied!",
+  "urlEdit": "Edit URL",
+  "urlClear": "Clear URL",
+  "urlClickToOpenTooltip": "{url}\nClick to open • Double-click to edit",
+  "@urlClickToOpenTooltip": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "numericInvalidNumber": "Enter a number, for example 12.5 or 12,5.",
+  "numericInvalidDuration": "Enter a duration: 1h 30m, 01:30:00, or seconds.",
+  "numericNonFinite": "The number must be finite.",
+  "numericFormulaUnsupported": "Formulas are not supported. Enter the calculated value.",
+  "numericSeparators": "Use a point or comma for decimals and spaces for thousands.",
+  "numericTooLarge": "The value is too large.",
+  "numericInvalidStatus": "Correct invalid cell values",
+  "durationNegative": "Negative duration",
+  "durationInvalidFields": "Use whole days, hours 0–23, minutes 0–59, and seconds below 60.",
+  "databasePasteTitle": "Range not changed",
+  "databasePasteMalformed": "Invalid TSV quoting. Copy the cells again.",
+  "databasePasteRagged": "Every row must have the same number of columns.",
+  "databasePasteTooLarge": "Paste up to 2,000 cells and 2 million characters at a time.",
+  "databasePasteBounds": "The range does not fit on this table page. Choose a smaller range or another starting cell.",
+  "databasePasteShape": "The copied range must match the selection size. One value can fill the entire selection.",
+  "databasePasteCheckbox": "Use TRUE/FALSE, 1/0, or yes/no for a checkbox.",
+  "databasePasteDate": "Use a valid date in YYYY-MM-DD format (1970–2100).",
+  "databasePasteUrl": "Use an HTTP, HTTPS, or mailto address.",
+  "databasePasteTag": "Use existing, unambiguous tag names. Separate multiple tags with commas or use a JSON list of names.",
+  "databasePasteUnsupported": "This value is not supported by the column.",
+  "databasePasteConflict": "Cells or column settings have changed. Refresh the range and try again. No cells were overwritten.",
+  "databasePasteDrafts": "Finish editing and resolve unsaved values in the target cells first.",
+  "databasePasteBusy": "Wait for the current range operation to finish.",
+  "databasePasteFailed": "The range could not be saved. No changes were applied.",
+  "databasePasteNothingUndo": "No range paste to undo.",
+  "databasePasteNothingRedo": "No range paste to redo.",
+  "databasePasteUnchanged": "The cells already contain these values.",
+  "databasePasteUndo": "Undo paste",
+  "databasePasteRedo": "Redo paste",
+  "databasePasteSaved": "Pasted cells: {count}",
+  "databasePasteUndone": "Paste undone. Cells restored: {count}",
+  "databasePasteRedone": "Paste redone. Cells restored: {count}",
+  "databasePasteCellError": "Row {row}, {column}: {message}",
+  "@databasePasteSaved": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databasePasteUndone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databasePasteRedone": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "@databasePasteCellError": {
+    "placeholders": {
+      "row": {
+        "type": "int"
+      },
+      "column": {
+        "type": "String"
+      },
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "databaseSelectRow": "Select row; double-click to open page",
+  "databaseSelectColumn": "Select column (Ctrl+Space)",
+  "databaseSelectPage": "Select this table page",
+  "databaseSelectionScope": "Selection on the current loaded table page",
+  "databaseSelectionSize": "{rows} × {columns} · cells: {cells}",
+  "@databaseSelectionSize": {
+    "placeholders": {
+      "rows": {
+        "type": "int"
+      },
+      "columns": {
+        "type": "int"
+      },
+      "cells": {
+        "type": "int"
+      }
+    }
+  },
+  "coverToPanelTop": "Extend cover to panel top",
+  "coverBelowToolbar": "Place cover below toolbar",
+  "blockMoveHandle": "Drag to move · Click for actions",
+  "blockMoveUp": "Move above",
+  "blockMoveDown": "Move below",
+  "blockInsertAbove": "Insert block above",
+  "blockInsertBelow": "Insert block below",
+  "blockCode": "Code block",
+  "blockText": "Text block",
+  "blockDatabase": "Database",
+  "codeTitlePlaceholder": "Block name",
+  "codeMoreActions": "Code block actions",
+  "trashEmptyDescription": "Deleted pages, databases and rows appear here until permanently deleted.",
+  "trashActionFailed": "Could not complete this trash action. Your data has been kept. Try again.",
+  "trashLoadFailed": "Could not load the trash.",
+  "settings": "Settings",
+  "settingsTabGeneral": "General",
+  "generalSettingsHelp": "Appearance and app behavior",
+  "settingsAppearance": "Appearance",
+  "settingsAutoApply": "Changes apply automatically.",
+  "theme": "Theme",
+  "themeHelp": "Application appearance",
+  "themeAuto": "System default",
+  "themeSystemShort": "System",
+  "themeLightShort": "Light",
+  "themeDarkShort": "Dark",
+  "languageHelp": "Interface language",
+  "workspaceBackupHelp": "Export and restore workspace in JSON",
+  "openAction": "Open…",
+  "about": "About",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "sync": "Sync",
+  "syncHelp": "Notes are stored on this computer. A server is only needed to keep them in sync across your other devices.",
+  "syncTabSignIn": "Sign In",
+  "syncTabSignUp": "Sign Up",
+  "syncSignedInAs": "Signed in as {email}",
+  "@syncSignedInAs": {
+    "placeholders": {
+      "email": {
+        "type": "String"
+      }
+    }
+  },
+  "syncSignOut": "Sign out",
+  "menuCallout": "Callout",
+  "menuToggle": "Toggle list",
+  "calloutPlaceholder": "Write a callout...",
+  "togglePlaceholder": "Toggle",
+  "toggleEmptyHint": "Empty toggle. Click to add content",
+  "blockCallout": "Callout",
+  "blockToggle": "Toggle",
+  "blockImage": "Image",
+  "dropImageHint": "Drop image to insert",
+  "turnInto": "Turn into",
+  "turnIntoText": "Text",
+  "turnIntoH1": "Heading 1",
+  "turnIntoH2": "Heading 2",
+  "turnIntoH3": "Heading 3",
+  "turnIntoBulletList": "Bulleted list",
+  "turnIntoNumberedList": "Numbered list",
+  "turnIntoTodoList": "To-do list",
+  "turnIntoQuote": "Quote",
+  "turnIntoCode": "Code block",
+  "turnIntoCallout": "Callout",
+  "turnIntoToggle": "Toggle list",
+  "copyBlockText": "Copy text",
+  "back": "Back",
+  "toggleSidebar": "Sidebar",
+  "hideSidebar": "Hide sidebar",
+  "showSidebar": "Show sidebar",
+  "navBack": "Back",
+  "navForward": "Forward"
+}

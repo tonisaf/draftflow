@@ -1,0 +1,39 @@
+name: Windows CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  windows-build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Enable Windows Long Paths
+        run: git config --system core.longpaths true
+
+      - name: Setup Flutter Environment
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Verify Flutter Installation
+        run: flutter doctor -v
+
+      - name: Get Dependencies
+        run: flutter pub get
+
+      - name: Analyze Dart Code
+        run: flutter analyze --no-pub
+
+      - name: Run Test Suite
+        run: flutter test --no-pub
+
+      - name: Build Windows Executable
+        run: flutter build windows --release
