@@ -108,7 +108,7 @@ void main() {
     expect(find.text('Настройки'), findsOneWidget);
     expect(find.text('Основные'), findsNWidgets(2));
     expect(find.text('Синхронизация'), findsOneWidget);
-    expect(find.text('Notes Here'), findsOneWidget);
+    expect(find.text('DraftFlow'), findsOneWidget);
     expect(find.text('1.0.0'), findsOneWidget);
     expect(find.text('Изменения применяются автоматически.'), findsOneWidget);
 

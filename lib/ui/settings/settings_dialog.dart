@@ -11,8 +11,9 @@ import '../theme.dart';
 import 'modules_section.dart';
 import 'settings_widgets.dart';
 import 'sync_section.dart';
+import 'update_section.dart';
 
-const String _appName = 'Notes Here';
+const String _appName = 'DraftFlow';
 const String _appVersion = '1.0.0';
 
 /// Wide screens get a fixed-size dialog; narrow screens a full-screen page.
@@ -131,6 +132,9 @@ Widget _general(
         l10n.settingsAutoApply,
         style: TextStyle(fontSize: 12, color: context.skin.muted),
       ),
+      const SizedBox(height: 24),
+      const _Caption('Обновления'),
+      const AppUpdateSection(),
       if (!desktop) ...[
         const SizedBox(height: 24),
         _Caption(l10n.about),
