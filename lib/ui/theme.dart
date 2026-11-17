@@ -384,6 +384,7 @@ abstract final class DesktopUx {
   static const databaseVisibleRows = 8;
   static const databaseLoadingHeight =
       databaseVisibleRows * databaseRowHeight + 120.0;
+  static const databaseMaxVisibleHeight = 480.0;
   static const databaseToolbarExtent = 28.0;
   static const databaseHeaderHeight = 34.0;
   static const databaseTitleSize = UiType.heading;

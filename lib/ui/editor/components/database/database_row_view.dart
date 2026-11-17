@@ -83,16 +83,20 @@ class _DataRowViewState extends State<DataRowView> {
         onEnter: (_) => setState(() => _isHovered = true),
         onExit: (_) => setState(() => _isHovered = false),
         child: Container(
-          height: DesktopUx.databaseRowHeight,
-        decoration: BoxDecoration(
-          color: _isHovered ? skin.hover : Palette.transparent,
-          border: Border(
-            bottom: BorderSide(color: thinBorderColor, width: UiSpace.s0_8),
+          constraints: const BoxConstraints(
+            minHeight: DesktopUx.databaseRowHeight,
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
+          decoration: BoxDecoration(
+            color: _isHovered ? skin.hover : Palette.transparent,
+            border: Border(
+              bottom: BorderSide(color: thinBorderColor, width: UiSpace.s0_8),
+            ),
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
             // Quiet gutter: a real open action, not a decorative drag affordance.
             SizedBox(
               width: DesktopUx.databaseGutterWidth,
@@ -190,7 +194,8 @@ class _DataRowViewState extends State<DataRowView> {
         ),
       ),
     ),
-  );
+  ),
+);
   }
 }
 

@@ -478,7 +478,12 @@ class _DataCellState extends State<DataCell> {
       child: Container(
         key: _frameKey,
         width: widget.width,
-        height: DesktopUx.databaseRowHeight,
+        height: (widget.column.type == 'title' || widget.column.type == 'checkbox')
+            ? DesktopUx.databaseRowHeight
+            : null,
+        constraints: const BoxConstraints(
+          minHeight: DesktopUx.databaseRowHeight,
+        ),
         foregroundDecoration:
             (_saveEntry?.phase == CellSavePhase.invalid ||
                 _saveEntry?.phase == CellSavePhase.failed ||
@@ -832,10 +837,14 @@ class _DataCellState extends State<DataCell> {
                             .where((l) => l.isNotEmpty)
                             .join(', '),
                         waitDuration: const Duration(milliseconds: 500),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: UiSpace.s4,
+                          ),
+                          child: Wrap(
+                            spacing: UiSpace.s4,
+                            runSpacing: UiSpace.s4,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               for (final opt in activeOptions) ...[
                                 Builder(
@@ -848,9 +857,6 @@ class _DataCellState extends State<DataCell> {
                                           Palette.defaultTagArgb,
                                     );
                                     return Container(
-                                      margin: const EdgeInsets.only(
-                                        right: UiSpace.s4,
-                                      ),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: UiSpace.s6,
                                         vertical: UiSpace.s2,
@@ -1320,7 +1326,11 @@ class _InlineCellInputState extends State<InlineCellInput> {
       controller: _controller,
       focusNode: _focusNode,
       selectAllOnFocus: false,
-      keyboardType: widget.isNumber ? TextInputType.number : TextInputType.text,
+      keyboardType: widget.isNumber
+          ? TextInputType.number
+          : TextInputType.multiline,
+      maxLines: widget.isNumber ? 1 : null,
+      minLines: 1,
       style: TextStyle(
         fontSize: UiType.body,
         fontWeight: FontWeight.w400,

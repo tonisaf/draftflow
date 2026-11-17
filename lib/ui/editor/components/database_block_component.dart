@@ -654,15 +654,33 @@ class _DatabaseBlockComponentWidgetState
                                             ),
                                           ),
                                         ),
-                                      SizedBox(
-                                        width: tableWidth,
-                                        height:
-                                            displayRows.length.clamp(
-                                              0,
-                                              DesktopUx.databaseVisibleRows,
-                                            ) *
-                                            DesktopUx.databaseRowHeight,
-                                        child: DatabaseGridSelection(
+                                      Builder(
+                                        builder: (context) {
+                                          double totalHeight = 0;
+                                          for (final row in displayRows.take(DesktopUx.databaseVisibleRows)) {
+                                            double rowH = DesktopUx.databaseRowHeight;
+                                            final rData = data.firstWhere(
+                                              (d) => d.page.id == row.id,
+                                              orElse: () => DatabaseRowData(row),
+                                            );
+                                            for (final col in columns) {
+                                              final val = rData.properties[col.id]?.toString();
+                                              if (val != null && val.length > 35) {
+                                                final lines = (val.length / 32).ceil().clamp(1, 8);
+                                                final h = lines * 20.0 + 8.0;
+                                                if (h > rowH) rowH = h;
+                                              }
+                                            }
+                                            totalHeight += rowH;
+                                          }
+                                          final viewportHeight = totalHeight.clamp(
+                                            displayRows.isEmpty ? 0.0 : DesktopUx.databaseRowHeight,
+                                            DesktopUx.databaseMaxVisibleHeight,
+                                          );
+                                          return SizedBox(
+                                            width: tableWidth,
+                                            height: viewportHeight,
+                                            child: DatabaseGridSelection(
                                           controller: _gridSelection,
                                           rangeEdits:
                                               DatabaseRangeEdits.forRepository(
@@ -682,8 +700,6 @@ class _DatabaseBlockComponentWidgetState
                                             ),
                                             controller: _rowsScrollController,
                                             primary: false,
-                                            itemExtent:
-                                                DesktopUx.databaseRowHeight,
                                             itemCount: displayRows.length,
                                             findChildIndexCallback: (key) {
                                               final index = displayRows
@@ -744,7 +760,9 @@ class _DatabaseBlockComponentWidgetState
                                             },
                                           ),
                                         ),
-                                      ),
+                                        );
+                                      },
+                                    ),
                                       StreamBuilder<
                                         Map<String, DatabaseSummaryStats>
                                       >(
