@@ -666,24 +666,29 @@ class _TmdbFavoritePersonsDialogState extends State<TmdbFavoritePersonsDialog> {
                 const SizedBox(height: 3),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: Palette.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        person.localizedRole,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Palette.accent,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: Palette.accent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          person.localizedRole,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Palette.accent,
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
                     Flexible(
+                      flex: 2,
                       child: Text(
                         inLibraryCount > 0
                             ? '$inLibraryCount в базе'
@@ -830,27 +835,30 @@ class _TmdbFavoritePersonsDialogState extends State<TmdbFavoritePersonsDialog> {
                 const SizedBox(height: 3),
                 Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: Palette.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        localizedRole,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Palette.accent,
+                    Flexible(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: Palette.accent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          localizedRole,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: Palette.accent,
+                          ),
                         ),
                       ),
                     ),
                     if (knownStr.isNotEmpty) ...[
                       const SizedBox(width: 6),
                       Flexible(
+                        flex: 2,
                         child: Text(
                           knownStr,
                           maxLines: 1,
