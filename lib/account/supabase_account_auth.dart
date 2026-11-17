@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:supabase/supabase.dart';
 
 import 'account_controller.dart';
+import 'server_config.dart';
 import 'session_store.dart';
 
 class SupabaseAccountAuth implements AccountAuth, AccountSyncProvider {
@@ -39,6 +40,30 @@ class SupabaseAccountAuth implements AccountAuth, AccountSyncProvider {
       },
     );
   }
+
+  static SupabaseAccountAuth create({required String url, required String key}) {
+    final normalized = normalizeServerUrl(url);
+    final uri = Uri.tryParse(normalized);
+    if (uri == null ||
+        (uri.scheme != 'https' && uri.scheme != 'http') ||
+        uri.host.isEmpty) {
+      throw const AccountFailure('Неверный адрес сервера аккаунтов.');
+    }
+    if (key.trim().isEmpty) {
+      throw const AccountFailure('Укажите ключ anon.');
+    }
+    return SupabaseAccountAuth(
+      client: SupabaseClient(
+        normalized,
+        key.trim(),
+        authOptions: const AuthClientOptions(
+          authFlowType: AuthFlowType.implicit,
+        ),
+      ),
+      store: SecureSessionStore(uri.host),
+    );
+  }
+
   static SupabaseAccountAuth? fromEnvironment() {
     const url = String.fromEnvironment('SUPABASE_URL');
     const key = String.fromEnvironment('SUPABASE_ANON_KEY');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../account/account_controller.dart';
+import '../../account/server_config.dart';
 import '../../l10n/locale_controller.dart';
 import '../../sync/sync_engine.dart';
 import '../account/sync_panel.dart';
@@ -19,8 +20,15 @@ class SyncSection extends StatefulWidget {
 }
 
 class _SyncSectionState extends State<SyncSection> {
+  late final _url = TextEditingController(
+    text: widget.controller.serverConfig?.url ?? '',
+  );
+  late final _key = TextEditingController(
+    text: widget.controller.serverConfig?.key ?? '',
+  );
   final _email = TextEditingController();
   final _password = TextEditingController();
+  bool _editingServer = false;
   bool _signUp = false;
   String? _validationError;
   String? _backupMessage;
@@ -33,6 +41,8 @@ class _SyncSectionState extends State<SyncSection> {
 
   @override
   void dispose() {
+    _url.dispose();
+    _key.dispose();
     _email.dispose();
     _password.clear();
     _password.dispose();
@@ -80,6 +90,112 @@ class _SyncSectionState extends State<SyncSection> {
     setState(() => _backupMessage = result);
   }
 
+  Widget _serverForm(BuildContext context, AccountController c) {
+    final skin = context.skin;
+    final error = _validationError ?? c.error;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Подключение к серверу Supabase',
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Укажите адрес вашего проекта Supabase (облачного или self-hosted) и ключ anon.',
+          style: TextStyle(fontSize: 13, color: skin.muted),
+        ),
+        const SizedBox(height: 14),
+        LabeledField(
+          controller: _url,
+          label: 'Адрес проекта Supabase',
+          enabled: !c.busy,
+          keyboardType: TextInputType.url,
+        ),
+        LabeledField(
+          controller: _key,
+          label: 'Ключ anon (API key)',
+          secret: true,
+          enabled: !c.busy,
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            FilledButton(
+              onPressed: c.busy
+                  ? null
+                  : () async {
+                      final url = _url.text.trim();
+                      final key = _key.text.trim();
+                      if (url.isEmpty) {
+                        setState(() => _validationError = 'Укажите адрес сервера Supabase.');
+                        return;
+                      }
+                      if (key.isEmpty) {
+                        setState(() => _validationError = 'Укажите ключ anon.');
+                        return;
+                      }
+                      setState(() => _validationError = null);
+                      final success = await c.configureServer(url, key);
+                      if (mounted && success) {
+                        setState(() => _editingServer = false);
+                      }
+                    },
+              child: const Text('Подключить'),
+            ),
+            OutlinedButton(
+              onPressed: c.busy
+                  ? null
+                  : () {
+                      _url.text = defaultSupabaseUrl;
+                      _key.text = defaultSupabaseAnonKey;
+                      setState(() => _validationError = null);
+                    },
+              child: const Text('Сервер по умолчанию'),
+            ),
+            if (c.configured)
+              TextButton(
+                onPressed: c.busy
+                    ? null
+                    : () {
+                        _url.text = c.serverConfig?.url ?? '';
+                        _key.text = c.serverConfig?.key ?? '';
+                        setState(() {
+                          _editingServer = false;
+                          _validationError = null;
+                        });
+                      },
+                child: Text(context.l10n.cancel),
+              ),
+          ],
+        ),
+        if (c.busy) ...[
+          const SizedBox(height: 10),
+          TickerMode(
+            enabled: !MediaQuery.disableAnimationsOf(context),
+            child: const LinearProgressIndicator(minHeight: 3),
+          ),
+        ],
+        if (error != null) ...[
+          const SizedBox(height: 10),
+          StatusPill(
+            tone: StatusTone.danger,
+            child: Text(error, style: const TextStyle(fontSize: 13)),
+          ),
+        ],
+        if (c.notice != null) ...[
+          const SizedBox(height: 10),
+          StatusPill(
+            tone: StatusTone.warning,
+            child: Text(c.notice!, style: const TextStyle(fontSize: 13)),
+          ),
+        ],
+      ],
+    );
+  }
+
   Widget _signIn(BuildContext context, AccountController c) {
     final l10n = context.l10n;
     final skin = context.skin;
@@ -123,9 +239,30 @@ class _SyncSectionState extends State<SyncSection> {
           ],
           onSubmitted: (_) => _submit(),
         ),
-        FilledButton(
-          onPressed: c.busy ? null : _submit,
-          child: Text(_signUp ? l10n.createAccount : l10n.signIn),
+        Row(
+          children: [
+            FilledButton(
+              onPressed: c.busy ? null : _submit,
+              child: Text(_signUp ? l10n.createAccount : l10n.signIn),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: c.busy
+                  ? null
+                  : () => setState(() {
+                        _url.text = c.serverConfig?.url ?? '';
+                        _key.text = c.serverConfig?.key ?? '';
+                        _editingServer = true;
+                        _validationError = null;
+                      }),
+              child: Text(
+                c.currentServerHost != null
+                    ? 'Сервер: ${c.currentServerHost}'
+                    : 'Сменить сервер',
+                style: TextStyle(fontSize: 12.5, color: skin.muted),
+              ),
+            ),
+          ],
         ),
         if (c.busy) ...[
           const SizedBox(height: 10),
@@ -165,6 +302,8 @@ class _SyncSectionState extends State<SyncSection> {
           style: const TextStyle(fontSize: 14),
         ),
         const SizedBox(height: 4),
+        if (c.currentServerHost != null)
+          Text('Сервер: ${c.currentServerHost}', style: muted),
         Text(syncLabel(context, c), style: muted),
         if (engine?.message != null) Text(engine!.message!, style: muted),
         if (engine != null && engine.pending > 0)
@@ -191,6 +330,17 @@ class _SyncSectionState extends State<SyncSection> {
             TextButton(
               onPressed: c.busy ? null : _backup,
               child: Text(l10n.backupBeforeConflict),
+            ),
+            TextButton(
+              onPressed: c.busy
+                  ? null
+                  : () => setState(() {
+                        _url.text = c.serverConfig?.url ?? '';
+                        _key.text = c.serverConfig?.key ?? '';
+                        _editingServer = true;
+                        _validationError = null;
+                      }),
+              child: const Text('Сменить сервер'),
             ),
             TextButton(
               onPressed: c.busy ? null : c.signOut,
@@ -232,11 +382,8 @@ class _SyncSectionState extends State<SyncSection> {
     return ListenableBuilder(
       listenable: c,
       builder: (context, _) {
-        if (!c.configured) {
-          return Text(
-            context.l10n.unconfiguredNotice,
-            style: TextStyle(fontSize: 13, color: context.skin.muted),
-          );
+        if (_editingServer || !c.configured) {
+          return _serverForm(context, c);
         }
         final needsSignIn =
             c.account == null ||

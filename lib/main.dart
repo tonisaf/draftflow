@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'account/account_controller.dart';
 import 'account/account_scope.dart';
+import 'account/server_config.dart';
 import 'account/supabase_account_auth.dart';
 import 'data/db/app_database.dart';
 import 'data/notes_repository.dart';
@@ -94,17 +95,37 @@ void main() async {
     );
   }
 
+  ServerConfig? serverConfig = await ServerConfigStore.load();
   AccountAuth? auth;
   String? configurationError;
-  try {
-    auth = SupabaseAccountAuth.fromEnvironment();
-  } on AccountFailure catch (e) {
-    configurationError = e.message;
+  if (serverConfig != null) {
+    try {
+      auth = SupabaseAccountAuth.create(
+        url: serverConfig.url,
+        key: serverConfig.key,
+      );
+    } on AccountFailure catch (e) {
+      configurationError = e.message;
+    } catch (e) {
+      configurationError = 'Ошибка сервера синхронизации: $e';
+    }
+  } else {
+    try {
+      auth = SupabaseAccountAuth.fromEnvironment();
+      if (auth != null) {
+        const envUrl = String.fromEnvironment('SUPABASE_URL');
+        const envKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+        serverConfig = ServerConfig(url: envUrl, key: envKey);
+      }
+    } on AccountFailure catch (e) {
+      configurationError = e.message;
+    }
   }
   FocusNode? syncFocus;
   final accounts = AccountController(
     guest: repository,
     auth: auth,
+    serverConfig: serverConfig,
     waitForEditorFrame: () async {
       syncFocus = FocusManager.instance.primaryFocus;
       await WidgetsBinding.instance.endOfFrame;

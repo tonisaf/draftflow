@@ -10,6 +10,8 @@ import 'package:flutter/foundation.dart';
 import '../data/db/app_database.dart';
 import '../data/notes_repository.dart';
 import '../sync/sync_outbox.dart';
+import 'server_config.dart';
+import 'supabase_account_auth.dart';
 
 class NotesIdentity {
   const NotesIdentity(this.id, this.email, {this.requiresSignIn = false});
@@ -33,12 +35,34 @@ class AccountController extends ChangeNotifier {
   AccountController({
     required NotesRepository guest,
     this.auth,
+    this.serverConfig,
     Future<NotesRepository> Function(String)? openAccount,
     this.waitForEditorFrame,
     this.afterRemoteApply,
   }) : repository = guest,
        _guest = guest,
        _open = openAccount ?? _openDefault {
+    _subscribeAuth();
+  }
+  static Future<NotesRepository> _openDefault(String id) async {
+    final db = AppDatabase.forAccount(id);
+    try {
+      await SyncOutbox(db).enable();
+      return NotesRepository(db);
+    } catch (_) {
+      await db.close();
+      rethrow;
+    }
+  }
+
+  AccountAuth? auth;
+  ServerConfig? serverConfig;
+
+  String? get currentServerUrl => serverConfig?.url;
+  String? get currentServerHost => serverConfig?.host;
+
+  void _subscribeAuth() {
+    _subscription?.cancel();
     _subscription = auth?.changes.listen(
       (identity) {
         if (busy) {
@@ -53,18 +77,54 @@ class AccountController extends ChangeNotifier {
       },
     );
   }
-  static Future<NotesRepository> _openDefault(String id) async {
-    final db = AppDatabase.forAccount(id);
+
+  Future<bool> configureServer(String rawUrl, String rawKey) async {
+    if (busy || _disposed) return false;
+    error = null;
+    notice = null;
+    final normalized = normalizeServerUrl(rawUrl);
+    if (normalized.isEmpty) {
+      _setError('Укажите адрес сервера Supabase.');
+      return false;
+    }
+    if (rawKey.trim().isEmpty) {
+      _setError('Укажите ключ anon.');
+      return false;
+    }
     try {
-      await SyncOutbox(db).enable();
-      return NotesRepository(db);
-    } catch (_) {
-      await db.close();
-      rethrow;
+      final newAuth = SupabaseAccountAuth.create(url: normalized, key: rawKey);
+      await _subscription?.cancel();
+      await auth?.dispose();
+      auth = newAuth;
+      serverConfig = ServerConfig(url: normalized, key: rawKey.trim());
+      await ServerConfigStore.save(serverConfig);
+      _subscribeAuth();
+      unawaited(restore());
+      notifyListeners();
+      return true;
+    } on AccountFailure catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (e) {
+      _setError('Не удалось подключить сервер: $e');
+      return false;
     }
   }
 
-  final AccountAuth? auth;
+  Future<void> clearServer() async {
+    if (busy || _disposed) return;
+    if (account != null) {
+      await signOut();
+    }
+    await _subscription?.cancel();
+    _subscription = null;
+    await auth?.dispose();
+    auth = null;
+    serverConfig = null;
+    await ServerConfigStore.save(null);
+    notifyListeners();
+  }
+
   final Future<void> Function()? waitForEditorFrame;
   final VoidCallback? afterRemoteApply;
   bool applyingRemote = false;

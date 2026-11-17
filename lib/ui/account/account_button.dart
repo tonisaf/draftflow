@@ -1,5 +1,6 @@
 import '../common/app_dialog.dart';
 import '../common/app_icons.dart';
+import '../settings/settings_dialog.dart';
 
 import 'package:flutter/material.dart';
 
@@ -138,6 +139,15 @@ class _AccountDialogState extends State<_AccountDialog> {
                 if (!c.configured) ...[
                   const SizedBox(height: UiSpace.s12),
                   Text(context.l10n.unconfiguredNotice),
+                  const SizedBox(height: UiSpace.s12),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      showSettings(context, initialTab: 1);
+                    },
+                    icon: const Icon(Icons.settings, size: UiSpace.s16),
+                    label: const Text('Настроить сервер'),
+                  ),
                 ] else if (c.account == null ||
                     c.account!.requiresSignIn ||
                     c.syncEngine?.phase == NotesSyncPhase.authRequired) ...[
