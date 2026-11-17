@@ -262,7 +262,7 @@
   "cellNewStatus": "Новый статус...",
   "cellAddStatus": "+ Статус",
   "cellAddMultiSelect": "+ Теги",
-  "cellUntitledPage": "Страница без названия",
+  "cellUntitledPage": "Без названия",
   "cellTypeText": "Введите текст...",
   "cellCouldNotSave": "Не удалось сохранить ячейку. Проверьте, что строка и колонка существуют, и повторите.",
   "filterDialogTitle": "Фильтр базы данных",

@@ -5,6 +5,7 @@ import '../../account/account_scope.dart';
 import '../../data/notes_repository.dart';
 import '../../l10n/locale_controller.dart';
 import '../../main.dart' show ThemeController, ThemeScope;
+import '../../services/app_update_service.dart' show currentAppVersion;
 import '../common/app_dialog.dart';
 import '../common/quiet_button.dart';
 import '../theme.dart';
@@ -14,7 +15,7 @@ import 'sync_section.dart';
 import 'update_section.dart';
 
 const String _appName = 'DraftFlow';
-const String _appVersion = '1.0.5';
+const String _appVersion = currentAppVersion;
 
 /// Wide screens get a fixed-size dialog; narrow screens a full-screen page.
 Future<void> showSettings(

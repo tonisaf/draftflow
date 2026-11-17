@@ -826,49 +826,56 @@ class _DataCellState extends State<DataCell> {
               child: Container(
                 alignment: Alignment.centerLeft,
                 child: activeOptions.isNotEmpty
-                    ? SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            for (final opt in activeOptions) ...[
-                              Builder(
-                                builder: (ctx) {
-                                  final label = opt['label']?.toString() ?? '';
-                                  final colorHex = opt['color'] ??
-                                      Palette.defaultTagArgb;
-                                  final tagColor = Palette.stored(
-                                    int.tryParse(colorHex.toString()) ??
-                                        Palette.defaultTagArgb,
-                                  );
-                                  return Container(
-                                    margin: const EdgeInsets.only(
-                                      right: UiSpace.s4,
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: UiSpace.s6,
-                                      vertical: UiSpace.s2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: tagColor.withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(
-                                        UiRadius.compact,
+                    ? Tooltip(
+                        message: activeOptions
+                            .map((o) => o['label']?.toString() ?? '')
+                            .where((l) => l.isNotEmpty)
+                            .join(', '),
+                        waitDuration: const Duration(milliseconds: 500),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final opt in activeOptions) ...[
+                                Builder(
+                                  builder: (ctx) {
+                                    final label = opt['label']?.toString() ?? '';
+                                    final colorHex = opt['color'] ??
+                                        Palette.defaultTagArgb;
+                                    final tagColor = Palette.stored(
+                                      int.tryParse(colorHex.toString()) ??
+                                          Palette.defaultTagArgb,
+                                    );
+                                    return Container(
+                                      margin: const EdgeInsets.only(
+                                        right: UiSpace.s4,
                                       ),
-                                    ),
-                                    child: Text(
-                                      label,
-                                      maxLines: 1,
-                                      style: TextStyle(
-                                        fontSize: UiType.caption,
-                                        fontWeight: FontWeight.w600,
-                                        color: tagColor,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: UiSpace.s6,
+                                        vertical: UiSpace.s2,
                                       ),
-                                    ),
-                                  );
-                                },
-                              ),
+                                      decoration: BoxDecoration(
+                                        color: tagColor.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(
+                                          UiRadius.compact,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        label,
+                                        maxLines: 1,
+                                        style: TextStyle(
+                                          fontSize: UiType.caption,
+                                          fontWeight: FontWeight.w600,
+                                          color: tagColor,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
                       )
                     : (_cellHovered || _cellFocused
@@ -1158,8 +1165,15 @@ class _TitleCellInputState extends State<TitleCellInput> {
         isDense: true,
         contentPadding: EdgeInsets.zero,
         border: InputBorder.none,
-        hintText: context.l10n.cellUntitledPage,
-        hintStyle: TextStyle(color: skin.hint, fontSize: UiType.editorTitle),
+        hintText: (_focusNode.hasFocus || widget.isCellHovered || _controller.text.isEmpty)
+            ? context.l10n.cellUntitledPage
+            : null,
+        hintStyle: TextStyle(
+          color: (_focusNode.hasFocus || widget.isCellHovered)
+              ? skin.hint
+              : skin.hint.withValues(alpha: 0.45),
+          fontSize: UiType.editorTitle,
+        ),
       ),
       onChanged: (_) => _editedWhileFocused = true,
       onSubmitted: (_) => _commit(),
@@ -1301,7 +1315,7 @@ class _InlineCellInputState extends State<InlineCellInput> {
     }
 
     widget.editor?.open = expand;
-    return TextField(
+    final textField = TextField(
       onTap: expand,
       controller: _controller,
       focusNode: _focusNode,
@@ -1317,10 +1331,24 @@ class _InlineCellInputState extends State<InlineCellInput> {
         isDense: true,
         contentPadding: EdgeInsets.zero,
         border: InputBorder.none,
-        hintText: widget.isNumber ? '0' : context.l10n.cellTypeText,
-        hintStyle: TextStyle(color: skin.hint, fontSize: UiType.body),
+        hintText: (_focusNode.hasFocus || widget.isCellHovered)
+            ? (widget.isNumber ? '0' : context.l10n.cellTypeText)
+            : null,
+        hintStyle: TextStyle(
+          color: skin.hint.withValues(alpha: 0.7),
+          fontSize: UiType.body,
+        ),
       ),
       onSubmitted: (_) => _commit(),
     );
+
+    if (!_focusNode.hasFocus && _controller.text.trim().isNotEmpty) {
+      return Tooltip(
+        message: _controller.text,
+        waitDuration: const Duration(milliseconds: 600),
+        child: textField,
+      );
+    }
+    return textField;
   }
 }

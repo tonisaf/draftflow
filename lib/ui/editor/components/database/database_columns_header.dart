@@ -423,14 +423,18 @@ class _ResizableColumnHeaderState extends State<ResizableColumnHeader> {
                         child: Row(
                           children: [
                             Flexible(
-                              child: Text(
-                                widget.column.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: UiType.body,
-                                  fontWeight: FontWeight.w400,
-                                  color: skin.muted,
+                              child: Tooltip(
+                                message: widget.column.name,
+                                waitDuration: const Duration(milliseconds: 500),
+                                child: Text(
+                                  widget.column.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: UiType.body,
+                                    fontWeight: FontWeight.w400,
+                                    color: skin.muted,
+                                  ),
                                 ),
                               ),
                             ),

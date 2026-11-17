@@ -830,7 +830,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get cellAddMultiSelect => '+ Теги';
 
   @override
-  String get cellUntitledPage => 'Страница без названия';
+  String get cellUntitledPage => 'Без названия';
 
   @override
   String get cellTypeText => 'Введите текст...';

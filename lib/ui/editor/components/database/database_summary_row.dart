@@ -512,6 +512,9 @@ class _TableSummaryCellState extends State<TableSummaryCell> {
                     opacity: _isHovered ? 1.0 : 0.0,
                     child: Text(
                       context.l10n.calculate,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
                       style: TextStyle(
                         fontSize: UiType.caption,
                         color: skin.hint,
