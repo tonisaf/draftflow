@@ -84,60 +84,84 @@ class _DataRowViewState extends State<DataRowView> {
   ) {
     return SizedBox(
       width: DesktopUx.databaseGutterWidth,
-      child: navigation == null
-          ? IconButton(
-              tooltip: context.l10n.rowOpenAsPage,
-              onPressed: widget.onOpenPage,
-              icon: const Icon(
-                AppIcons.arrowUpRightSquare,
-                size: UiSpace.s14,
-              ),
-            )
-          : ValueListenableBuilder<DatabaseGridRange?>(
-              valueListenable: navigation.selection,
-              builder: (context, range, _) => Semantics(
-                button: true,
-                label: context.l10n.databaseSelectRow,
-                onTap: () =>
-                    navigation.selectRow(widget.page.id, false),
-                onLongPress: widget.onOpenPage,
-                child: ExcludeSemantics(
-                  child: GestureDetector(
-                    onDoubleTap: widget.onOpenPage,
-                    child: IconButton(
-                      key: ValueKey(
-                        'database_select_row_${widget.page.id}',
-                      ),
-                      tooltip: context.l10n.databaseSelectRow,
-                      onPressed: navigation.focus,
-                      iconSize: UiSpace.s14,
-                      padding: EdgeInsets.zero,
-                      style: ButtonStyle(
-                        foregroundColor:
-                            WidgetStateProperty.resolveWith(
-                              (states) =>
-                                  navigation.isRowSelected(
-                                        widget.page.id,
-                                      ) ||
-                                      _isHovered ||
-                                      states.contains(
-                                        WidgetState.focused,
-                                      )
-                                  ? skin.muted
-                                  : Palette.transparent,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(top: UiSpace.s6),
+          child: navigation == null
+              ? IconButton(
+                  tooltip: context.l10n.rowOpenAsPage,
+                  onPressed: widget.onOpenPage,
+                  constraints: const BoxConstraints(
+                    minWidth: UiSpace.s20,
+                    minHeight: UiSpace.s20,
+                  ),
+                  style: IconButton.styleFrom(
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    minimumSize: const Size(UiSpace.s20, UiSpace.s20),
+                    padding: EdgeInsets.zero,
+                  ),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(
+                    AppIcons.arrowUpRightSquare,
+                    size: UiSpace.s14,
+                  ),
+                )
+              : ValueListenableBuilder<DatabaseGridRange?>(
+                  valueListenable: navigation.selection,
+                  builder: (context, range, _) => Semantics(
+                    button: true,
+                    label: context.l10n.databaseSelectRow,
+                    onTap: () =>
+                        navigation.selectRow(widget.page.id, false),
+                    onLongPress: widget.onOpenPage,
+                    child: ExcludeSemantics(
+                      child: GestureDetector(
+                        onDoubleTap: widget.onOpenPage,
+                        child: IconButton(
+                          key: ValueKey(
+                            'database_select_row_${widget.page.id}',
+                          ),
+                          tooltip: context.l10n.databaseSelectRow,
+                          onPressed: navigation.focus,
+                          constraints: const BoxConstraints(
+                            minWidth: UiSpace.s20,
+                            minHeight: UiSpace.s20,
+                          ),
+                          iconSize: UiSpace.s14,
+                          padding: EdgeInsets.zero,
+                          style: ButtonStyle(
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            minimumSize: const WidgetStatePropertyAll(
+                              Size(UiSpace.s20, UiSpace.s20),
                             ),
-                      ),
-                      icon: Icon(
-                        navigation.isRowSelected(widget.page.id)
-                            ? AppIcons.checkmarkSquare
-                            : AppIcons.square,
-                        size: UiSpace.s14,
+                            foregroundColor:
+                                WidgetStateProperty.resolveWith(
+                                  (states) =>
+                                      navigation.isRowSelected(
+                                            widget.page.id,
+                                          ) ||
+                                          _isHovered ||
+                                          states.contains(
+                                            WidgetState.focused,
+                                          )
+                                      ? skin.muted
+                                      : Palette.transparent,
+                                ),
+                          ),
+                          icon: Icon(
+                            navigation.isRowSelected(widget.page.id)
+                                ? AppIcons.checkmarkSquare
+                                : AppIcons.square,
+                            size: UiSpace.s14,
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ),
+        ),
+      ),
     );
   }
 
@@ -161,20 +185,34 @@ class _DataRowViewState extends State<DataRowView> {
   Widget _buildAction(BuildContext context, Skin skin) {
     return SizedBox(
       width: DesktopUx.databaseActionWidth,
-      child: IconButton(
-        tooltip: context.l10n.rowMoveToTrash,
-        onPressed: widget.onDeleteRow,
-        iconSize: UiSpace.s14,
-        padding: EdgeInsets.zero,
-        style: ButtonStyle(
-          foregroundColor: WidgetStateProperty.resolveWith(
-            (states) =>
-                _isHovered || states.contains(WidgetState.focused)
-                ? skin.destructive
-                : Palette.transparent,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Padding(
+          padding: const EdgeInsets.only(top: UiSpace.s6),
+          child: IconButton(
+            tooltip: context.l10n.rowMoveToTrash,
+            onPressed: widget.onDeleteRow,
+            constraints: const BoxConstraints(
+              minWidth: UiSpace.s20,
+              minHeight: UiSpace.s20,
+            ),
+            iconSize: UiSpace.s14,
+            padding: EdgeInsets.zero,
+            style: ButtonStyle(
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              minimumSize: const WidgetStatePropertyAll(
+                Size(UiSpace.s20, UiSpace.s20),
+              ),
+              foregroundColor: WidgetStateProperty.resolveWith(
+                (states) =>
+                    _isHovered || states.contains(WidgetState.focused)
+                    ? skin.destructive
+                    : Palette.transparent,
+              ),
+            ),
+            icon: const Icon(AppIcons.xmark, size: UiSpace.s14),
           ),
         ),
-        icon: const Icon(AppIcons.xmark, size: UiSpace.s14),
       ),
     );
   }

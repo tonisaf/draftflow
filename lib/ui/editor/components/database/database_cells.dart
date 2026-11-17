@@ -81,7 +81,12 @@ class DataCell extends StatefulWidget {
     required this.onUpdateTitle,
     required this.onUpdateValue,
     required this.onOpenPage,
-    this.contentPadding = const EdgeInsets.symmetric(horizontal: UiSpace.s8),
+    this.contentPadding = const EdgeInsets.fromLTRB(
+      UiSpace.s8,
+      UiSpace.s6,
+      UiSpace.s8,
+      UiSpace.s2,
+    ),
   });
 
   @override
@@ -478,9 +483,6 @@ class _DataCellState extends State<DataCell> {
       child: Container(
         key: _frameKey,
         width: widget.width,
-        height: (widget.column.type == 'title' || widget.column.type == 'checkbox')
-            ? DesktopUx.databaseRowHeight
-            : null,
         constraints: const BoxConstraints(
           minHeight: DesktopUx.databaseRowHeight,
         ),
@@ -498,7 +500,7 @@ class _DataCellState extends State<DataCell> {
           ),
         ),
         padding: widget.contentPadding,
-        alignment: Alignment.centerLeft,
+        alignment: Alignment.topLeft,
         child: _buildCellContent(context, skin),
       ),
     );
@@ -567,7 +569,7 @@ class _DataCellState extends State<DataCell> {
           if (!HardwareKeyboard.instance.isShiftPressed) pickDate();
         },
         child: Container(
-          alignment: Alignment.centerLeft,
+          alignment: Alignment.topLeft,
           child: (_cellHovered || dateStr.isNotEmpty)
               ? Row(
                   mainAxisSize: MainAxisSize.min,
@@ -636,10 +638,10 @@ class _DataCellState extends State<DataCell> {
                   setState(() => _cellFocused = focused),
               onTap: () => _openTagPicker(tagCtx, options),
               child: Container(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.topLeft,
                 child: label.isNotEmpty
                     ? Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.topLeft,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: UiSpace.s7,
@@ -725,10 +727,10 @@ class _DataCellState extends State<DataCell> {
                   setState(() => _cellFocused = focused),
               onTap: () => _openStatusPicker(statusCtx, options),
               child: Container(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.topLeft,
                 child: label.isNotEmpty
                     ? Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: Alignment.topLeft,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: UiSpace.s8,
@@ -829,7 +831,7 @@ class _DataCellState extends State<DataCell> {
                   setState(() => _cellFocused = focused),
               onTap: () => _openMultiSelectPicker(tagCtx, options),
               child: Container(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.topLeft,
                 child: activeOptions.isNotEmpty
                     ? Tooltip(
                         message: activeOptions

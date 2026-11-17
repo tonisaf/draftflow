@@ -214,12 +214,13 @@ Future<String?> showExpandedCellEditor(
                                           : FontWeight.w400,
                                       color: skin.text,
                                     ),
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   isDense: true,
                                   visualDensity: VisualDensity.standard,
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.all(
-                                    UiSpace.s8,
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: UiSpace.s8,
+                                    vertical: title ? UiSpace.s6 : UiSpace.s8,
                                   ),
                                 ),
                               ),
