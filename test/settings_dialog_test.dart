@@ -8,6 +8,7 @@ import 'package:notes_here/data/db/app_database.dart';
 import 'package:notes_here/data/notes_repository.dart';
 import 'package:notes_here/l10n/locale_controller.dart';
 import 'package:notes_here/main.dart';
+import 'package:notes_here/services/app_update_service.dart' show currentAppVersion;
 import 'package:notes_here/ui/settings/settings_dialog.dart';
 import 'package:notes_here/ui/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -109,7 +110,7 @@ void main() {
     expect(find.text('Основные'), findsNWidgets(2));
     expect(find.text('Синхронизация'), findsOneWidget);
     expect(find.text('DraftFlow'), findsOneWidget);
-    expect(find.text('1.0.5'), findsOneWidget);
+    expect(find.text(currentAppVersion), findsOneWidget);
     expect(find.text('Изменения применяются автоматически.'), findsOneWidget);
 
     // Open Theme dropdown pill and pick Dark

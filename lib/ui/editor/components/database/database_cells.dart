@@ -1352,13 +1352,6 @@ class _InlineCellInputState extends State<InlineCellInput> {
       onSubmitted: (_) => _commit(),
     );
 
-    if (!_focusNode.hasFocus && _controller.text.trim().isNotEmpty) {
-      return Tooltip(
-        message: _controller.text,
-        waitDuration: const Duration(milliseconds: 600),
-        child: textField,
-      );
-    }
     return textField;
   }
 }
