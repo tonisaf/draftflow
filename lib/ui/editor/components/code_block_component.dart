@@ -136,6 +136,7 @@ class _CodeBlockComponentWidgetState extends State<CodeBlockComponentWidget>
   int _foldGeneration = 0;
   bool _reducedMotion = false;
   bool? _lastCollapsed;
+  SelectionGestureInterceptor? _selectionInterceptor;
 
   @override
   void initState() {
@@ -162,6 +163,52 @@ class _CodeBlockComponentWidgetState extends State<CodeBlockComponentWidget>
     super.didChangeDependencies();
     _reducedMotion = MediaQuery.disableAnimationsOf(context);
     if (_reducedMotion) _syncFold(_lastCollapsed ?? false);
+    _registerSelectionInterceptor();
+  }
+
+  void _registerSelectionInterceptor() {
+    if (_selectionInterceptor != null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _selectionInterceptor != null) return;
+      try {
+        final service = editorState.service.selectionService;
+        final interceptor = SelectionGestureInterceptor(
+          key: 'code_block_triple_tap_${node.id}',
+          canTripleTap: (details) {
+            if (!mounted || !editorState.editable) return true;
+            final offset = details.globalPosition;
+            final targetNode = service.getNodeInOffset(offset);
+            if (targetNode?.id != node.id) return true;
+
+            final pos = service.getPositionInOffset(offset);
+            if (pos != null) {
+              final text = node.delta?.toPlainText() ?? '';
+              final clickOffset = pos.offset.clamp(0, text.length);
+              int lineStart =
+                  text.lastIndexOf('\n', clickOffset > 0 ? clickOffset - 1 : 0);
+              lineStart = lineStart == -1 ? 0 : lineStart + 1;
+              int lineEnd = text.indexOf('\n', clickOffset);
+              lineEnd = lineEnd == -1 ? text.length : lineEnd;
+
+              final lineSelection = Selection(
+                start: Position(path: node.path, offset: lineStart),
+                end: Position(path: node.path, offset: lineEnd),
+              );
+
+              scheduleMicrotask(() {
+                if (mounted && !editorState.isDisposed) {
+                  service.updateSelection(lineSelection);
+                }
+              });
+              return false;
+            }
+            return true;
+          },
+        );
+        service.registerGestureInterceptor(interceptor);
+        _selectionInterceptor = interceptor;
+      } catch (_) {}
+    });
   }
 
   void _syncFold(bool collapsed) {
@@ -219,6 +266,13 @@ class _CodeBlockComponentWidgetState extends State<CodeBlockComponentWidget>
 
   @override
   void dispose() {
+    if (_selectionInterceptor != null) {
+      try {
+        editorState.service.selectionService
+            .unregisterGestureInterceptor(_selectionInterceptor!.key);
+      } catch (_) {}
+      _selectionInterceptor = null;
+    }
     _titleFocus.removeListener(_onTitleFocusChanged);
     _titleFocus.dispose();
     _titleController.dispose();

@@ -88,7 +88,7 @@ Widget buildEditorContextMenu(
             shortcut: menuShortcut('A'),
             onTap: () {
               onPressed();
-              selectAllCommand.handler(editorState);
+              smartSelectAllCommand.handler(editorState);
             },
           ),
         ],
@@ -368,29 +368,16 @@ List<CharacterShortcutEvent> buildEditorCharacterShortcuts({
       key: 'insert newline in code block',
       character: '\n',
       handler: (state) async {
-        final selection = state.selection;
-        if (selection == null || !selection.isCollapsed) {
+        final selection = state.selection?.normalized;
+        if (selection == null) {
           return false;
         }
         final node = state.getNodeAtPath(selection.start.path);
         if (node?.type != codeBlockType) return false;
 
-        final text = node?.delta?.toPlainText() ?? '';
-        final offset = selection.start.offset;
-
-        // Double enter at the end of code block exits it into a new paragraph
-        if (offset == text.length && text.endsWith('\n')) {
-          final transaction = state.transaction;
-          transaction.deleteText(node!, text.length - 1, 1);
-          final next = node.path.next;
-          transaction.insertNode(next, paragraphNode());
-          transaction.afterSelection = Selection.collapsed(
-            Position(path: next),
-          );
-          await state.apply(transaction);
-          return true;
+        if (!selection.isCollapsed) {
+          await state.deleteSelection(selection);
         }
-
         await state.insertTextAtPosition('\n', position: selection.start);
         return true;
       },
@@ -592,6 +579,96 @@ final CommandShortcutEvent nonTextBlockInsertAboveCommand =
           return KeyEventResult.ignored;
         }
         unawaited(_handleNonTextBlockEnter(editorState, after: false));
+        return KeyEventResult.handled;
+      },
+    );
+
+/// Two-stage select all:
+/// 1st Ctrl+A / Cmd+A: selects the entire current block.
+/// 2nd Ctrl+A / Cmd+A: selects all blocks on the entire page.
+final CommandShortcutEvent smartSelectAllCommand = CommandShortcutEvent(
+  key: 'smart two-stage select all',
+  getDescription: () => AppFlowyEditorL10n.current.cmdSelectAll,
+  command: 'ctrl+a',
+  macOSCommand: 'cmd+a',
+  handler: _smartSelectAllCommandHandler,
+);
+
+KeyEventResult _smartSelectAllCommandHandler(EditorState editorState) {
+  if (editorState.document.root.children.isEmpty ||
+      editorState.selection == null) {
+    return KeyEventResult.ignored;
+  }
+
+  final selection = editorState.selection!.normalized;
+  final lastSelectable = editorState.getLastSelectable();
+  if (lastSelectable == null) {
+    return KeyEventResult.handled;
+  }
+
+  final docStart = Position(path: [0]);
+  final docEnd = lastSelectable.$2.end(lastSelectable.$1);
+  final isEntireDocSelected =
+      selection.start == docStart && selection.end == docEnd;
+
+  if (isEntireDocSelected) {
+    return KeyEventResult.handled;
+  }
+
+  // 1. If currently inside a single block, check if the whole block is already selected
+  if (selection.isSingle) {
+    final node = editorState.getNodeAtPath(selection.start.path);
+    if (node != null) {
+      final selectable = node.selectable;
+      final blockStart =
+          selectable?.start() ?? Position(path: node.path, offset: 0);
+      final blockEnd = selectable?.end() ??
+          Position(
+            path: node.path,
+            offset: node.delta?.toPlainText().length ?? 1,
+          );
+
+      final isEntireBlockSelected =
+          selection.start == blockStart && selection.end == blockEnd;
+
+      // If the block is not yet fully selected, select this block first!
+      if (!isEntireBlockSelected && blockStart != blockEnd) {
+        editorState.updateSelectionWithReason(
+          Selection(start: blockStart, end: blockEnd),
+          reason: SelectionUpdateReason.selectAll,
+        );
+        return KeyEventResult.handled;
+      }
+    }
+  }
+
+  // 2. Second press (or multiple blocks already selected): select the whole page
+  editorState.updateSelectionWithReason(
+    Selection(start: docStart, end: docEnd),
+    reason: SelectionUpdateReason.selectAll,
+  );
+  return KeyEventResult.handled;
+}
+
+/// Exits a code block on Shift+Enter, creating an editable paragraph below it.
+final CommandShortcutEvent exitCodeBlockOnShiftEnterCommand =
+    CommandShortcutEvent(
+      key: 'exit code block to new paragraph on shift enter',
+      getDescription: () => 'exit code block on shift+enter',
+      command: 'shift+enter',
+      handler: (editorState) {
+        final selection = editorState.selection;
+        if (selection == null) return KeyEventResult.ignored;
+        final node = editorState.getNodeAtPath(selection.start.path);
+        if (node == null || node.type != codeBlockType) {
+          return KeyEventResult.ignored;
+        }
+
+        final next = node.path.next;
+        final transaction = editorState.transaction;
+        transaction.insertNode(next, paragraphNode());
+        transaction.afterSelection = Selection.collapsed(Position(path: next));
+        editorState.apply(transaction);
         return KeyEventResult.handled;
       },
     );

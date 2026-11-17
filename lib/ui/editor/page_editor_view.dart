@@ -983,8 +983,10 @@ class _PageEditorViewState extends State<PageEditorView>
                       commandShortcutEvents: [
                         codeBlockPasteCommand,
                         codeBlockPasteWithoutFormattingCommand,
+                        exitCodeBlockOnShiftEnterCommand,
                         nonTextBlockInsertAboveCommand,
                         nonTextBlockEnterCommand,
+                        smartSelectAllCommand,
                         smartCopyCommand,
                         smartCutCommand,
                         smartLinkPasteCommand,
