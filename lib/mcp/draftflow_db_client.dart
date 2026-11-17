@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fractional_indexing/fractional_indexing.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:sqlite3/sqlite3.dart';
 import 'package:uuid/uuid.dart';
 
@@ -600,11 +601,46 @@ class DraftFlowDbClient {
     return '';
   }
 
+  static String _extractMarkdownFromDelta(List<dynamic>? delta) {
+    if (delta == null || delta.isEmpty) return '';
+    final sb = StringBuffer();
+    for (final op in delta) {
+      if (op is Map && op['insert'] is String) {
+        var text = op['insert'] as String;
+        final attrs = op['attributes'] as Map<String, dynamic>?;
+        if (attrs != null && attrs.isNotEmpty) {
+          if (attrs['code'] == true) {
+            text = '`$text`';
+          }
+          if (attrs['bold'] == true) {
+            text = '**$text**';
+          }
+          if (attrs['italic'] == true) {
+            text = '*$text*';
+          }
+          if (attrs['strikethrough'] == true) {
+            text = '~~$text~~';
+          }
+          if (attrs['href'] is String) {
+            text = '[$text](${attrs['href']})';
+          }
+        }
+        sb.write(text);
+      }
+    }
+    return sb.toString().trim();
+  }
+
   static String _blockJsonToMarkdown(String type, String rawJson) {
-    final text = _extractTextFromBlockJson(rawJson);
+    String text = '';
     try {
       final map = jsonDecode(rawJson) as Map<String, dynamic>;
       final data = map['data'] as Map<String, dynamic>? ?? {};
+      final delta = data['delta'] as List<dynamic>?;
+      text = _extractMarkdownFromDelta(delta);
+      if (text.isEmpty) {
+        text = _extractTextFromBlockJson(rawJson);
+      }
 
       switch (type) {
         case 'heading':
@@ -632,6 +668,22 @@ class DraftFlowDbClient {
     } catch (_) {
       return text;
     }
+  }
+
+  static List<Map<String, dynamic>> _parseInlineMarkdownToDelta(String text) {
+    if (text.isEmpty) return [];
+    try {
+      final doc = md.Document(extensionSet: md.ExtensionSet.gitHubWeb, encodeHtml: false);
+      final nodes = doc.parseInline(text);
+      final visitor = _DeltaVisitor();
+      for (final n in nodes) {
+        n.accept(visitor);
+      }
+      if (visitor.delta.isNotEmpty) {
+        return visitor.delta;
+      }
+    } catch (_) {}
+    return [{'insert': text}];
   }
 
   static List<_BlockEntry> _markdownToBlockEntries(String markdown) {
@@ -679,7 +731,7 @@ class DraftFlowDbClient {
           type: 'heading',
           jsonMap: {
             'type': 'heading',
-            'data': {'level': 1, 'delta': [{'insert': trimmed.substring(2)}]},
+            'data': {'level': 1, 'delta': _parseInlineMarkdownToDelta(trimmed.substring(2))},
           },
         ));
       } else if (trimmed.startsWith('## ')) {
@@ -687,7 +739,7 @@ class DraftFlowDbClient {
           type: 'heading',
           jsonMap: {
             'type': 'heading',
-            'data': {'level': 2, 'delta': [{'insert': trimmed.substring(3)}]},
+            'data': {'level': 2, 'delta': _parseInlineMarkdownToDelta(trimmed.substring(3))},
           },
         ));
       } else if (trimmed.startsWith('### ')) {
@@ -695,7 +747,7 @@ class DraftFlowDbClient {
           type: 'heading',
           jsonMap: {
             'type': 'heading',
-            'data': {'level': 3, 'delta': [{'insert': trimmed.substring(4)}]},
+            'data': {'level': 3, 'delta': _parseInlineMarkdownToDelta(trimmed.substring(4))},
           },
         ));
       } else if (trimmed.startsWith('- [ ] ')) {
@@ -703,7 +755,7 @@ class DraftFlowDbClient {
           type: 'todo_list',
           jsonMap: {
             'type': 'todo_list',
-            'data': {'checked': false, 'delta': [{'insert': trimmed.substring(6)}]},
+            'data': {'checked': false, 'delta': _parseInlineMarkdownToDelta(trimmed.substring(6))},
           },
         ));
       } else if (trimmed.startsWith('- [x] ') || trimmed.startsWith('- [X] ')) {
@@ -711,7 +763,7 @@ class DraftFlowDbClient {
           type: 'todo_list',
           jsonMap: {
             'type': 'todo_list',
-            'data': {'checked': true, 'delta': [{'insert': trimmed.substring(6)}]},
+            'data': {'checked': true, 'delta': _parseInlineMarkdownToDelta(trimmed.substring(6))},
           },
         ));
       } else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
@@ -719,7 +771,7 @@ class DraftFlowDbClient {
           type: 'bulleted_list',
           jsonMap: {
             'type': 'bulleted_list',
-            'data': {'delta': [{'insert': trimmed.substring(2)}]},
+            'data': {'delta': _parseInlineMarkdownToDelta(trimmed.substring(2))},
           },
         ));
       } else if (RegExp(r'^\d+\.\s+').hasMatch(trimmed)) {
@@ -728,7 +780,7 @@ class DraftFlowDbClient {
           type: 'numbered_list',
           jsonMap: {
             'type': 'numbered_list',
-            'data': {'delta': [{'insert': content}]},
+            'data': {'delta': _parseInlineMarkdownToDelta(content)},
           },
         ));
       } else if (trimmed.startsWith('> ')) {
@@ -736,7 +788,7 @@ class DraftFlowDbClient {
           type: 'quote',
           jsonMap: {
             'type': 'quote',
-            'data': {'delta': [{'insert': trimmed.substring(2)}]},
+            'data': {'delta': _parseInlineMarkdownToDelta(trimmed.substring(2))},
           },
         ));
       } else if (trimmed == '---' || trimmed == '***' || trimmed == '___') {
@@ -749,7 +801,7 @@ class DraftFlowDbClient {
           type: 'paragraph',
           jsonMap: {
             'type': 'paragraph',
-            'data': {'delta': [{'insert': trimmed}]},
+            'data': {'delta': _parseInlineMarkdownToDelta(trimmed)},
           },
         ));
       }
@@ -769,6 +821,62 @@ class DraftFlowDbClient {
     }
 
     return entries;
+  }
+}
+
+class _DeltaVisitor implements md.NodeVisitor {
+  final List<Map<String, dynamic>> delta = [];
+  final Map<String, dynamic> _attrs = {};
+
+  @override
+  bool visitElementBefore(md.Element element) {
+    if (element.tag == 'strong' || element.tag == 'b') {
+      _attrs['bold'] = true;
+    } else if (element.tag == 'em' || element.tag == 'i') {
+      _attrs['italic'] = true;
+    } else if (element.tag == 'code') {
+      _attrs['code'] = true;
+    } else if (element.tag == 'del' || element.tag == 's') {
+      _attrs['strikethrough'] = true;
+    } else if (element.tag == 'u') {
+      _attrs['underline'] = true;
+    } else if (element.tag == 'a') {
+      final href = element.attributes['href'];
+      if (href != null && href.isNotEmpty) {
+        _attrs['href'] = href;
+      }
+    }
+    return true;
+  }
+
+  @override
+  void visitText(md.Text text) {
+    if (text.text.isEmpty) return;
+    if (_attrs.isEmpty) {
+      delta.add({'insert': text.text});
+    } else {
+      delta.add({
+        'insert': text.text,
+        'attributes': Map<String, dynamic>.from(_attrs),
+      });
+    }
+  }
+
+  @override
+  void visitElementAfter(md.Element element) {
+    if (element.tag == 'strong' || element.tag == 'b') {
+      _attrs.remove('bold');
+    } else if (element.tag == 'em' || element.tag == 'i') {
+      _attrs.remove('italic');
+    } else if (element.tag == 'code') {
+      _attrs.remove('code');
+    } else if (element.tag == 'del' || element.tag == 's') {
+      _attrs.remove('strikethrough');
+    } else if (element.tag == 'u') {
+      _attrs.remove('underline');
+    } else if (element.tag == 'a') {
+      _attrs.remove('href');
+    }
   }
 }
 
