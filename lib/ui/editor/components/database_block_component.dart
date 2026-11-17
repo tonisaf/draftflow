@@ -28,6 +28,9 @@ export 'database/database_columns_header.dart';
 export 'database/database_cells.dart';
 export 'database/database_row_modal.dart';
 export 'database/database_summary_row.dart';
+export 'database/database_autofit.dart';
+export 'database/database_views.dart';
+export 'database/database_view_tabs.dart';
 
 import 'database/database_models.dart';
 import 'database/database_header.dart';
@@ -36,6 +39,9 @@ import 'database/database_cells.dart';
 import 'database/database_row_modal.dart';
 import 'database/database_property_menu.dart';
 import 'database/database_summary_row.dart';
+import 'database/database_autofit.dart';
+import 'database/database_views.dart';
+import 'database/database_view_tabs.dart';
 
 /// Reuse adjacent editable text instead of accumulating empty paragraphs.
 Future<void> insertTextAroundDatabase(
@@ -167,6 +173,14 @@ class _DatabaseBlockComponentWidgetState
   Timer? _searchTimer;
   final ScrollController _rowsScrollController = ScrollController();
   final _gridSelection = DatabaseGridSelectionController();
+
+  @override
+  void initState() {
+    super.initState();
+    final view = _activeView;
+    _sortConfig = view.sort;
+    _filterRules.addAll(view.filters);
+  }
   Stream<Database?>? _databaseStream;
   Stream<List<DatabaseColumn>>? _columnsStream;
   Stream<DatabaseRowsPage>? _rowsStream;
@@ -187,6 +201,146 @@ class _DatabaseBlockComponentWidgetState
       };
     }
     return _localSummaries;
+  }
+
+  bool get _freezeTitle =>
+      widget.node.attributes['freezeTitle'] as bool? ?? true;
+
+  List<DatabaseViewConfig> get _views {
+    final parsed = parseDatabaseViews(widget.node.attributes['views']);
+    if (parsed.isNotEmpty) return parsed;
+    return const [
+      DatabaseViewConfig(
+        id: 'view_default',
+        name: 'Table',
+        type: DatabaseViewType.table,
+      ),
+    ];
+  }
+
+  String get _activeViewId {
+    final id = widget.node.attributes['activeViewId'] as String?;
+    final views = _views;
+    if (id != null && views.any((v) => v.id == id)) return id;
+    return views.first.id;
+  }
+
+  DatabaseViewConfig get _activeView {
+    final views = _views;
+    return views.firstWhere(
+      (v) => v.id == _activeViewId,
+      orElse: () => views.first,
+    );
+  }
+
+  void _persistViews(List<DatabaseViewConfig> views, {String? activeId}) {
+    try {
+      final transaction = editorState.transaction;
+      final updates = <String, dynamic>{
+        'views': views.map((v) => v.toJson()).toList(),
+      };
+      if (activeId != null) {
+        updates['activeViewId'] = activeId;
+      }
+      transaction.updateNode(widget.node, updates);
+      editorState.apply(transaction);
+    } catch (_) {}
+    setState(() {});
+  }
+
+  void _onSelectView(DatabaseViewConfig view) {
+    if (view.id == _activeViewId) return;
+    setState(() {
+      _sortConfig = view.sort;
+      _filterRules.clear();
+      _filterRules.addAll(view.filters);
+      _resetPage();
+      _rowsStream = null;
+    });
+    try {
+      final transaction = editorState.transaction;
+      transaction.updateNode(widget.node, {'activeViewId': view.id});
+      editorState.apply(transaction);
+    } catch (_) {}
+  }
+
+  void _onAddView(DatabaseViewType type) {
+    final views = List<DatabaseViewConfig>.from(_views);
+    final newId = 'view_${DateTime.now().millisecondsSinceEpoch}';
+    String defaultName;
+    switch (type) {
+      case DatabaseViewType.board:
+        defaultName = context.l10n.viewTypeBoard;
+        break;
+      case DatabaseViewType.gallery:
+        defaultName = context.l10n.viewTypeGallery;
+        break;
+      case DatabaseViewType.list:
+        defaultName = context.l10n.viewTypeList;
+        break;
+      case DatabaseViewType.table:
+        defaultName = '${context.l10n.viewTypeTable} ${views.length + 1}';
+        break;
+    }
+    final newView = DatabaseViewConfig(
+      id: newId,
+      name: defaultName,
+      type: type,
+    );
+    views.add(newView);
+    _persistViews(views, activeId: newId);
+    _onSelectView(newView);
+  }
+
+  void _onDuplicateView(DatabaseViewConfig view) {
+    final views = List<DatabaseViewConfig>.from(_views);
+    final newId = 'view_${DateTime.now().millisecondsSinceEpoch}';
+    final dup = view.copyWith(
+      id: newId,
+      name: '${view.name} (Copy)',
+    );
+    views.add(dup);
+    _persistViews(views, activeId: newId);
+    _onSelectView(dup);
+  }
+
+  void _onRenameView(DatabaseViewConfig view, String newName) {
+    final views = _views.map((v) {
+      if (v.id == view.id) return v.copyWith(name: newName);
+      return v;
+    }).toList();
+    _persistViews(views);
+  }
+
+  void _onDeleteView(DatabaseViewConfig view) {
+    if (_views.length <= 1) return;
+    final views = _views.where((v) => v.id != view.id).toList();
+    final newActiveId = view.id == _activeViewId ? views.first.id : null;
+    _persistViews(views, activeId: newActiveId);
+    if (newActiveId != null) {
+      _onSelectView(views.first);
+    }
+  }
+
+  void _onUpdateColumnVisibility(
+    DatabaseViewConfig view,
+    List<String> visibleCols,
+  ) {
+    final views = _views.map((v) {
+      if (v.id == view.id) return v.copyWith(visibleColumnIds: visibleCols);
+      return v;
+    }).toList();
+    _persistViews(views);
+  }
+
+  void _toggleFreezeTitle() {
+    final next = !_freezeTitle;
+    try {
+      final transaction = editorState.transaction;
+      transaction.updateNode(widget.node, {'freezeTitle': next});
+      editorState.apply(transaction);
+    } catch (_) {}
+    setState(() {});
   }
 
   void _setColumnSummary(String columnId, String? summaryType) {
@@ -283,17 +437,20 @@ class _DatabaseBlockComponentWidgetState
   }
 
   void _setSort(String? columnId, bool ascending) {
+    final newSort = columnId == null
+        ? null
+        : DatabaseSortConfig(columnId: columnId, ascending: ascending);
     setState(() {
       _resetPage();
-      if (columnId == null) {
-        _sortConfig = null;
-      } else {
-        _sortConfig = DatabaseSortConfig(
-          columnId: columnId,
-          ascending: ascending,
-        );
-      }
+      _sortConfig = newSort;
     });
+    final views = _views.map((v) {
+      if (v.id == _activeViewId) {
+        return v.copyWith(sort: newSort, clearSort: newSort == null);
+      }
+      return v;
+    }).toList();
+    _persistViews(views);
   }
 
   void _addFilter(DatabaseFilterRule rule) {
@@ -302,6 +459,13 @@ class _DatabaseBlockComponentWidgetState
       _filterRules.removeWhere((r) => r.columnId == rule.columnId);
       _filterRules.add(rule);
     });
+    final views = _views.map((v) {
+      if (v.id == _activeViewId) {
+        return v.copyWith(filters: List.from(_filterRules));
+      }
+      return v;
+    }).toList();
+    _persistViews(views);
   }
 
   void _removeFilter(String columnId) {
@@ -309,6 +473,13 @@ class _DatabaseBlockComponentWidgetState
       _resetPage();
       _filterRules.removeWhere((r) => r.columnId == columnId);
     });
+    final views = _views.map((v) {
+      if (v.id == _activeViewId) {
+        return v.copyWith(filters: List.from(_filterRules));
+      }
+      return v;
+    }).toList();
+    _persistViews(views);
   }
 
   void _clearFilters() {
@@ -319,6 +490,13 @@ class _DatabaseBlockComponentWidgetState
       _searchQuery = '';
       _appliedSearch = '';
     });
+    final views = _views.map((v) {
+      if (v.id == _activeViewId) {
+        return v.copyWith(filters: const []);
+      }
+      return v;
+    }).toList();
+    _persistViews(views);
   }
 
   void _changePage(int offset) {
@@ -393,6 +571,24 @@ class _DatabaseBlockComponentWidgetState
 
   void _createRow() async {
     await widget.repository.createDatabaseRow(_databaseId, title: '');
+  }
+
+  void _autoFitColumn(
+    String colId,
+    List<DatabaseColumn> columns,
+    List<DatabaseRowData> rows,
+  ) {
+    final col = columns.where((c) => c.id == colId).firstOrNull;
+    if (col == null) return;
+    final width = calculateAutoFitColumnWidth(
+      column: col,
+      rows: rows,
+      cellSaves: _cellSaves,
+    );
+    setState(() {
+      _columnWidths[colId] = width;
+    });
+    widget.repository.updateColumn(colId, width: width);
   }
 
   void _openRowModal(Page page, List<DatabaseColumn> columns) {
@@ -471,7 +667,17 @@ class _DatabaseBlockComponentWidgetState
           builder: (context, colSnap) {
             if (colSnap.hasError) return _tableLoadError();
             if (!colSnap.hasData) return _loadingTable();
-            final columns = colSnap.data!;
+            final allColumns = colSnap.data!;
+            final activeView = _activeView;
+            final columns = activeView.visibleColumnIds.isEmpty
+                ? allColumns
+                : allColumns
+                    .where(
+                      (c) =>
+                          c.type == 'title' ||
+                          activeView.visibleColumnIds.contains(c.id),
+                    )
+                    .toList();
 
             _ensureStreams(columns);
             _ensureSummaryStream(columns);
@@ -528,6 +734,20 @@ class _DatabaseBlockComponentWidgetState
                                 newTitle,
                               );
                             },
+                            freezeTitle: _freezeTitle,
+                            onToggleFreezeTitle: _toggleFreezeTitle,
+                            tabs: DatabaseViewTabs(
+                              views: _views,
+                              activeViewId: _activeViewId,
+                              columns: allColumns,
+                              onSelectView: _onSelectView,
+                              onAddView: _onAddView,
+                              onRenameView: _onRenameView,
+                              onDuplicateView: _onDuplicateView,
+                              onDeleteView: _onDeleteView,
+                              onUpdateColumnVisibility:
+                                  _onUpdateColumnVisibility,
+                            ),
                           ),
                           // Horizontally Scrollable Table
                           Scrollbar(
@@ -549,6 +769,9 @@ class _DatabaseBlockComponentWidgetState
                                       // Column Headers
                                       ColumnsHeaderRow(
                                         selectionController: _gridSelection,
+                                        horizontalScrollController:
+                                            _horizontalScrollController,
+                                        freezeTitle: _freezeTitle,
                                         addPropertyKey: _addPropertyKey,
                                         columns: columns,
                                         columnWidths: _columnWidths,
@@ -567,6 +790,8 @@ class _DatabaseBlockComponentWidgetState
                                             width: width,
                                           );
                                         },
+                                        onAutoFit: (colId) =>
+                                            _autoFitColumn(colId, columns, data),
                                         onRenameColumn: (colId, newName) {
                                           widget.repository.updateColumn(
                                             colId,
@@ -716,6 +941,9 @@ class _DatabaseBlockComponentWidgetState
                                                 ),
                                                 child: DataRowView(
                                                   saves: _cellSaves,
+                                                  horizontalScrollController:
+                                                      _horizontalScrollController,
+                                                  freezeTitle: _freezeTitle,
                                                   key: ValueKey(
                                                     displayRows[i].id,
                                                   ),
@@ -770,6 +998,9 @@ class _DatabaseBlockComponentWidgetState
                                         stream: _summaryStream,
                                         builder: (context, summary) =>
                                             TableSummaryRow(
+                                              horizontalScrollController:
+                                                  _horizontalScrollController,
+                                              freezeTitle: _freezeTitle,
                                               stats: summary.data,
                                               loading:
                                                   !summary.hasData &&

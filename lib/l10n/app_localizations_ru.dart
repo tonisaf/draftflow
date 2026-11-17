@@ -733,6 +733,12 @@ class AppLocalizationsRu extends AppLocalizations {
   String get columnMoveRight => 'Переместить вправо';
 
   @override
+  String get columnAutoFit => 'Подогнать ширину';
+
+  @override
+  String get freezeTitleColumn => 'Закрепить колонку названия';
+
+  @override
   String get columnSortAscending => 'Сортировать по возрастанию';
 
   @override
@@ -807,6 +813,36 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get propertyScopeHint =>
       'Изменения применяются ко всем представлениям этого свойства.';
+
+  @override
+  String get addView => 'Добавить представление';
+
+  @override
+  String get viewTypeTable => 'Таблица';
+
+  @override
+  String get viewTypeBoard => 'Доска';
+
+  @override
+  String get viewTypeGallery => 'Галерея';
+
+  @override
+  String get viewTypeList => 'Список';
+
+  @override
+  String get renameView => 'Переименовать вид';
+
+  @override
+  String get duplicateView => 'Дублировать вид';
+
+  @override
+  String get deleteView => 'Удалить вид';
+
+  @override
+  String get propertiesVisibility => 'Видимость свойств';
+
+  @override
+  String get defaultViewName => 'Таблица';
 
   @override
   String get propertyAdding => 'Добавление...';

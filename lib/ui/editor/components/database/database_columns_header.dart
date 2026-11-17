@@ -12,6 +12,7 @@ import 'package:notes_here/ui/theme.dart';
 
 import 'database_models.dart';
 import 'database_property_menu.dart';
+import 'database_sticky_pane.dart';
 
 // ----------------------------------------------------------------------------
 // Columns Header Row
@@ -19,6 +20,8 @@ import 'database_property_menu.dart';
 
 class ColumnsHeaderRow extends StatelessWidget {
   final DatabaseGridSelectionController? selectionController;
+  final ScrollController? horizontalScrollController;
+  final bool freezeTitle;
   final List<DatabaseColumn> columns;
   final Map<String, double> columnWidths;
   final Color headerBg;
@@ -27,6 +30,7 @@ class ColumnsHeaderRow extends StatelessWidget {
   final void Function(String? colId, bool ascending) onSortChanged;
   final void Function(String colId, double width) onResize;
   final void Function(String colId, double width) onResizeEnd;
+  final void Function(String colId)? onAutoFit;
   final void Function(String colId, String newName)? onRenameColumn;
   final void Function(String colId, String newType)? onChangeColumnType;
   final void Function(String colId, String newOptions)? onChangeColumnOptions;
@@ -39,6 +43,8 @@ class ColumnsHeaderRow extends StatelessWidget {
 
   const ColumnsHeaderRow({
     this.selectionController,
+    this.horizontalScrollController,
+    this.freezeTitle = true,
     super.key,
     required this.columns,
     required this.columnWidths,
@@ -48,6 +54,7 @@ class ColumnsHeaderRow extends StatelessWidget {
     required this.onSortChanged,
     required this.onResize,
     required this.onResizeEnd,
+    this.onAutoFit,
     this.onRenameColumn,
     this.onChangeColumnType,
     this.onChangeColumnOptions,
@@ -69,104 +76,162 @@ class ColumnsHeaderRow extends StatelessWidget {
     );
   }
 
+  Widget _buildGutter(BuildContext context, Skin skin) {
+    return SizedBox(
+      width: DesktopUx.databaseGutterWidth,
+      child: selectionController == null
+          ? null
+          : IconButton(
+              key: const Key('database_select_all'),
+              tooltip: context.l10n.databaseSelectPage,
+              padding: EdgeInsets.zero,
+              icon: Icon(
+                AppIcons.table,
+                size: UiSpace.s14,
+                color: skin.muted,
+              ),
+              onPressed: selectionController!.selectAll,
+            ),
+    );
+  }
+
+  Widget _buildHeader(
+    BuildContext context,
+    int i,
+    DatabaseGridRange? range,
+  ) {
+    final col = columns[i];
+    final isTitle = col.type == 'title';
+    return ResizableColumnHeader(
+      key: ValueKey(col.id),
+      column: col,
+      columnIndex: i,
+      selected:
+          range != null &&
+          range.firstRow == 0 &&
+          range.lastRow >= 0 &&
+          i >= range.firstColumn &&
+          i <= range.lastColumn &&
+          (range.mode == DatabaseSelectionMode.columns ||
+              range.mode == DatabaseSelectionMode.all),
+      onSelect: selectionController == null
+          ? null
+          : () => selectionController!.selectColumn(
+              col.id,
+              extend: HardwareKeyboard.instance.isShiftPressed,
+            ),
+      width: columnWidths[col.id] ?? col.width,
+      icon: iconForColumnType(col.type),
+      borderColor: borderColor,
+      isSorted: sortConfig?.columnId == col.id,
+      sortAscending: sortConfig?.ascending ?? true,
+      canMoveLeft: !isTitle && i > 1,
+      canMoveRight: !isTitle && i < columns.length - 1,
+      onMoveLeft: onMoveColumnLeft != null
+          ? () => onMoveColumnLeft!(col.id)
+          : null,
+      onMoveRight: onMoveColumnRight != null
+          ? () => onMoveColumnRight!(col.id)
+          : null,
+      onReorder: onReorderColumn != null
+          ? (draggedId) => onReorderColumn!(draggedId, col.id)
+          : null,
+      onSort: (asc) => onSortChanged(col.id, asc),
+      onClearSort: () => onSortChanged(null, true),
+      onResize: (w) => onResize(col.id, w),
+      onResizeEnd: (w) => onResizeEnd(col.id, w),
+      onAutoFit: onAutoFit != null ? () => onAutoFit!(col.id) : null,
+      onRename: onRenameColumn != null
+          ? (newName) => onRenameColumn!(col.id, newName)
+          : null,
+      onChangeType: onChangeColumnType != null
+          ? (newType) => onChangeColumnType!(col.id, newType)
+          : null,
+      onOptionsChange: onChangeColumnOptions != null
+          ? (newOptions) =>
+                onChangeColumnOptions!(col.id, newOptions)
+          : null,
+      onDelete: isTitle ? null : () => onDeleteColumn(col.id),
+    );
+  }
+
+  Widget _buildAddButton(BuildContext context, Skin skin) {
+    return Tooltip(
+      message: context.l10n.databaseAddProperty,
+      child: InkWell(
+        key: addPropertyKey,
+        onTap: onAddColumn,
+        child: Container(
+          width: UiSpace.s36,
+          height: DesktopUx.databaseHeaderHeight,
+          alignment: Alignment.center,
+          child: Icon(
+            AppIcons.plus,
+            size: UiSpace.s16,
+            color: skin.muted,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _build(BuildContext context, DatabaseGridRange? range) {
     final skin = context.skin;
+
+    final shouldFreeze = freezeTitle &&
+        columns.isNotEmpty &&
+        columns.first.type == 'title' &&
+        horizontalScrollController != null;
+
+    if (!shouldFreeze) {
+      return Container(
+        color: headerBg,
+        height: DesktopUx.databaseHeaderHeight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildGutter(context, skin),
+            for (int i = 0; i < columns.length; i++)
+              _buildHeader(context, i, range),
+            _buildAddButton(context, skin),
+          ],
+        ),
+      );
+    }
+
+    final titleWidth = columnWidths[columns[0].id] ?? columns[0].width;
+    final frozenWidth = DesktopUx.databaseGutterWidth + titleWidth;
 
     return Container(
       color: headerBg,
       height: DesktopUx.databaseHeaderHeight,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          SizedBox(
-            width: DesktopUx.databaseGutterWidth,
-            child: selectionController == null
-                ? null
-                : IconButton(
-                    key: const Key('database_select_all'),
-                    tooltip: context.l10n.databaseSelectPage,
-                    padding: EdgeInsets.zero,
-                    icon: Icon(
-                      AppIcons.table,
-                      size: UiSpace.s14,
-                      color: skin.muted,
-                    ),
-                    onPressed: selectionController!.selectAll,
-                  ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: frozenWidth),
+              for (int i = 1; i < columns.length; i++)
+                _buildHeader(context, i, range),
+              _buildAddButton(context, skin),
+            ],
           ),
-          for (int i = 0; i < columns.length; i++) ...[
-            Builder(
-              builder: (ctx) {
-                final col = columns[i];
-                final isTitle = col.type == 'title';
-                return ResizableColumnHeader(
-                  key: ValueKey(col.id),
-                  column: col,
-                  columnIndex: i,
-                  selected:
-                      range != null &&
-                      range.firstRow == 0 &&
-                      range.lastRow >= 0 &&
-                      i >= range.firstColumn &&
-                      i <= range.lastColumn &&
-                      (range.mode == DatabaseSelectionMode.columns ||
-                          range.mode == DatabaseSelectionMode.all),
-                  onSelect: selectionController == null
-                      ? null
-                      : () => selectionController!.selectColumn(
-                          col.id,
-                          extend: HardwareKeyboard.instance.isShiftPressed,
-                        ),
-                  width: columnWidths[col.id] ?? col.width,
-                  icon: iconForColumnType(col.type),
-                  borderColor: borderColor,
-                  isSorted: sortConfig?.columnId == col.id,
-                  sortAscending: sortConfig?.ascending ?? true,
-                  canMoveLeft: !isTitle && i > 1,
-                  canMoveRight: !isTitle && i < columns.length - 1,
-                  onMoveLeft: onMoveColumnLeft != null
-                      ? () => onMoveColumnLeft!(col.id)
-                      : null,
-                  onMoveRight: onMoveColumnRight != null
-                      ? () => onMoveColumnRight!(col.id)
-                      : null,
-                  onReorder: onReorderColumn != null
-                      ? (draggedId) => onReorderColumn!(draggedId, col.id)
-                      : null,
-                  onSort: (asc) => onSortChanged(col.id, asc),
-                  onClearSort: () => onSortChanged(null, true),
-                  onResize: (w) => onResize(col.id, w),
-                  onResizeEnd: (w) => onResizeEnd(col.id, w),
-                  onRename: onRenameColumn != null
-                      ? (newName) => onRenameColumn!(col.id, newName)
-                      : null,
-                  onChangeType: onChangeColumnType != null
-                      ? (newType) => onChangeColumnType!(col.id, newType)
-                      : null,
-                  onOptionsChange: onChangeColumnOptions != null
-                      ? (newOptions) =>
-                            onChangeColumnOptions!(col.id, newOptions)
-                      : null,
-                  onDelete: isTitle ? null : () => onDeleteColumn(col.id),
-                );
-              },
-            ),
-          ],
-          // Add column button
-          Tooltip(
-            message: context.l10n.databaseAddProperty,
-            child: InkWell(
-              key: addPropertyKey,
-              onTap: onAddColumn,
-              child: Container(
-                width: UiSpace.s36,
-                height: DesktopUx.databaseHeaderHeight,
-                alignment: Alignment.center,
-                child: Icon(
-                  AppIcons.plus,
-                  size: UiSpace.s16,
-                  color: skin.muted,
-                ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: DatabaseStickyPane(
+              horizontalScrollController: horizontalScrollController,
+              width: frozenWidth,
+              backgroundColor: headerBg,
+              borderColor: borderColor,
+              isFrozen: true,
+              child: Row(
+                children: [
+                  _buildGutter(context, skin),
+                  _buildHeader(context, 0, range),
+                ],
               ),
             ),
           ),
@@ -198,6 +263,7 @@ class ResizableColumnHeader extends StatefulWidget {
   final VoidCallback onClearSort;
   final ValueChanged<double> onResize;
   final ValueChanged<double> onResizeEnd;
+  final VoidCallback? onAutoFit;
   final ValueChanged<String>? onRename;
   final ValueChanged<String>? onChangeType;
   final ValueChanged<String>? onOptionsChange;
@@ -223,6 +289,7 @@ class ResizableColumnHeader extends StatefulWidget {
     required this.onClearSort,
     required this.onResize,
     required this.onResizeEnd,
+    this.onAutoFit,
     this.onRename,
     this.onChangeType,
     this.onOptionsChange,
@@ -318,6 +385,15 @@ class _ResizableColumnHeaderState extends State<ResizableColumnHeader> {
             onTap: () {
               close();
               widget.onMoveRight?.call();
+            },
+          ),
+        if (widget.onAutoFit != null)
+          MenuRow(
+            label: context.l10n.columnAutoFit,
+            glyph: AppIcons.arrowLeftRight,
+            onTap: () {
+              close();
+              widget.onAutoFit?.call();
             },
           ),
         MenuRow(
@@ -485,6 +561,7 @@ class _ResizableColumnHeaderState extends State<ResizableColumnHeader> {
                 onExit: (_) => setState(() => _isHandleHovered = false),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
+                  onDoubleTap: widget.onAutoFit,
                   onHorizontalDragDown: (details) {
                     _resizeStartX = _headerX(details.globalPosition);
                     _resizeStartWidth = widget.width;

@@ -31,6 +31,9 @@ class DatabaseHeader extends StatefulWidget {
   final VoidCallback onAddRow;
   final VoidCallback? onAddColumn;
   final ValueChanged<String> onTitleChanged;
+  final bool freezeTitle;
+  final VoidCallback? onToggleFreezeTitle;
+  final Widget? tabs;
 
   const DatabaseHeader({
     super.key,
@@ -49,6 +52,9 @@ class DatabaseHeader extends StatefulWidget {
     required this.onAddRow,
     this.onAddColumn,
     required this.onTitleChanged,
+    this.freezeTitle = true,
+    this.onToggleFreezeTitle,
+    this.tabs,
   });
 
   @override
@@ -271,6 +277,19 @@ class _DatabaseHeaderState extends State<DatabaseHeader> {
               },
             ),
           ],
+          if (widget.onToggleFreezeTitle != null) ...[
+            const MenuDivider(),
+            MenuRow(
+              label: context.l10n.freezeTitleColumn,
+              glyph: widget.freezeTitle
+                  ? AppIcons.checkmarkSquare
+                  : AppIcons.square,
+              onTap: () {
+                close();
+                widget.onToggleFreezeTitle!();
+              },
+            ),
+          ],
         ],
       ),
     );
@@ -439,6 +458,11 @@ class _DatabaseHeaderState extends State<DatabaseHeader> {
                     ],
                   ),
           ),
+          if (widget.tabs != null)
+            Padding(
+              padding: const EdgeInsets.only(top: UiSpace.s6, bottom: UiSpace.s2),
+              child: widget.tabs!,
+            ),
           if (_isSearchOpen)
             Padding(
               padding: const EdgeInsets.only(

@@ -11,6 +11,7 @@ import 'package:notes_here/l10n/locale_controller.dart';
 import 'package:notes_here/ui/theme.dart';
 
 import 'database_cells.dart';
+import 'database_sticky_pane.dart';
 
 // ----------------------------------------------------------------------------
 // Data Row View
@@ -18,6 +19,8 @@ import 'database_cells.dart';
 
 class DataRowView extends StatefulWidget {
   final DatabaseCellSaves? saves;
+  final ScrollController? horizontalScrollController;
+  final bool freezeTitle;
   final int? rowIndex;
   final Page page;
   final Map<String, dynamic>? properties;
@@ -34,6 +37,8 @@ class DataRowView extends StatefulWidget {
   const DataRowView({
     super.key,
     this.saves,
+    this.horizontalScrollController,
+    this.freezeTitle = true,
     this.rowIndex,
     required this.page,
     this.properties,
@@ -72,11 +77,154 @@ class _DataRowViewState extends State<DataRowView> {
     widget.onPatchProperties({key: val});
   }
 
+  Widget _buildGutter(
+    BuildContext context,
+    Skin skin,
+    DatabaseGridNavigation? navigation,
+  ) {
+    return SizedBox(
+      width: DesktopUx.databaseGutterWidth,
+      child: navigation == null
+          ? IconButton(
+              tooltip: context.l10n.rowOpenAsPage,
+              onPressed: widget.onOpenPage,
+              icon: const Icon(
+                AppIcons.arrowUpRightSquare,
+                size: UiSpace.s14,
+              ),
+            )
+          : ValueListenableBuilder<DatabaseGridRange?>(
+              valueListenable: navigation.selection,
+              builder: (context, range, _) => Semantics(
+                button: true,
+                label: context.l10n.databaseSelectRow,
+                onTap: () =>
+                    navigation.selectRow(widget.page.id, false),
+                onLongPress: widget.onOpenPage,
+                child: ExcludeSemantics(
+                  child: GestureDetector(
+                    onDoubleTap: widget.onOpenPage,
+                    child: IconButton(
+                      key: ValueKey(
+                        'database_select_row_${widget.page.id}',
+                      ),
+                      tooltip: context.l10n.databaseSelectRow,
+                      onPressed: navigation.focus,
+                      iconSize: UiSpace.s14,
+                      padding: EdgeInsets.zero,
+                      style: ButtonStyle(
+                        foregroundColor:
+                            WidgetStateProperty.resolveWith(
+                              (states) =>
+                                  navigation.isRowSelected(
+                                        widget.page.id,
+                                      ) ||
+                                      _isHovered ||
+                                      states.contains(
+                                        WidgetState.focused,
+                                      )
+                                  ? skin.muted
+                                  : Palette.transparent,
+                            ),
+                      ),
+                      icon: Icon(
+                        navigation.isRowSelected(widget.page.id)
+                            ? AppIcons.checkmarkSquare
+                            : AppIcons.square,
+                        size: UiSpace.s14,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildCell(DatabaseColumn col, {bool transparentBorder = false}) {
+    return DataCell(
+      saves: widget.saves,
+      rowId: widget.page.id,
+      key: ValueKey(col.id),
+      column: col,
+      width: widget.columnWidths[col.id] ?? col.width,
+      borderColor: transparentBorder ? Palette.transparent : widget.borderColor,
+      pageTitle: widget.page.title,
+      cellValue: _properties[col.id],
+      repository: widget.repository,
+      onUpdateTitle: widget.onUpdateTitle,
+      onUpdateValue: (val) => _setProperty(col.id, val),
+      onOpenPage: widget.onOpenPage,
+    );
+  }
+
+  Widget _buildAction(BuildContext context, Skin skin) {
+    return SizedBox(
+      width: DesktopUx.databaseActionWidth,
+      child: IconButton(
+        tooltip: context.l10n.rowMoveToTrash,
+        onPressed: widget.onDeleteRow,
+        iconSize: UiSpace.s14,
+        padding: EdgeInsets.zero,
+        style: ButtonStyle(
+          foregroundColor: WidgetStateProperty.resolveWith(
+            (states) =>
+                _isHovered || states.contains(WidgetState.focused)
+                ? skin.destructive
+                : Palette.transparent,
+          ),
+        ),
+        icon: const Icon(AppIcons.xmark, size: UiSpace.s14),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final navigation = DatabaseGridScope.maybeOf(context);
     final skin = context.skin;
     final thinBorderColor = widget.borderColor;
+
+    final shouldFreeze = widget.freezeTitle &&
+        widget.columns.isNotEmpty &&
+        widget.columns.first.type == 'title' &&
+        widget.horizontalScrollController != null;
+
+    if (!shouldFreeze) {
+      return RepaintBoundary(
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _isHovered = true),
+          onExit: (_) => setState(() => _isHovered = false),
+          child: Container(
+            constraints: const BoxConstraints(
+              minHeight: DesktopUx.databaseRowHeight,
+            ),
+            decoration: BoxDecoration(
+              color: _isHovered ? skin.hover : Palette.transparent,
+              border: Border(
+                bottom: BorderSide(color: thinBorderColor, width: UiSpace.s0_8),
+              ),
+            ),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildGutter(context, skin, navigation),
+                  for (final col in widget.columns)
+                    _buildCell(col),
+                  _buildAction(context, skin),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final titleWidth =
+        widget.columnWidths[widget.columns[0].id] ?? widget.columns[0].width;
+    final frozenWidth = DesktopUx.databaseGutterWidth + titleWidth;
 
     return RepaintBoundary(
       child: MouseRegion(
@@ -93,109 +241,44 @@ class _DataRowViewState extends State<DataRowView> {
             ),
           ),
           child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
+            child: Stack(
+              clipBehavior: Clip.none,
               children: [
-            // Quiet gutter: a real open action, not a decorative drag affordance.
-            SizedBox(
-              width: DesktopUx.databaseGutterWidth,
-              child: navigation == null
-                  ? IconButton(
-                      tooltip: context.l10n.rowOpenAsPage,
-                      onPressed: widget.onOpenPage,
-                      icon: const Icon(
-                        AppIcons.arrowUpRightSquare,
-                        size: UiSpace.s14,
-                      ),
-                    )
-                  : ValueListenableBuilder<DatabaseGridRange?>(
-                      valueListenable: navigation.selection,
-                      builder: (context, range, _) => Semantics(
-                        button: true,
-                        label: context.l10n.databaseSelectRow,
-                        onTap: () =>
-                            navigation.selectRow(widget.page.id, false),
-                        onLongPress: widget.onOpenPage,
-                        child: ExcludeSemantics(
-                          child: GestureDetector(
-                            onDoubleTap: widget.onOpenPage,
-                            child: IconButton(
-                              key: ValueKey(
-                                'database_select_row_${widget.page.id}',
-                              ),
-                              tooltip: context.l10n.databaseSelectRow,
-                              onPressed: navigation.focus,
-                              iconSize: UiSpace.s14,
-                              padding: EdgeInsets.zero,
-                              style: ButtonStyle(
-                                foregroundColor:
-                                    WidgetStateProperty.resolveWith(
-                                      (states) =>
-                                          navigation.isRowSelected(
-                                                widget.page.id,
-                                              ) ||
-                                              _isHovered ||
-                                              states.contains(
-                                                WidgetState.focused,
-                                              )
-                                          ? skin.muted
-                                          : Palette.transparent,
-                                    ),
-                              ),
-                              icon: Icon(
-                                navigation.isRowSelected(widget.page.id)
-                                    ? AppIcons.checkmarkSquare
-                                    : AppIcons.square,
-                                size: UiSpace.s14,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(width: frozenWidth),
+                    for (int i = 1; i < widget.columns.length; i++)
+                      _buildCell(widget.columns[i]),
+                    _buildAction(context, skin),
+                  ],
+                ),
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: DatabaseStickyPane(
+                    horizontalScrollController: widget.horizontalScrollController,
+                    width: frozenWidth,
+                    backgroundColor: _isHovered ? skin.hover : skin.surface,
+                    borderColor: thinBorderColor,
+                    isFrozen: true,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildGutter(context, skin, navigation),
+                        _buildCell(widget.columns[0], transparentBorder: true),
+                      ],
                     ),
-            ),
-            // Cells
-            for (final col in widget.columns) ...[
-              DataCell(
-                saves: widget.saves,
-                rowId: widget.page.id,
-                key: ValueKey(col.id),
-                column: col,
-                width: widget.columnWidths[col.id] ?? col.width,
-                borderColor: widget.borderColor,
-                pageTitle: widget.page.title,
-                cellValue: _properties[col.id],
-                repository: widget.repository,
-                onUpdateTitle: widget.onUpdateTitle,
-                onUpdateValue: (val) => _setProperty(col.id, val),
-                onOpenPage: widget.onOpenPage,
-              ),
-            ],
-            SizedBox(
-              width: DesktopUx.databaseActionWidth,
-              child: IconButton(
-                tooltip: context.l10n.rowMoveToTrash,
-                onPressed: widget.onDeleteRow,
-                iconSize: UiSpace.s14,
-                padding: EdgeInsets.zero,
-                style: ButtonStyle(
-                  foregroundColor: WidgetStateProperty.resolveWith(
-                    (states) =>
-                        _isHovered || states.contains(WidgetState.focused)
-                        ? skin.destructive
-                        : Palette.transparent,
                   ),
                 ),
-                icon: const Icon(AppIcons.xmark, size: UiSpace.s14),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  ),
-);
+    );
   }
 }
 

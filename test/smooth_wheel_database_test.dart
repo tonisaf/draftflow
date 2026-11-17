@@ -72,7 +72,9 @@ void main() {
               matching: find.byType(SingleChildScrollView),
             ),
           )
-          .firstWhere((w) => w.scrollDirection == Axis.horizontal)
+          .firstWhere(
+            (w) => w.scrollDirection == Axis.horizontal && w.controller != null,
+          )
           .controller!;
       final point = t.getTopLeft(viewport) + const Offset(140, 18);
       Future<void> wheel(Offset delta) => t.sendEventToBinding(

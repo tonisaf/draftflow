@@ -1478,6 +1478,18 @@ abstract class AppLocalizations {
   /// **'Move right'**
   String get columnMoveRight;
 
+  /// No description provided for @columnAutoFit.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-fit width'**
+  String get columnAutoFit;
+
+  /// No description provided for @freezeTitleColumn.
+  ///
+  /// In en, this message translates to:
+  /// **'Freeze title column'**
+  String get freezeTitleColumn;
+
   /// No description provided for @columnSortAscending.
   ///
   /// In en, this message translates to:
@@ -1627,6 +1639,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Changes apply to all views showing this property.'**
   String get propertyScopeHint;
+
+  /// No description provided for @addView.
+  ///
+  /// In en, this message translates to:
+  /// **'Add view'**
+  String get addView;
+
+  /// No description provided for @viewTypeTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Table'**
+  String get viewTypeTable;
+
+  /// No description provided for @viewTypeBoard.
+  ///
+  /// In en, this message translates to:
+  /// **'Board'**
+  String get viewTypeBoard;
+
+  /// No description provided for @viewTypeGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get viewTypeGallery;
+
+  /// No description provided for @viewTypeList.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get viewTypeList;
+
+  /// No description provided for @renameView.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename view'**
+  String get renameView;
+
+  /// No description provided for @duplicateView.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate view'**
+  String get duplicateView;
+
+  /// No description provided for @deleteView.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete view'**
+  String get deleteView;
+
+  /// No description provided for @propertiesVisibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Properties visibility'**
+  String get propertiesVisibility;
+
+  /// No description provided for @defaultViewName.
+  ///
+  /// In en, this message translates to:
+  /// **'Table'**
+  String get defaultViewName;
 
   /// No description provided for @propertyAdding.
   ///

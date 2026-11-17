@@ -42,11 +42,13 @@ abstract final class AppIcons {
   static const docTextSearch = CupertinoIcons.doc_text_search;
   static const ellipsis = CupertinoIcons.ellipsis;
   static const exclamationmarkCircle = CupertinoIcons.exclamationmark_circle;
+  static const eye = CupertinoIcons.eye;
   static const folder = CupertinoIcons.folder;
   static const lineHorizontal3Decrease =
       CupertinoIcons.line_horizontal_3_decrease;
   static const link = CupertinoIcons.link;
   static const listBullet = CupertinoIcons.list_bullet;
+  static const lock = CupertinoIcons.lock;
   static const moon = CupertinoIcons.moon;
   static const number = CupertinoIcons.number;
   static const pencil = CupertinoIcons.pencil;

@@ -10,6 +10,7 @@ import 'package:notes_here/ui/theme.dart';
 
 import 'database_models.dart';
 import 'database_row_view.dart';
+import 'database_sticky_pane.dart';
 
 enum SummaryType {
   none,
@@ -282,6 +283,8 @@ String calculateSummary({
 ).formatted;
 
 class TableSummaryRow extends StatelessWidget {
+  final ScrollController? horizontalScrollController;
+  final bool freezeTitle;
   final Map<String, DatabaseSummaryStats>? stats;
   final bool loading;
   final bool error;
@@ -295,6 +298,8 @@ class TableSummaryRow extends StatelessWidget {
 
   const TableSummaryRow({
     super.key,
+    this.horizontalScrollController,
+    this.freezeTitle = true,
     this.stats,
     this.loading = false,
     this.error = false,
@@ -307,63 +312,118 @@ class TableSummaryRow extends StatelessWidget {
     required this.onSummaryChanged,
   });
 
+  Widget _buildSummaryCell(
+    DatabaseColumn col, {
+    bool transparentBorder = false,
+  }) {
+    final effectiveBorderColor =
+        transparentBorder ? Palette.transparent : borderColor;
+    if (col.type == 'title' && onAddRow != null) {
+      return SizedBox(
+        width: columnWidths[col.id] ?? col.width,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: BottomAddRowButton(onTap: onAddRow!),
+              ),
+            ),
+            Flexible(
+              flex: 2,
+              child: LayoutBuilder(
+                builder: (context, constraints) => TableSummaryCell(
+                  key: ValueKey('summary_${col.id}'),
+                  stats: stats?[col.id],
+                  loading: loading,
+                  error: error,
+                  column: col,
+                  width: constraints.maxWidth,
+                  borderColor: effectiveBorderColor,
+                  rows: rows,
+                  currentSummaryType: SummaryType.fromId(
+                    summaries[col.id],
+                  ),
+                  onSummaryChanged: onSummaryChanged,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    return TableSummaryCell(
+      key: ValueKey('summary_${col.id}'),
+      stats: stats?[col.id],
+      loading: loading,
+      error: error,
+      column: col,
+      width: columnWidths[col.id] ?? col.width,
+      borderColor: effectiveBorderColor,
+      rows: rows,
+      currentSummaryType: SummaryType.fromId(summaries[col.id]),
+      onSummaryChanged: onSummaryChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final skin = context.skin;
+    final shouldFreeze = freezeTitle &&
+        columns.isNotEmpty &&
+        columns.first.type == 'title' &&
+        horizontalScrollController != null;
+
+    if (!shouldFreeze) {
+      return SizedBox(
+        height: DesktopUx.databaseRowHeight,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(width: DesktopUx.databaseGutterWidth),
+            for (final col in columns) _buildSummaryCell(col),
+            const SizedBox(width: DesktopUx.databaseActionWidth),
+          ],
+        ),
+      );
+    }
+
+    final titleWidth = columnWidths[columns[0].id] ?? columns[0].width;
+    final frozenWidth = DesktopUx.databaseGutterWidth + titleWidth;
+
     return SizedBox(
       height: DesktopUx.databaseRowHeight,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          const SizedBox(width: DesktopUx.databaseGutterWidth),
-          for (final col in columns)
-            if (col.type == 'title' && onAddRow != null)
-              SizedBox(
-                width: columnWidths[col.id] ?? col.width,
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: BottomAddRowButton(onTap: onAddRow!),
-                      ),
-                    ),
-                    Flexible(
-                      flex: 2,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) => TableSummaryCell(
-                          key: ValueKey('summary_${col.id}'),
-                          stats: stats?[col.id],
-                          loading: loading,
-                          error: error,
-                          column: col,
-                          width: constraints.maxWidth,
-                          borderColor: borderColor,
-                          rows: rows,
-                          currentSummaryType: SummaryType.fromId(
-                            summaries[col.id],
-                          ),
-                          onSummaryChanged: onSummaryChanged,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            else
-              TableSummaryCell(
-                key: ValueKey('summary_${col.id}'),
-                stats: stats?[col.id],
-                loading: loading,
-                error: error,
-                column: col,
-                width: columnWidths[col.id] ?? col.width,
-                borderColor: borderColor,
-                rows: rows,
-                currentSummaryType: SummaryType.fromId(summaries[col.id]),
-                onSummaryChanged: onSummaryChanged,
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(width: frozenWidth),
+              for (int i = 1; i < columns.length; i++)
+                _buildSummaryCell(columns[i]),
+              const SizedBox(width: DesktopUx.databaseActionWidth),
+            ],
+          ),
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 0,
+            child: DatabaseStickyPane(
+              horizontalScrollController: horizontalScrollController,
+              width: frozenWidth,
+              backgroundColor: skin.surface,
+              borderColor: borderColor,
+              isFrozen: true,
+              child: Row(
+                children: [
+                  const SizedBox(width: DesktopUx.databaseGutterWidth),
+                  _buildSummaryCell(columns[0], transparentBorder: true),
+                ],
               ),
-          const SizedBox(width: DesktopUx.databaseActionWidth),
+            ),
+          ),
         ],
       ),
     );

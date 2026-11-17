@@ -420,6 +420,13 @@ class _DatabaseGridSelectionState extends State<DatabaseGridSelection>
     }
     final horizontal = widget.horizontalScrollController;
     if (horizontal != null && horizontal.hasClients) {
+      if (cell.$2 == 0) {
+        return;
+      }
+      final titleWidth = widget.widths[widget.columns.first.id] ??
+          widget.columns.first.width;
+      final frozenWidth = DesktopUx.databaseGutterWidth + titleWidth;
+
       var left = DesktopUx.databaseGutterWidth;
       for (var i = 0; i < cell.$2; i++) {
         left += widget.widths[widget.columns[i].id] ?? widget.columns[i].width;
@@ -428,8 +435,9 @@ class _DatabaseGridSelectionState extends State<DatabaseGridSelection>
           widget.widths[widget.columns[cell.$2].id] ??
           widget.columns[cell.$2].width;
       final view = horizontal.position.viewportDimension;
-      final target = left < horizontal.offset || width > view
-          ? left
+      final target = (left < horizontal.offset + frozenWidth ||
+              width > (view - frozenWidth))
+          ? left - frozenWidth
           : left + width > horizontal.offset + view
           ? left + width - view
           : horizontal.offset;
@@ -931,8 +939,13 @@ class _DatabaseGridSelectionState extends State<DatabaseGridSelection>
           width += w;
         }
       }
+      final hOffset = (first == 0 &&
+              last == 0 &&
+              widget.horizontalScrollController?.hasClients == true)
+          ? widget.horizontalScrollController!.offset
+          : 0.0;
       selection = Rect.fromLTWH(
-        x,
+        x + hOffset,
         math.min(_anchor!.$1, _extent!.$1) * DesktopUx.databaseRowHeight -
             _offset,
         width,

@@ -729,6 +729,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get columnMoveRight => 'Move right';
 
   @override
+  String get columnAutoFit => 'Auto-fit width';
+
+  @override
+  String get freezeTitleColumn => 'Freeze title column';
+
+  @override
   String get columnSortAscending => 'Sort ascending';
 
   @override
@@ -803,6 +809,36 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get propertyScopeHint =>
       'Changes apply to all views showing this property.';
+
+  @override
+  String get addView => 'Add view';
+
+  @override
+  String get viewTypeTable => 'Table';
+
+  @override
+  String get viewTypeBoard => 'Board';
+
+  @override
+  String get viewTypeGallery => 'Gallery';
+
+  @override
+  String get viewTypeList => 'List';
+
+  @override
+  String get renameView => 'Rename view';
+
+  @override
+  String get duplicateView => 'Duplicate view';
+
+  @override
+  String get deleteView => 'Delete view';
+
+  @override
+  String get propertiesVisibility => 'Properties visibility';
+
+  @override
+  String get defaultViewName => 'Table';
 
   @override
   String get propertyAdding => 'Adding...';
