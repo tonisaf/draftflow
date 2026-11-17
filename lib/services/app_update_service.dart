@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../modules/core/url_utils.dart';
 
-const String currentAppVersion = '1.0.3';
+const String currentAppVersion = '1.0.4';
 const String gitHubRepoOwner = 'tonisaf';
 const String gitHubRepoName = 'draftflow';
 
@@ -369,7 +369,7 @@ rm -rf "\$TEMP_DIR"
   Future<void> _installAndRestartWindows(String zipPath) async {
     final tempDir = Directory.systemTemp.createTempSync('draftflow_update_');
 
-    // 1. Extract zip via tar or PowerShell
+    // 1. Extract zip via tar or PowerShell (hidden)
     var extractOk = false;
     try {
       final tarRes = await Process.run('tar', ['-xf', zipPath, '-C', tempDir.path]);
@@ -379,47 +379,100 @@ rm -rf "\$TEMP_DIR"
     } catch (_) {}
 
     if (!extractOk) {
-      final psRes = await Process.run('powershell', [
+      final psRes = await Process.run('powershell.exe', [
+        '-WindowStyle',
+        'Hidden',
         '-NoProfile',
         '-NonInteractive',
         '-Command',
-        'Expand-Archive -Path "$zipPath" -DestinationPath "${tempDir.path}" -Force',
+        'Expand-Archive -LiteralPath "$zipPath" -DestinationPath "${tempDir.path}" -Force',
       ]);
       if (psRes.exitCode != 0) {
         throw Exception('Не удалось распаковать архив обновления: ${psRes.stderr}');
       }
     }
 
-    // 2. Identify current installation directory
+    // 2. Identify current installation directory and executable
     final resolvedExe = File(Platform.resolvedExecutable);
     final installDir = resolvedExe.parent.path;
-    final exeName = resolvedExe.uri.pathSegments.last;
 
-    // 3. Create update.bat
-    final batFile = File('${tempDir.path}\\update.bat');
+    // Check if files were extracted into a single nested subfolder or directly into tempDir
+    Directory effectiveSourceDir = tempDir;
+    try {
+      final entities = tempDir.listSync();
+      final dirs = entities.whereType<Directory>().toList();
+      final exes = entities
+          .whereType<File>()
+          .where((f) => f.path.toLowerCase().endsWith('.exe'))
+          .toList();
+      if (exes.isEmpty && dirs.length == 1) {
+        effectiveSourceDir = dirs.first;
+      }
+    } catch (_) {}
+
+    // 3. Create a detached PowerShell updater script outside the source directory
     final currentPid = pid;
-    final batContent = '''@echo off
-set PID=$currentPid
-set SOURCE_DIR=${tempDir.path}
-set TARGET_DIR=$installDir
-set EXE_NAME=$exeName
+    final psScriptFile = File(
+      '${Directory.systemTemp.path}\\draftflow_updater_$currentPid.ps1',
+    );
 
-:wait_loop
-timeout /t 1 /nobreak > nul
-tasklist /fi "PID eq %PID%" 2>nul | findstr "%PID%" > nul
-if not errorlevel 1 (
-    goto wait_loop
-)
+    final escapedSourceDir = effectiveSourceDir.path.replaceAll('"', '`"');
+    final escapedTargetDir = installDir.replaceAll('"', '`"');
+    final escapedExePath = resolvedExe.path.replaceAll('"', '`"');
+    final escapedTempRoot = tempDir.path.replaceAll('"', '`"');
 
-xcopy /s /e /y "%SOURCE_DIR%\\*" "%TARGET_DIR%\\"
-start "" "%TARGET_DIR%\\%EXE_NAME%"
-rmdir /s /q "%SOURCE_DIR%"
-del "%~f0"
+    final psContent = '''
+\$targetPid = $currentPid
+\$sourceDir = "$escapedSourceDir"
+\$targetDir = "$escapedTargetDir"
+\$exePath = "$escapedExePath"
+\$tempRoot = "$escapedTempRoot"
+
+# 1. Wait for DraftFlow process to exit cleanly
+try {
+    \$proc = Get-Process -Id \$targetPid -ErrorAction SilentlyContinue
+    if (\$proc) {
+        \$null = \$proc.WaitForExit(10000)
+    }
+} catch {}
+
+# Extra pause to ensure Windows file handles and DLLs are released
+Start-Sleep -Milliseconds 800
+
+# 2. In case process hasn't exited, forcefully terminate it
+try {
+    Stop-Process -Id \$targetPid -Force -ErrorAction SilentlyContinue
+} catch {}
+
+# 3. Replace old files with updated binaries
+Copy-Item -Path "\$sourceDir\\*" -Destination "\$targetDir" -Recurse -Force
+
+# 4. Launch updated DraftFlow.exe
+Start-Process -FilePath "\$exePath"
+
+# 5. Clean up temporary extract folder and script
+Start-Sleep -Milliseconds 600
+Remove-Item -Path "\$tempRoot" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item -Path "\$PSCommandPath" -Force -ErrorAction SilentlyContinue
 ''';
-    await batFile.writeAsString(batContent);
 
-    // 4. Launch detached batch file & exit
-    await Process.start('cmd.exe', ['/c', batFile.path], mode: ProcessStartMode.detached);
+    await psScriptFile.writeAsString(psContent);
+
+    // 4. Launch PowerShell with completely hidden window style & exit
+    await Process.start(
+      'powershell.exe',
+      [
+        '-WindowStyle',
+        'Hidden',
+        '-NoProfile',
+        '-NonInteractive',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        psScriptFile.path,
+      ],
+      mode: ProcessStartMode.detached,
+    );
     exit(0);
   }
 
