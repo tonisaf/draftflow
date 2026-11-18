@@ -319,6 +319,25 @@ class _SidebarItemState extends State<SidebarItem> {
     final hasCustomIcon = widget.node.page.icon != null &&
         widget.node.page.icon!.isNotEmpty;
 
+    // Align child notes without icons directly under the parent folder's text
+    final double leftPadding;
+    if (hasCustomIcon || hasChildren) {
+      leftPadding = UiSpace.s8 + (depth * DesktopUx.treeIndent);
+    } else if (depth > 0) {
+      leftPadding = UiSpace.s8 + ((depth - 1) * DesktopUx.treeIndent) + 16.0 + UiSpace.s6;
+    } else {
+      leftPadding = UiSpace.s8 + 16.0 + UiSpace.s6;
+    }
+
+    final FontWeight textWeight;
+    if (hasChildren) {
+      textWeight = FontWeight.w500;
+    } else if (widget.isSelected) {
+      textWeight = FontWeight.w500;
+    } else {
+      textWeight = FontWeight.w400;
+    }
+
     final itemContent = MouseRegion(
       onEnter: (_) {
         setState(() => _isHovered = true);
@@ -357,10 +376,10 @@ class _SidebarItemState extends State<SidebarItem> {
               vertical: 1.0,
             ),
             padding: EdgeInsets.fromLTRB(
-              UiSpace.s8 + (depth * DesktopUx.treeIndent),
-              UiSpace.s4,
+              leftPadding,
+              UiSpace.s3_5,
               UiSpace.s6,
-              UiSpace.s4,
+              UiSpace.s3_5,
             ),
             decoration: BoxDecoration(
               color: fill,
@@ -400,10 +419,8 @@ class _SidebarItemState extends State<SidebarItem> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 13.0,
-                      fontWeight: widget.isSelected
-                          ? FontWeight.w500
-                          : FontWeight.w400,
-                      letterSpacing: -0.1,
+                      fontWeight: textWeight,
+                      letterSpacing: -0.15,
                       color: skin.text,
                     ),
                   ),
@@ -572,15 +589,15 @@ class _SidebarItemState extends State<SidebarItem> {
               if (_currentDropPosition == DropPosition.above)
                 Positioned(
                   top: -1.5,
-                  left: UiSpace.s10 + widget.node.depth * DesktopUx.treeIndent,
-                  right: UiSpace.s10,
+                  left: leftPadding,
+                  right: UiSpace.s8,
                   child: const DropLineIndicator(),
                 ),
               if (_currentDropPosition == DropPosition.below)
                 Positioned(
                   bottom: -1.5,
-                  left: UiSpace.s10 + widget.node.depth * DesktopUx.treeIndent,
-                  right: UiSpace.s10,
+                  left: leftPadding,
+                  right: UiSpace.s8,
                   child: const DropLineIndicator(),
                 ),
             ],
