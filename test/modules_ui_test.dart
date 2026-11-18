@@ -1,4 +1,5 @@
 import 'package:drift/native.dart';
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -153,7 +154,12 @@ void main() {
     // Verify module list item exists
     expect(find.text('Тестовый Модуль'), findsOneWidget);
     expect(find.text('Описание тестового модуля'), findsOneWidget);
-    expect(find.byType(Switch), findsWidgets);
+    expect(
+      find.byWidgetPredicate(
+        (w) => w is CupertinoSwitch || w is Switch,
+      ),
+      findsWidgets,
+    );
 
     await tester.pumpWidget(const SizedBox());
     await tester.pumpAndSettle();

@@ -110,7 +110,7 @@ class _ModulesSettingsTabState extends State<ModulesSettingsTab> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Switch.adaptive(
+                CupertinoSwitch(
                   value: isEnabled,
                   activeColor: Palette.accent,
                   onChanged: (val) {
