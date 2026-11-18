@@ -90,8 +90,10 @@ void main() {
       expect(find.text('Settings'), findsOneWidget);
 
       // Tap the Language pill dropdown (currently set to English)
+      await tester.ensureVisible(find.text('English'));
       await tester.tap(find.text('English'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Русский'));
       await tester.tap(find.text('Русский'));
       await tester.pumpAndSettle();
 

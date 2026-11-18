@@ -98,7 +98,7 @@ Widget _general(
       title: title,
       subtitle: subtitle,
       stacked:
-          constraints.maxWidth < 440 ||
+          constraints.maxWidth < 560 ||
           MediaQuery.textScalerOf(context).scale(1) > 1.15,
       trailing: control,
     ),
@@ -197,7 +197,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: GlassSurface(
         radius: UiRadius.modal,
         color: skin.glassStrong,
@@ -268,11 +268,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
                           ),
                       ],
                     );
-                    return SizedBox(
-                      key: const ValueKey('settings-window'),
-                      width: 820,
-                      height: 620,
-                      child: Stack(
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final dialogWidth =
+                            constraints.maxWidth.clamp(320.0, 820.0);
+                        final dialogHeight =
+                            constraints.maxHeight.clamp(380.0, 620.0);
+                        return SizedBox(
+                          key: const ValueKey('settings-window'),
+                          width: dialogWidth,
+                          height: dialogHeight,
+                          child: Stack(
                         children: [
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -358,7 +364,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       ),
                     );
                   },
-                ),
+                );
+              },
+            ),
       ),
     );
   }

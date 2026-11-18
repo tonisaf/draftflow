@@ -114,8 +114,10 @@ void main() {
     expect(find.text('Изменения применяются автоматически.'), findsOneWidget);
 
     // Open Theme dropdown pill and pick Dark
+    await tester.ensureVisible(find.text('Как в системе').first);
     await tester.tap(find.text('Как в системе').first);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Тёмная'));
     await tester.tap(find.text('Тёмная'));
     await tester.pumpAndSettle();
     expect(theme.mode, ThemeMode.dark);
