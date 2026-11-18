@@ -1,7 +1,10 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:notes_here/mcp/draftflow_db_client.dart';
 import 'package:notes_here/mcp/draftflow_mcp_server.dart';
+import 'package:notes_here/mcp/mcp_config.dart';
 
 void main(List<String> args) async {
   String? dbPath;
@@ -49,6 +52,20 @@ void main(List<String> args) async {
     }
   }
 
+  // Hybrid Bridge Routing:
+  // 1. If DraftFlow GUI is running, forward requests over loopback HTTP
+  final store = FileMcpConfigStore();
+  final config = await store.load();
+
+  if (config != null && config.port > 0) {
+    final isAlive = await _checkGuiAlive(config);
+    if (isAlive) {
+      await _runHttpBridge(config, dbPath: dbPath);
+      return;
+    }
+  }
+
+  // 2. Headless offline fallback mode (directly against SQLite)
   try {
     final server = await DraftFlowMcpServer.create(dbPath);
     await server.start();
@@ -58,43 +75,94 @@ void main(List<String> args) async {
   }
 }
 
+Future<bool> _checkGuiAlive(McpConfig config) async {
+  try {
+    final client = HttpClient();
+    client.connectionTimeout = const Duration(milliseconds: 300);
+    final req = await client.postUrl(config.url);
+    req.headers
+      ..set('Host', '127.0.0.1:${config.port}')
+      ..set('Authorization', 'Bearer ${config.token}')
+      ..contentType = ContentType.json;
+    req.write(jsonEncode({'jsonrpc': '2.0', 'id': 0, 'method': 'ping'}));
+    final resp = await req.close();
+    client.close(force: true);
+    return resp.statusCode == HttpStatus.ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<void> _runHttpBridge(McpConfig config, {String? dbPath}) async {
+  final client = HttpClient();
+  DraftFlowMcpServer? fallbackServer;
+
+  final lines = stdin
+      .transform(utf8.decoder)
+      .transform(const LineSplitter());
+
+  await for (final line in lines) {
+    final trimmed = line.trim();
+    if (trimmed.isEmpty) continue;
+
+    var forwarded = false;
+    try {
+      final req = await client.postUrl(config.url);
+      req.headers
+        ..set('Host', '127.0.0.1:${config.port}')
+        ..set('Authorization', 'Bearer ${config.token}')
+        ..contentType = ContentType.json;
+      req.write(trimmed);
+      final resp = await req.close();
+      if (resp.statusCode == HttpStatus.ok) {
+        final body = await utf8.decoder.bind(resp).join();
+        stdout.writeln(body.trim());
+        forwarded = true;
+      } else if (resp.statusCode == HttpStatus.accepted) {
+        forwarded = true;
+      }
+    } on SocketException {
+      // GUI stopped, fall back to headless
+    } catch (_) {}
+
+    if (!forwarded) {
+      // Fallback to local headless processing if GUI is unreachable
+      fallbackServer ??= await DraftFlowMcpServer.create(dbPath);
+      try {
+        final decoded = jsonDecode(trimmed) as Map<String, dynamic>;
+        final reply = await fallbackServer.handleMessage(decoded);
+        if (reply != null) {
+          stdout.writeln(jsonEncode(reply));
+        }
+      } catch (e) {
+        stdout.writeln(jsonEncode({
+          'jsonrpc': '2.0',
+          'id': null,
+          'error': {'code': -32700, 'message': 'Parse error: $e'},
+        }));
+      }
+    }
+  }
+
+  client.close(force: true);
+}
+
 void _printHelp() {
   stdout.writeln('''
-DraftFlow MCP Server (Model Context Protocol)
+DraftFlow Hybrid MCP Server (Model Context Protocol)
 Connects external AI agents (Antigravity, Claude Code, Codex, Cursor) directly to your DraftFlow notes and relational databases.
 
 Usage:
   dart run bin/draftflow_mcp.dart [options]
+
+Modes:
+  - Online (GUI running): Transparently forwards requests to local HTTP server for real-time Drift UI reactivity and instant Supabase sync.
+  - Offline (GUI closed): Automatically falls back to direct SQLite access (WAL mode) for 24/7 autonomous agent access.
 
 Options:
   -d, --db-path <path>  Explicit path to DraftFlow SQLite database (.sqlite)
   --detect              Detect and print the local DraftFlow database path
   --test                Run self-test on the detected database
   -h, --help            Show this help message
-
-Setup with Claude Code:
-  claude mcp add draftflow dart run ${Directory.current.path}/bin/draftflow_mcp.dart
-
-Setup with Antigravity:
-  Add to ~/.gemini/antigravity/mcp_servers.json:
-  {
-    "mcpServers": {
-      "draftflow": {
-        "command": "dart",
-        "args": ["run", "${Directory.current.path}/bin/draftflow_mcp.dart"]
-      }
-    }
-  }
-
-Setup with Codex / Cursor:
-  Add to ~/.cursor/mcp.json:
-  {
-    "mcpServers": {
-      "draftflow": {
-        "command": "dart",
-        "args": ["run", "${Directory.current.path}/bin/draftflow_mcp.dart"]
-      }
-    }
-  }
 ''');
 }

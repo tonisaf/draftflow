@@ -48,7 +48,7 @@ class _SidebarModuleRowState extends State<SidebarModuleRow> {
             ),
             padding: const EdgeInsets.symmetric(
               horizontal: UiSpace.s8,
-              vertical: UiSpace.s6,
+              vertical: UiSpace.s4,
             ),
             decoration: BoxDecoration(
               color: fill,
@@ -66,8 +66,9 @@ class _SidebarModuleRowState extends State<SidebarModuleRow> {
                   child: Text(
                     widget.module.title,
                     style: TextStyle(
-                      fontSize: UiType.body,
-                      fontWeight: widget.isSelected ? FontWeight.w600 : FontWeight.normal,
+                      fontSize: 13.0,
+                      fontWeight: widget.isSelected ? FontWeight.w500 : FontWeight.normal,
+                      letterSpacing: -0.1,
                       color: widget.isSelected ? Palette.accent : skin.text,
                     ),
                     overflow: TextOverflow.ellipsis,

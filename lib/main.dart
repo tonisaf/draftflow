@@ -1,5 +1,6 @@
 import 'dart:async' show unawaited;
 
+import 'package:drift/drift.dart' show TableUpdate;
 import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,6 +12,9 @@ import 'account/supabase_account_auth.dart';
 import 'data/db/app_database.dart';
 import 'data/notes_repository.dart';
 import 'l10n/locale_controller.dart';
+import 'mcp/draftflow_db_client.dart';
+import 'mcp/draftflow_http_server.dart';
+import 'mcp/draftflow_mcp_server.dart';
 import 'modules/core/module_manager.dart';
 import 'modules/core/module_scope.dart';
 import 'modules/tmdb/tmdb_module.dart';
@@ -155,6 +159,30 @@ void main() async {
     moduleManager: moduleManager,
   ));
   if (configurationError == null) unawaited(accounts.restore());
+
+  // Embedded loopback MCP server for local AI agents (instant UI & Supabase sync)
+  try {
+    final mcpClient = DraftFlowDbClient.open();
+    final mcp = DraftFlowMcpServer(
+      client: mcpClient,
+      onDataMutated: () {
+        try {
+          final activeDb = accounts.repository.db;
+          activeDb.notifyUpdates({
+            TableUpdate.onTable(activeDb.pages),
+            TableUpdate.onTable(activeDb.blocks),
+            TableUpdate.onTable(activeDb.databases),
+            TableUpdate.onTable(activeDb.databaseColumns),
+          });
+          accounts.syncEngine?.sync();
+        } catch (_) {}
+      },
+    );
+    final mcpHttp = DraftFlowHttpServer(mcpServer: mcp);
+    unawaited(mcpHttp.start());
+  } catch (e) {
+    debugPrint('DraftFlow MCP loopback server notice: $e');
+  }
 }
 
 class NotesApp extends StatefulWidget {

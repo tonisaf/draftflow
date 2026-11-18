@@ -51,7 +51,7 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
             ),
             padding: const EdgeInsets.symmetric(
               horizontal: UiSpace.s8,
-              vertical: UiSpace.s6,
+              vertical: UiSpace.s4,
             ),
             decoration: BoxDecoration(
               color: fill,
@@ -76,10 +76,11 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                   child: Text(
                     context.l10n.quickNotes,
                     style: TextStyle(
-                      fontSize: UiType.title,
+                      fontSize: 13.0,
                       fontWeight: widget.isSelected
-                          ? FontWeight.w600
+                          ? FontWeight.w500
                           : FontWeight.w400,
+                      letterSpacing: -0.1,
                       color: widget.isSelected ? skin.text : skin.muted,
                     ),
                   ),

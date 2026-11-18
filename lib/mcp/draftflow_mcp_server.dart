@@ -8,11 +8,13 @@ class DraftFlowMcpServer {
   final DraftFlowDbClient client;
   final Stream<String> _inputLines;
   final void Function(String) _outputSink;
+  final FutureOr<void> Function()? onDataMutated;
 
   DraftFlowMcpServer({
     required this.client,
     Stream<String>? inputLines,
     void Function(String)? outputSink,
+    this.onDataMutated,
   })  : _inputLines = inputLines ??
             stdin
                 .transform(utf8.decoder)
@@ -165,6 +167,7 @@ ${page['markdown']}
             parentId: parentId,
             icon: icon,
           );
+          await onDataMutated?.call();
           return _mcpTextResult(
             'Created page "${res['title']}" with ID: ${res['pageId']}',
           );
@@ -181,12 +184,14 @@ ${page['markdown']}
             content: content,
             append: append,
           );
+          await onDataMutated?.call();
           return _mcpTextResult('Updated page $pageId successfully');
 
         case 'delete_page':
           final pageId = args['pageId']?.toString() ?? '';
           if (pageId.isEmpty) throw ArgumentError('pageId is required');
           client.deletePage(pageId);
+          await onDataMutated?.call();
           return _mcpTextResult('Moved page $pageId to trash');
 
         case 'list_databases':
@@ -209,6 +214,7 @@ ${page['markdown']}
               : null;
           if (dbId.isEmpty) throw ArgumentError('databaseId is required');
           final res = client.createDatabaseRow(dbId, title: title, properties: props);
+          await onDataMutated?.call();
           return _mcpTextResult('Created row "${res['title']}" with ID: ${res['rowId']}');
 
         case 'update_database_row':
@@ -219,12 +225,14 @@ ${page['markdown']}
               : null;
           if (rowId.isEmpty) throw ArgumentError('rowId is required');
           client.updateDatabaseRow(rowId, title: title, properties: props);
+          await onDataMutated?.call();
           return _mcpTextResult('Updated database row $rowId');
 
         case 'delete_database_row':
           final rowId = args['rowId']?.toString() ?? '';
           if (rowId.isEmpty) throw ArgumentError('rowId is required');
           client.deleteDatabaseRow(rowId);
+          await onDataMutated?.call();
           return _mcpTextResult('Deleted database row $rowId');
 
         default:

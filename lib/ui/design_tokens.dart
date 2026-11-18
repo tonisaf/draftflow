@@ -97,8 +97,8 @@ abstract final class UiRadius {
   /// Pill badge / counter radius: 10px
   static const badge = 10.0;
 
-  /// Sidebar items: 7px (macOS desktop standard)
-  static const sidebarRow = 7.0;
+  /// Sidebar items: 6px (Antigravity / modern desktop standard)
+  static const sidebarRow = 6.0;
 
   /// Micro actions and compact affordances: 4px
   static const action = 4.0;

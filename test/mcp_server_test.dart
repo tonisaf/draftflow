@@ -3,7 +3,9 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:notes_here/mcp/draftflow_db_client.dart';
+import 'package:notes_here/mcp/draftflow_http_server.dart';
 import 'package:notes_here/mcp/draftflow_mcp_server.dart';
+import 'package:notes_here/mcp/mcp_config.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 void main() {
@@ -291,6 +293,72 @@ void main() {}
 
       expect(getRes!['result']['content'][0]['text'], contains('# AI Generated Plan'));
       expect(getRes['result']['content'][0]['text'], contains('Execute MCP server integration.'));
+    });
+
+    test('creates page with divider without constraint error', () async {
+      final res = await server.handleMessage({
+        'jsonrpc': '2.0',
+        'id': 6,
+        'method': 'tools/call',
+        'params': {
+          'name': 'create_page',
+          'arguments': {
+            'title': 'Page with Divider',
+            'content': 'Header above\n---\nFooter below',
+          },
+        },
+      });
+
+      expect(res!['result']['isError'], isNot(true));
+      expect(res['result']['content'][0]['text'], contains('Created page "Page with Divider"'));
+    });
+
+    test('HTTP server serves JSON-RPC and triggers onDataMutated', () async {
+      var mutated = false;
+      final serverWithHook = DraftFlowMcpServer(
+        client: client,
+        onDataMutated: () => mutated = true,
+      );
+
+      final customStore = FileMcpConfigStore(
+        path: '${tempDir.path}/test_mcp.json',
+      );
+      final httpServer = DraftFlowHttpServer(
+        mcpServer: serverWithHook,
+        store: customStore,
+      );
+
+      await httpServer.start();
+      expect(httpServer.isRunning, isTrue);
+      final cfg = httpServer.config!;
+      expect(cfg.port, greaterThan(0));
+
+      final httpClient = HttpClient();
+      final req = await httpClient.postUrl(cfg.url);
+      req.headers
+        ..set('Host', '127.0.0.1:${cfg.port}')
+        ..set('Authorization', 'Bearer ${cfg.token}')
+        ..contentType = ContentType.json;
+
+      req.write(jsonEncode({
+        'jsonrpc': '2.0',
+        'id': 100,
+        'method': 'tools/call',
+        'params': {
+          'name': 'create_page',
+          'arguments': {'title': 'Live HTTP Note'},
+        },
+      }));
+
+      final resp = await req.close();
+      expect(resp.statusCode, HttpStatus.ok);
+      final body = await utf8.decoder.bind(resp).join();
+      expect(body, contains('Live HTTP Note'));
+      expect(mutated, isTrue);
+
+      httpClient.close(force: true);
+      await httpServer.stop();
+      expect(httpServer.isRunning, isFalse);
     });
   });
 }

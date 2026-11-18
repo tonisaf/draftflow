@@ -63,15 +63,19 @@ class Skin extends ThemeExtension<Skin> {
     final transparentSidebar =
         mica || defaultTargetPlatform == TargetPlatform.macOS;
     return switch ((brightness, transparentSidebar)) {
-      (Brightness.light, false) => _light,
+      (Brightness.light, false) => _light.copyWith(
+        sidebarSelected: const Color(0x12000000),
+      ),
       (Brightness.light, true) => _light.copyWith(
         sidebar: const Color(0x00FFFFFF),
-        sidebarSelected: const Color(0x1F000000),
+        sidebarSelected: const Color(0x14000000),
       ),
-      (Brightness.dark, false) => _dark,
+      (Brightness.dark, false) => _dark.copyWith(
+        sidebarSelected: const Color(0x1AFFFFFF),
+      ),
       (Brightness.dark, true) => _dark.copyWith(
         sidebar: const Color(0x00000000),
-        sidebarSelected: const Color(0x26FFFFFF),
+        sidebarSelected: const Color(0x1CFFFFFF),
       ),
     };
   }
@@ -85,7 +89,7 @@ class Skin extends ThemeExtension<Skin> {
     divider: Color(0xFFE7E9EC),
     hairlineBorder: Color(0x0D000000),
     sidebar: Color(0xFFF3F4F6),
-    sidebarSelected: Color(0xFFE1E4E9),
+    sidebarSelected: Color(0x12000000),
     surface: Colors.white,
     surfaceSubtle: Color(0xFFF7F8FA),
     card: Colors.white,
@@ -150,7 +154,7 @@ class Skin extends ThemeExtension<Skin> {
     divider: Color(0xFF34373C),
     hairlineBorder: Color(0x1AFFFFFF),
     sidebar: Color(0xFF26282C),
-    sidebarSelected: Color(0xFF383B41),
+    sidebarSelected: Color(0x1AFFFFFF),
     surface: Color(0xFF1F2023),
     surfaceSubtle: Color(0xFF25272B),
     card: Color(0xFF2B2D31),
@@ -363,7 +367,7 @@ abstract final class Motion {
 }
 
 abstract final class DesktopUx {
-  static const sidebarRowHeight = 34.0;
+  static const sidebarRowHeight = 29.0;
   static const sidebarSearchHeight = 32.0;
   static const sidebarIconSize = UiSpace.s16;
   static const sidebarIconGap = 10.0;

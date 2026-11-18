@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# DraftFlow MCP Universal Runner
+# Automatically uses Dart SDK if available, or falls back to native Ruby SQLite engine.
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$DIR")"
+
+if command -v dart >/dev/null 2>&1; then
+  cd "$PROJECT_ROOT" && exec dart run "$DIR/draftflow_mcp.dart" "$@"
+elif [ -x /usr/bin/ruby ]; then
+  exec /usr/bin/ruby "$DIR/draftflow_mcp.rb" "$@"
+else
+  echo "Error: Neither 'dart' nor '/usr/bin/ruby' was found to run DraftFlow MCP server." >&2
+  exit 1
+fi

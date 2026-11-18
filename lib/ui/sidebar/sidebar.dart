@@ -156,10 +156,15 @@ class _SidebarState extends State<Sidebar> {
           !widget.isShowingTrash &&
           !widget.isShowingQuickNotes;
 
+      final parentTitle = node.page.parentId != null
+          ? widget.pages.where((p) => p.id == node.page.parentId).firstOrNull?.title
+          : null;
+
       widgets.add(
         SidebarItem(
           key: ValueKey(node.page.id),
           node: node,
+          parentTitle: parentTitle,
           prevSibling: prevSibling,
           nextSibling: nextSibling,
           isExpanded: isExpanded,

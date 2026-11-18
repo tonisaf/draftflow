@@ -16,6 +16,7 @@ import 'sidebar_drop_indicator.dart';
 
 class SidebarItem extends StatefulWidget {
   final PageTreeNode node;
+  final String? parentTitle;
   final PageTreeNode? prevSibling;
   final PageTreeNode? nextSibling;
   final bool isExpanded;
@@ -35,6 +36,7 @@ class SidebarItem extends StatefulWidget {
   const SidebarItem({
     super.key,
     required this.node,
+    this.parentTitle,
     this.prevSibling,
     this.nextSibling,
     required this.isExpanded,
@@ -62,11 +64,151 @@ class _SidebarItemState extends State<SidebarItem> {
   bool _isPressed = false;
   DropPosition? _currentDropPosition;
   Timer? _autoExpandTimer;
+  Timer? _hoverPreviewTimer;
+  OverlayEntry? _hoverPreviewEntry;
 
   @override
   void dispose() {
     _autoExpandTimer?.cancel();
+    _hoverPreviewTimer?.cancel();
+    _hoverPreviewEntry?.remove();
+    _hoverPreviewEntry = null;
     super.dispose();
+  }
+
+  void _hideHoverCard() {
+    _hoverPreviewTimer?.cancel();
+    _hoverPreviewEntry?.remove();
+    _hoverPreviewEntry = null;
+  }
+
+  String _formatPreviewTimestamp(DateTime date) {
+    final now = DateTime.now();
+    final isToday = now.year == date.year && now.month == date.month && now.day == date.day;
+    final hour = date.hour.toString().padLeft(2, '0');
+    final minute = date.minute.toString().padLeft(2, '0');
+    if (isToday) {
+      return 'Updated $hour:$minute';
+    }
+    final yesterday = now.subtract(const Duration(days: 1));
+    final isYesterday = yesterday.year == date.year && yesterday.month == date.month && yesterday.day == date.day;
+    if (isYesterday) {
+      return 'Updated Yesterday, $hour:$minute';
+    }
+    final day = date.day.toString().padLeft(2, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    return 'Updated $day.$month $hour:$minute';
+  }
+
+  void _showHoverCard() {
+    if (!mounted || !_isHovered || _hoverPreviewEntry != null) return;
+    final overlay = Overlay.maybeOf(context);
+    if (overlay == null) return;
+
+    final renderBox = context.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.hasSize) return;
+
+    final globalPos = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+    final screenSize = MediaQuery.sizeOf(context);
+
+    final top = (globalPos.dy - 4.0).clamp(10.0, (screenSize.height - 110.0).clamp(10.0, double.infinity));
+    final left = globalPos.dx + size.width + 10.0;
+
+    _hoverPreviewEntry = OverlayEntry(
+      builder: (overlayContext) {
+        final skin = context.skin;
+        final title = widget.node.page.title.trim().isEmpty
+            ? context.l10n.untitled
+            : widget.node.page.title;
+
+        return Positioned(
+          top: top,
+          left: left,
+          child: IgnorePointer(
+            child: Material(
+              color: Palette.transparent,
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 240, minWidth: 160),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14.0,
+                  vertical: 10.0,
+                ),
+                decoration: BoxDecoration(
+                  color: skin.card,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: skin.hairlineBorder),
+                  boxShadow: skin.popoverShadows,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w600,
+                        color: skin.text,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (widget.parentTitle != null &&
+                        widget.parentTitle!.trim().isNotEmpty) ...[
+                      const SizedBox(height: 5.0),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.folder_outlined,
+                            size: 13.0,
+                            color: skin.muted,
+                          ),
+                          const SizedBox(width: 4.0),
+                          Flexible(
+                            child: Text(
+                              widget.parentTitle!,
+                              style: TextStyle(
+                                fontSize: 11.0,
+                                color: skin.muted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 5.0),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 13.0,
+                          color: skin.muted,
+                        ),
+                        const SizedBox(width: 4.0),
+                        Text(
+                          _formatPreviewTimestamp(widget.node.page.createdAt),
+                          style: TextStyle(
+                            fontSize: 11.0,
+                            color: skin.muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlay.insert(_hoverPreviewEntry!);
   }
 
   void _scheduleAutoExpand() {
@@ -174,148 +316,149 @@ class _SidebarItemState extends State<SidebarItem> {
       border = null;
     }
 
+    final hasCustomIcon = widget.node.page.icon != null &&
+        widget.node.page.icon!.isNotEmpty;
+
     final itemContent = MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
+      onEnter: (_) {
+        setState(() => _isHovered = true);
+        _hoverPreviewTimer?.cancel();
+        _hoverPreviewTimer = Timer(const Duration(milliseconds: 450), _showHoverCard);
+      },
+      onExit: (_) {
+        setState(() => _isHovered = false);
+        _hideHoverCard();
+      },
       child: InkWell(
         borderRadius: BorderRadius.circular(UiRadius.sidebarRow),
         onFocusChange: (focused) => setState(() => _isFocused = focused),
         onHighlightChanged: (highlighted) =>
             setState(() => _isPressed = highlighted),
-        onTap: widget.onTap,
-        onSecondaryTapUp: (details) =>
-            _showContextMenu(context, details.globalPosition),
+        onTap: () {
+          _hideHoverCard();
+          widget.onTap();
+          if (hasChildren) {
+            widget.onToggleExpand();
+          }
+        },
+        onSecondaryTapUp: (details) {
+          _hideHoverCard();
+          _showContextMenu(context, details.globalPosition);
+        },
         child: SpringPress(
           pressed: _isPressed,
           scale: 0.985,
           child: Container(
-          constraints: const BoxConstraints(
-            minHeight: DesktopUx.sidebarRowHeight,
-          ),
-          margin: const EdgeInsets.symmetric(
-            horizontal: UiSpace.s10,
-            vertical: UiSpace.s1,
-          ),
-          padding: EdgeInsets.fromLTRB(
-            UiSpace.s8 + (depth * DesktopUx.treeIndent),
-            UiSpace.s6,
-            UiSpace.s8,
-            UiSpace.s6,
-          ),
-          decoration: BoxDecoration(
-            color: fill,
-            borderRadius: BorderRadius.circular(UiRadius.sidebarRow),
-            border: border,
-          ),
-          child: Row(
-            children: [
-              // Page icon (Custom emoji, folder, or doc)
-              SizedBox.square(
-                dimension: UiSpace.s18,
-                child: Center(
-                  child:
-                      (widget.node.page.icon != null &&
-                          widget.node.page.icon!.isNotEmpty)
-                      ? PageIconView(
-                          icon: widget.node.page.icon!,
-                          size: UiType.title,
-                        )
-                      : (hasChildren
-                            ? Icon(
-                                widget.isExpanded
-                                    ? AppIcons.folder
-                                    : AppIcons.folder,
-                                size: DesktopUx.sidebarIconSize,
-                                color: widget.isSelected
-                                    ? skin.text
-                                    : skin.muted,
-                              )
-                            : Icon(
-                                AppIcons.docText,
-                                size: DesktopUx.sidebarIconSize,
-                                color: widget.isSelected
-                                    ? skin.text
-                                    : skin.muted,
-                              )),
-                ),
-              ),
-              const SizedBox(width: DesktopUx.sidebarIconGap),
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: UiType.title,
-                    fontWeight: widget.isSelected
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                    color: skin.text,
-                  ),
-                ),
-              ),
-              if (_isHovered || _isFocused) ...[
-                // Add Subpage button
-                Tooltip(
-                  message: context.l10n.newSubpage,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.onAddSubpage,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: UiSpace.s2,
-                      ),
-                      child: Icon(
-                        AppIcons.plus,
-                        size: UiSpace.s14,
-                        color: skin.muted,
+            constraints: const BoxConstraints(
+              minHeight: DesktopUx.sidebarRowHeight,
+            ),
+            margin: const EdgeInsets.symmetric(
+              horizontal: UiSpace.s8,
+              vertical: 1.0,
+            ),
+            padding: EdgeInsets.fromLTRB(
+              UiSpace.s8 + (depth * DesktopUx.treeIndent),
+              UiSpace.s4,
+              UiSpace.s6,
+              UiSpace.s4,
+            ),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(UiRadius.sidebarRow),
+              border: border,
+            ),
+            child: Row(
+              children: [
+                if (hasCustomIcon) ...[
+                  SizedBox.square(
+                    dimension: 16.0,
+                    child: Center(
+                      child: PageIconView(
+                        icon: widget.node.page.icon!,
+                        size: 13.0,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: UiSpace.s4),
-                // Delete button
-                Tooltip(
-                  message: context.l10n.deletePage,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: widget.onDelete,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: UiSpace.s2,
-                      ),
+                  const SizedBox(width: UiSpace.s6),
+                ] else if (hasChildren) ...[
+                  SizedBox.square(
+                    dimension: 16.0,
+                    child: Center(
                       child: Icon(
-                        AppIcons.xmark,
-                        size: UiSpace.s14,
-                        color: skin.destructive,
+                        Icons.folder_outlined,
+                        size: 15.0,
+                        color: widget.isSelected ? skin.text : skin.muted,
                       ),
                     ),
                   ),
+                  const SizedBox(width: UiSpace.s6),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13.0,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w500
+                          : FontWeight.w400,
+                      letterSpacing: -0.1,
+                      color: skin.text,
+                    ),
+                  ),
                 ),
+                if (_isHovered || _isFocused) ...[
+                  // Add Subpage button
+                  Tooltip(
+                    message: context.l10n.newSubpage,
+                    child: InkResponse(
+                      radius: 12,
+                      onTap: () {
+                        _hideHoverCard();
+                        widget.onAddSubpage();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 3.0,
+                          vertical: 2.0,
+                        ),
+                        child: Icon(
+                          AppIcons.plus,
+                          size: 14.0,
+                          color: skin.muted,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 2.0),
+                  // Options menu button (replaces red cross!)
+                  Tooltip(
+                    message: context.l10n.pageOptions,
+                    child: InkResponse(
+                      radius: 12,
+                      onTapDown: (details) {
+                        _hideHoverCard();
+                        _showContextMenu(context, details.globalPosition);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 3.0,
+                          vertical: 2.0,
+                        ),
+                        child: Icon(
+                          Icons.more_vert_rounded,
+                          size: 15.0,
+                          color: skin.muted,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ],
-              if (hasChildren)
-                SizedBox.square(
-                  dimension: UiSpace.s18,
-                  child: IconButton(
-                    tooltip: widget.isExpanded
-                        ? context.l10n.collapsePage
-                        : context.l10n.expandPage,
-                    padding: EdgeInsets.zero,
-                    onPressed: widget.onToggleExpand,
-                    icon: SpringRotation(
-                      turns: widget.isExpanded ? 0.25 : 0.0,
-                      child: Icon(
-                        AppIcons.chevronRight,
-                        size: UiSpace.s16,
-                        color: skin.muted,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
-      ),
       ),
     );
 
@@ -371,12 +514,13 @@ class _SidebarItemState extends State<SidebarItem> {
         return Draggable<String>(
           data: widget.node.page.id,
           dragAnchorStrategy: pointerDragAnchorStrategy,
+          onDragStarted: _hideHoverCard,
           feedback: Material(
             color: Palette.transparent,
             child: Container(
               padding: const EdgeInsets.symmetric(
-                horizontal: UiSpace.s10,
-                vertical: UiSpace.s6,
+                horizontal: UiSpace.s8,
+                vertical: UiSpace.s4,
               ),
               decoration: BoxDecoration(
                 color: skin.surface,
@@ -397,13 +541,13 @@ class _SidebarItemState extends State<SidebarItem> {
                       widget.node.page.icon!.isNotEmpty) ...[
                     PageIconView(
                       icon: widget.node.page.icon!,
-                      size: UiType.title,
+                      size: 13.0,
                     ),
                     const SizedBox(width: UiSpace.s6),
-                  ] else ...[
+                  ] else if (hasChildren) ...[
                     Icon(
-                      AppIcons.docText,
-                      size: UiSpace.s14,
+                      Icons.folder_outlined,
+                      size: 14.0,
                       color: Palette.accent,
                     ),
                     const SizedBox(width: UiSpace.s6),
@@ -411,8 +555,8 @@ class _SidebarItemState extends State<SidebarItem> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: UiType.body,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 13.0,
+                      fontWeight: FontWeight.w500,
                       color: skin.text,
                     ),
                   ),
