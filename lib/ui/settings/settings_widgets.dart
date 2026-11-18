@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart'
+    show CupertinoIcons, CupertinoSlidingSegmentedControl;
 import 'package:flutter/material.dart';
 
 import '../common/quiet_button.dart';
@@ -94,7 +96,7 @@ class _SettingsChoiceState<T> extends State<SettingsChoice<T>> {
               trailingIcon: SizedBox.square(
                 dimension: 16,
                 child: entry.key == widget.value
-                    ? const Icon(Icons.check_rounded, size: 16)
+                    ? const Icon(CupertinoIcons.checkmark, size: 14)
                     : null,
               ),
               child: Text(entry.value),
@@ -113,12 +115,15 @@ class _SettingsChoiceState<T> extends State<SettingsChoice<T>> {
               skin.surfaceVariant,
               skin.surface,
             ),
-            minimumSize: const Size(138, 34),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            minimumSize: const Size(130, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: Theme.of(context).textTheme.bodyMedium
                 ?.copyWith(fontSize: 13, fontWeight: FontWeight.w400),
-            shape: const StadiumBorder(),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(UiRadius.control),
+              side: BorderSide(color: skin.hairlineBorder),
+            ),
           ),
           child: Semantics(
             label: '${widget.label}: $label',
@@ -127,8 +132,12 @@ class _SettingsChoiceState<T> extends State<SettingsChoice<T>> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Flexible(child: Text(label)),
-                const SizedBox(width: 16),
-                Icon(Icons.expand_more_rounded, size: 16, color: skin.muted),
+                const SizedBox(width: 8),
+                Icon(
+                  CupertinoIcons.chevron_up_chevron_down,
+                  size: 13,
+                  color: skin.muted,
+                ),
               ],
             ),
           ),
@@ -251,7 +260,7 @@ class QuietLink extends StatelessWidget {
 
 
 
-/// Exclusive tabs in a pill.
+/// Exclusive tabs in a pill using Apple sliding segmented control physics.
 class SegmentTabs extends StatelessWidget {
   const SegmentTabs({
     super.key,
@@ -267,51 +276,27 @@ class SegmentTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: skin.divider.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Row(
-        children: [
-          for (final (i, label) in labels.indexed)
-            Expanded(
-              child: Semantics(
-                button: true,
-                selected: i == index,
-                label: label,
-                excludeSemantics: true,
-                onTap: () => onChanged(i),
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => onChanged(i),
-                    child: Container(
-                      height: 28,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: i == index ? skin.card : Colors.transparent,
-                        borderRadius: BorderRadius.circular(7),
-                      ),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: i == index
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: i == index ? skin.text : skin.muted,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+    return CupertinoSlidingSegmentedControl<int>(
+      groupValue: index,
+      backgroundColor: skin.divider.withValues(alpha: 0.5),
+      thumbColor: skin.card,
+      children: {
+        for (final (i, label) in labels.indexed)
+          i: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: i == index ? FontWeight.w600 : FontWeight.w400,
+                color: i == index ? skin.text : skin.muted,
               ),
             ),
-        ],
-      ),
+          ),
+      },
+      onValueChanged: (val) {
+        if (val != null) onChanged(val);
+      },
     );
   }
 }

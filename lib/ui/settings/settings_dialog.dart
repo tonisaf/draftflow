@@ -1,3 +1,8 @@
+import 'package:flutter/cupertino.dart'
+    show
+        CupertinoButton,
+        CupertinoIcons,
+        CupertinoSlidingSegmentedControl;
 import 'package:flutter/material.dart';
 
 import '../../account/account_controller.dart';
@@ -47,7 +52,7 @@ Future<void> showSettings(
 
 enum _SectionKind { general, sync, modules }
 
-typedef _Section = (_SectionKind, String, Widget Function());
+typedef _Section = (_SectionKind, String, IconData, Widget Function());
 
 List<_Section> _sections(
   BuildContext context, {
@@ -61,17 +66,20 @@ List<_Section> _sections(
     (
       _SectionKind.general,
       l10n.settingsTabGeneral,
+      CupertinoIcons.gear_alt,
       () => _general(context, onOpenBackup: onOpenBackup),
     ),
     if (account != null)
       (
         _SectionKind.sync,
         l10n.sync,
+        CupertinoIcons.arrow_2_circlepath,
         () => _syncTab(context, account),
       ),
     (
       _SectionKind.modules,
       'Модули',
+      CupertinoIcons.square_grid_2x2,
       () => ModulesSettingsTab(repository: repo),
     ),
   ];
@@ -240,7 +248,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                 desktop: true,
                               )
                             else
-                              current.$3(),
+                              current.$4(),
                           ],
                         ),
                       ),
@@ -251,6 +259,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
                         for (final (i, t) in tabs.indexed)
                           _NavItem(
                             label: t.$2,
+                            icon: t.$3,
                             selected: i == index,
                             onTap: () {
                               if (_scroll.hasClients) _scroll.jumpTo(0);
@@ -387,11 +396,13 @@ class _AboutCompact extends StatelessWidget {
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.label,
+    required this.icon,
     required this.selected,
     required this.onTap,
   });
 
   final String label;
+  final IconData icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -407,11 +418,11 @@ class _NavItem extends StatelessWidget {
         builder:
             (context, {required hover, required focus, required pressed}) =>
                 Container(
-                  constraints: const BoxConstraints(minHeight: 38),
+                  constraints: const BoxConstraints(minHeight: 36),
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 9,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
                     color: selected
@@ -419,16 +430,29 @@ class _NavItem extends StatelessWidget {
                         : hover || pressed
                         ? skin.hover
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(9),
+                    borderRadius: BorderRadius.circular(UiRadius.inner),
                     border: focus ? Border.all(color: skin.accentText) : null,
                   ),
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
-                      color: skin.text,
-                    ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        icon,
+                        size: 16,
+                        color: selected ? Palette.accent : skin.muted,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight:
+                                selected ? FontWeight.w600 : FontWeight.w400,
+                            color: skin.text,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
       ),
@@ -467,7 +491,7 @@ class MobileSettingsPage extends StatelessWidget {
           children: [
             SettingsCard(
               children: [
-                for (final (_, label, build) in sections)
+                for (final (_, label, _, build) in sections)
                   InkWell(
                     onTap: () => Navigator.of(context).push<void>(
                       MaterialPageRoute(
@@ -583,15 +607,55 @@ class _ThemeChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return SettingsChoice<ThemeMode>(
-      label: l10n.theme,
-      value: controller.mode,
-      choices: {
-        ThemeMode.system: l10n.themeAuto,
-        ThemeMode.light: l10n.themeLightShort,
-        ThemeMode.dark: l10n.themeDarkShort,
+    final skin = context.skin;
+    return CupertinoSlidingSegmentedControl<ThemeMode>(
+      groupValue: controller.mode,
+      backgroundColor: skin.hover,
+      thumbColor: skin.card,
+      children: {
+        ThemeMode.system: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Text(
+            l10n.themeAuto,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: controller.mode == ThemeMode.system
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: skin.text,
+            ),
+          ),
+        ),
+        ThemeMode.light: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Text(
+            l10n.themeLightShort,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: controller.mode == ThemeMode.light
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: skin.text,
+            ),
+          ),
+        ),
+        ThemeMode.dark: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          child: Text(
+            l10n.themeDarkShort,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: controller.mode == ThemeMode.dark
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: skin.text,
+            ),
+          ),
+        ),
       },
-      onChanged: controller.setMode,
+      onValueChanged: (mode) {
+        if (mode != null) controller.setMode(mode);
+      },
     );
   }
 }
@@ -629,21 +693,20 @@ class _ActionPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return TextButton(
+    return CupertinoButton(
       onPressed: onTap,
-      style: TextButton.styleFrom(
-        foregroundColor: skin.text,
-        backgroundColor: Color.alphaBlend(skin.surfaceVariant, skin.surface),
-        minimumSize: const Size(138, 34),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      minSize: 32,
+      color: Color.alphaBlend(skin.surfaceVariant, skin.surface),
+      borderRadius: BorderRadius.circular(UiRadius.control),
+      child: Text(
+        label,
+        style: TextStyle(
           fontSize: 13,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
+          color: skin.text,
         ),
-        shape: const StadiumBorder(),
       ),
-      child: Text(label),
     );
   }
 }
