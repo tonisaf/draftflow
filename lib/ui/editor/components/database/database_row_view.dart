@@ -299,7 +299,10 @@ class _DataRowViewState extends State<DataRowView> {
                   child: DatabaseStickyPane(
                     horizontalScrollController: widget.horizontalScrollController,
                     width: frozenWidth,
-                    backgroundColor: _isHovered ? skin.hover : skin.surface,
+                    backgroundColor: Color.alphaBlend(
+                      _isHovered ? skin.hover : Palette.transparent,
+                      skin.surface,
+                    ),
                     borderColor: thinBorderColor,
                     isFrozen: true,
                     child: Row(

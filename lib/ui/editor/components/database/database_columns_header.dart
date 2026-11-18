@@ -224,7 +224,7 @@ class ColumnsHeaderRow extends StatelessWidget {
             child: DatabaseStickyPane(
               horizontalScrollController: horizontalScrollController,
               width: frozenWidth,
-              backgroundColor: headerBg,
+              backgroundColor: skin.surface,
               borderColor: borderColor,
               isFrozen: true,
               child: Row(

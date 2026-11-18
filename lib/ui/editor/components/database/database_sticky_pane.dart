@@ -30,6 +30,9 @@ class DatabaseStickyPane extends StatelessWidget {
       );
     }
 
+    final skin = context.skin;
+    final effectiveColor = Color.alphaBlend(backgroundColor, skin.surface);
+
     return AnimatedBuilder(
       animation: horizontalScrollController!,
       builder: (context, _) {
@@ -43,7 +46,7 @@ class DatabaseStickyPane extends StatelessWidget {
           child: Container(
             width: width,
             decoration: BoxDecoration(
-              color: backgroundColor,
+              color: effectiveColor,
               boxShadow: hasScrolled
                   ? [
                       BoxShadow(
@@ -58,7 +61,7 @@ class DatabaseStickyPane extends StatelessWidget {
               border: Border(
                 right: BorderSide(
                   color: borderColor,
-                  width: UiSpace.s0_8,
+                  width: UiSpace.s1,
                 ),
               ),
             ),
