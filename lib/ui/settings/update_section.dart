@@ -51,321 +51,186 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
         final release = _service.latestRelease;
         final asset = release?.platformAsset();
 
+        String statusSubtitle;
+        if (status == UpdateCheckStatus.upToDate) {
+          statusSubtitle = 'У вас установлена самая актуальная версия';
+        } else if (status == UpdateCheckStatus.error) {
+          statusSubtitle = 'Ошибка проверки сети: ${_service.errorMessage ?? "Сеть недоступна"}';
+        } else if (status == UpdateCheckStatus.checking) {
+          statusSubtitle = 'Проверка доступных обновлений…';
+        } else {
+          statusSubtitle = 'Нажмите «Проверить» для поиска новой версии';
+        }
+
         return SettingsCard(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 38,
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Palette.accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(UiRadius.action),
-                        ),
-                        child: const Icon(
-                          AppIcons.cloudDownload,
-                          color: Palette.accent,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: UiSpace.s12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'DraftFlow Updates',
-                              style: TextStyle(
-                                fontSize: UiType.title,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Текущая версия: v$currentAppVersion',
-                              style: TextStyle(
-                                fontSize: UiType.caption,
-                                color: skin.muted,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      _buildCheckButton(status),
-                    ],
-                  ),
-
-                  if (status == UpdateCheckStatus.upToDate) ...[
-                    const SizedBox(height: 12),
+            SettingRow(
+              title: 'DraftFlow Updates',
+              subtitle: 'Текущая версия: v$currentAppVersion • $statusSubtitle',
+              trailing: _buildCheckButton(status),
+            ),
+            if (release != null && _service.hasUpdate)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: skin.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: skin.hairlineBorder),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
                     Row(
                       children: [
-                        const Icon(
-                          Icons.check_circle_outline,
-                          color: Palette.success,
-                          size: 16,
+                        StatusPill(
+                          tone: StatusTone.success,
+                          child: Text('Доступно: v${release.version}'),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'У вас установлена самая актуальная версия',
-                          style: TextStyle(
-                            fontSize: UiType.caption,
-                            color: skin.muted,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-
-                  if (status == UpdateCheckStatus.error) ...[
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: Colors.redAccent,
-                          size: 16,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            'Не удалось проверить обновления: ${_service.errorMessage ?? "Сеть недоступна"}',
-                            style: const TextStyle(
+                        const Spacer(),
+                        if (asset != null && asset.size > 0)
+                          Text(
+                            asset.formattedSize(),
+                            style: TextStyle(
                               fontSize: UiType.micro,
-                              color: Colors.redAccent,
+                              color: skin.muted,
                             ),
                           ),
-                        ),
                       ],
                     ),
-                  ],
-
-                  if (release != null && _service.hasUpdate) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: skin.hover,
-                        borderRadius: BorderRadius.circular(UiRadius.compact),
-                        border: Border.all(color: skin.hairlineBorder),
+                    if (release.name.isNotEmpty && release.name != release.tagName) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        release.name,
+                        style: const TextStyle(
+                          fontSize: UiType.body,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                      child: Column(
+                    ],
+                    if (release.notes.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        release.notes,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: UiType.caption,
+                          color: skin.muted,
+                          height: 1.35,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+                    if (status == UpdateCheckStatus.downloading) ...[
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              StatusPill(
-                                tone: StatusTone.success,
-                                child: Text('Доступно: v${release.version}'),
+                              Text(
+                                _service.downloadProgress >= 1.0
+                                    ? 'Подготовка к установке…'
+                                    : 'Загрузка обновления...',
+                                style: const TextStyle(fontSize: UiType.micro),
                               ),
-                              const Spacer(),
-                              if (asset != null && asset.size > 0)
-                                Text(
-                                  asset.formattedSize(),
-                                  style: TextStyle(
-                                    fontSize: UiType.micro,
-                                    color: skin.muted,
-                                  ),
+                              Text(
+                                '${(_service.downloadProgress * 100).toInt()}%',
+                                style: const TextStyle(
+                                  fontSize: UiType.micro,
+                                  fontWeight: FontWeight.w600,
                                 ),
+                              ),
                             ],
                           ),
-                          if (release.name.isNotEmpty && release.name != release.tagName) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              release.name,
-                              style: const TextStyle(
-                                fontSize: UiType.body,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                          if (release.notes.isNotEmpty) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              release.notes,
-                              maxLines: 4,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: UiType.caption,
-                                color: skin.muted,
-                                height: 1.35,
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-
-                          if (status == UpdateCheckStatus.downloading) ...[
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      _service.downloadProgress >= 1.0
-                                          ? 'Подготовка к установке…'
-                                          : 'Загрузка обновления...',
-                                      style: const TextStyle(fontSize: UiType.micro),
-                                    ),
-                                    Text(
-                                      '${(_service.downloadProgress * 100).toInt()}%',
-                                      style: const TextStyle(
-                                        fontSize: UiType.micro,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                LinearProgressIndicator(
-                                  value: _service.downloadProgress,
-                                  backgroundColor: skin.surface,
-                                  color: Palette.accent,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                              ],
-                            ),
-                          ] else if (status == UpdateCheckStatus.installing) ...[
-                            Row(
-                              children: [
-                                const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Palette.accent,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Установка обновления и перезапуск…',
-                                  style: TextStyle(
-                                    fontSize: UiType.caption,
-                                    color: skin.text,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else if (status == UpdateCheckStatus.downloaded) ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => _service.installAndRestart(),
-                                    icon: const Icon(Icons.restart_alt, size: 16),
-                                    label: const Text('Перезапустить и обновить'),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Palette.accent,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(UiRadius.action),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton.icon(
-                                  onPressed: () => _service.openDownloadedFile(),
-                                  icon: const Icon(Icons.folder_open, size: 16),
-                                  label: const Text('Файл'),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: skin.text,
-                                    side: BorderSide(color: skin.hairlineBorder),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(UiRadius.action),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ] else if (asset == null) ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    onPressed: () => _service.openReleasePage(),
-                                    icon: const Icon(Icons.hourglass_top, size: 16),
-                                    label: Text(
-                                      'Сборка для ${Platform.isMacOS ? "macOS" : Platform.isWindows ? "Windows" : "Android"} ещё формируется…',
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: skin.muted,
-                                      side: BorderSide(color: skin.hairlineBorder),
-                                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(UiRadius.action),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton(
-                                  onPressed: () => _service.openReleasePage(),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: skin.text,
-                                    side: BorderSide(color: skin.hairlineBorder),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(UiRadius.action),
-                                    ),
-                                  ),
-                                  child: const Text('GitHub'),
-                                ),
-                              ],
-                            ),
-                          ] else ...[
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    onPressed: () => _service.downloadAndInstall(release),
-                                    icon: const Icon(Icons.system_update_alt, size: 16),
-                                    label: Text(
-                                      Platform.isMacOS || Platform.isWindows
-                                          ? 'Обновить и перезапустить'
-                                          : 'Скачать (${asset.name})',
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Palette.accent,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(UiRadius.action),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                OutlinedButton(
-                                  onPressed: () => _service.openReleasePage(),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: skin.text,
-                                    side: BorderSide(color: skin.hairlineBorder),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(UiRadius.action),
-                                    ),
-                                  ),
-                                  child: const Text('GitHub'),
-                                ),
-                              ],
-                            ),
-                          ],
+                          const SizedBox(height: 6),
+                          LinearProgressIndicator(
+                            value: _service.downloadProgress,
+                            backgroundColor: skin.surfaceSubtle,
+                            color: Palette.accent,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
                         ],
                       ),
-                    ),
+                    ] else if (status == UpdateCheckStatus.installing) ...[
+                      Row(
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Palette.accent,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Установка обновления и перезапуск…',
+                            style: TextStyle(
+                              fontSize: UiType.caption,
+                              color: skin.text,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else if (status == UpdateCheckStatus.downloaded) ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionPill(
+                            label: 'Перезапустить и обновить',
+                            primary: true,
+                            icon: Icons.restart_alt,
+                            onTap: () => _service.installAndRestart(),
+                          ),
+                          ActionPill(
+                            label: 'Файл',
+                            icon: Icons.folder_open,
+                            onTap: () => _service.openDownloadedFile(),
+                          ),
+                        ],
+                      ),
+                    ] else if (asset == null) ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionPill(
+                            label: 'Сборка формируется на GitHub…',
+                            icon: Icons.hourglass_top,
+                            onTap: () => _service.openReleasePage(),
+                          ),
+                          ActionPill(
+                            label: 'GitHub',
+                            onTap: () => _service.openReleasePage(),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ActionPill(
+                            label: Platform.isMacOS || Platform.isWindows
+                                ? 'Обновить и перезапустить'
+                                : 'Скачать (${asset.name})',
+                            primary: true,
+                            icon: Icons.system_update_alt,
+                            onTap: () => _service.downloadAndInstall(release),
+                          ),
+                          ActionPill(
+                            label: 'GitHub',
+                            onTap: () => _service.openReleasePage(),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
           ],
         );
       },
@@ -381,20 +246,9 @@ class _AppUpdateSectionState extends State<AppUpdateSection> {
       );
     }
 
-    return TextButton(
-      onPressed: () => _service.checkForUpdates(manual: true),
-      style: TextButton.styleFrom(
-        foregroundColor: Palette.accent,
-        backgroundColor: Palette.accent.withValues(alpha: 0.08),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(UiRadius.action),
-        ),
-      ),
-      child: const Text(
-        'Проверить',
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-      ),
+    return ActionPill(
+      label: 'Проверить',
+      onTap: () => _service.checkForUpdates(manual: true),
     );
   }
 }

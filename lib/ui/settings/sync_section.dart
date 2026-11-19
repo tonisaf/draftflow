@@ -145,19 +145,20 @@ class _SyncSectionState extends State<SyncSection> {
                     },
               child: const Text('Подключить'),
             ),
-            OutlinedButton(
-              onPressed: c.busy
+            ActionPill(
+              label: 'Сервер по умолчанию',
+              onTap: c.busy
                   ? null
                   : () {
                       _url.text = defaultSupabaseUrl;
                       _key.text = defaultSupabaseAnonKey;
                       setState(() => _validationError = null);
                     },
-              child: const Text('Сервер по умолчанию'),
             ),
             if (c.configured)
-              TextButton(
-                onPressed: c.busy
+              ActionPill(
+                label: context.l10n.cancel,
+                onTap: c.busy
                     ? null
                     : () {
                         _url.text = c.serverConfig?.url ?? '';
@@ -167,7 +168,6 @@ class _SyncSectionState extends State<SyncSection> {
                           _validationError = null;
                         });
                       },
-                child: Text(context.l10n.cancel),
               ),
           ],
         ),
@@ -246,8 +246,11 @@ class _SyncSectionState extends State<SyncSection> {
               child: Text(_signUp ? l10n.createAccount : l10n.signIn),
             ),
             const Spacer(),
-            TextButton(
-              onPressed: c.busy
+            ActionPill(
+              label: c.currentServerHost != null
+                  ? 'Сервер: ${c.currentServerHost}'
+                  : 'Сменить сервер',
+              onTap: c.busy
                   ? null
                   : () => setState(() {
                         _url.text = c.serverConfig?.url ?? '';
@@ -255,12 +258,6 @@ class _SyncSectionState extends State<SyncSection> {
                         _editingServer = true;
                         _validationError = null;
                       }),
-              child: Text(
-                c.currentServerHost != null
-                    ? 'Сервер: ${c.currentServerHost}'
-                    : 'Сменить сервер',
-                style: TextStyle(fontSize: 12.5, color: skin.muted),
-              ),
             ),
           ],
         ),
@@ -293,77 +290,91 @@ class _SyncSectionState extends State<SyncSection> {
     final l10n = context.l10n;
     final skin = context.skin;
     final engine = c.syncEngine;
-    final muted = TextStyle(fontSize: 13, color: skin.muted);
+
+    String syncStatusText = syncLabel(context, c);
+    if (engine?.message != null) syncStatusText += ' • ${engine!.message!}';
+    if (engine != null && engine.pending > 0) {
+      syncStatusText += ' • ${l10n.waitingToSend(engine.pending)}';
+    }
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          l10n.syncSignedInAs(c.account!.email),
-          style: const TextStyle(fontSize: 14),
+        SettingRow(
+          title: 'Учетная запись',
+          subtitle: '${c.account!.email} • ${syncLabel(context, c)}',
+          trailing: ActionPill(
+            label: l10n.syncSignOut,
+            onTap: c.busy ? null : c.signOut,
+          ),
         ),
-        const SizedBox(height: 4),
-        if (c.currentServerHost != null)
-          Text('Сервер: ${c.currentServerHost}', style: muted),
-        Text(syncLabel(context, c), style: muted),
-        if (engine?.message != null) Text(engine!.message!, style: muted),
-        if (engine != null && engine.pending > 0)
-          Text(l10n.waitingToSend(engine.pending), style: muted),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 4,
-          children: [
-            TextButton(
-              onPressed:
-                  c.busy ||
-                      engine == null ||
-                      engine.phase == NotesSyncPhase.syncing
-                  ? null
-                  : engine.sync,
-              child: Text(l10n.syncNow),
-            ),
-            if ((engine?.conflictCount ?? 0) > 0)
-              TextButton(
-                onPressed: c.busy ? null : _conflicts,
-                child: Text(l10n.resolveConflicts),
+        Divider(height: 25, thickness: 1, color: skin.hairlineBorder),
+        SettingRow(
+          title: 'Статус синхронизации',
+          subtitle: syncStatusText,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if ((engine?.conflictCount ?? 0) > 0) ...[
+                ActionPill(
+                  label: l10n.resolveConflicts,
+                  onTap: c.busy ? null : _conflicts,
+                ),
+                const SizedBox(width: 8),
+              ],
+              ActionPill(
+                label: l10n.syncNow,
+                primary: true,
+                onTap: c.busy ||
+                        engine == null ||
+                        engine.phase == NotesSyncPhase.syncing
+                    ? null
+                    : engine.sync,
               ),
-            TextButton(
-              onPressed: c.busy ? null : _backup,
-              child: Text(l10n.backupBeforeConflict),
-            ),
-            TextButton(
-              onPressed: c.busy
-                  ? null
-                  : () => setState(() {
-                        _url.text = c.serverConfig?.url ?? '';
-                        _key.text = c.serverConfig?.key ?? '';
-                        _editingServer = true;
-                        _validationError = null;
-                      }),
-              child: const Text('Сменить сервер'),
-            ),
-            TextButton(
-              onPressed: c.busy ? null : c.signOut,
-              child: Text(l10n.syncSignOut),
-            ),
-          ],
+            ],
+          ),
+        ),
+        Divider(height: 25, thickness: 1, color: skin.hairlineBorder),
+        SettingRow(
+          title: 'Сервер Supabase',
+          subtitle: c.currentServerHost ?? 'Сервер по умолчанию',
+          trailing: ActionPill(
+            label: 'Сменить',
+            onTap: c.busy
+                ? null
+                : () => setState(() {
+                      _url.text = c.serverConfig?.url ?? '';
+                      _key.text = c.serverConfig?.key ?? '';
+                      _editingServer = true;
+                      _validationError = null;
+                    }),
+          ),
+        ),
+        Divider(height: 25, thickness: 1, color: skin.hairlineBorder),
+        SettingRow(
+          title: 'Резервная копия',
+          subtitle: 'Локальный снимок базы перед синхронизацией',
+          trailing: ActionPill(
+            label: 'Создать',
+            onTap: c.busy ? null : _backup,
+          ),
         ),
         if (c.busy) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           TickerMode(
             enabled: !MediaQuery.disableAnimationsOf(context),
             child: const LinearProgressIndicator(minHeight: 3),
           ),
         ],
         if (c.error != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           StatusPill(
             tone: StatusTone.danger,
             child: Text(c.error!, style: const TextStyle(fontSize: 13)),
           ),
         ],
         if (_backupMessage != null || c.notice != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           StatusPill(
             tone: c.notice != null ? StatusTone.warning : StatusTone.success,
             child: Text(

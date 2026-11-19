@@ -555,7 +555,7 @@ class _UserSidebarTileState extends State<_UserSidebarTile> {
   }
 }
 
-class _NavItem extends StatelessWidget {
+class _NavItem extends StatefulWidget {
   const _NavItem({
     required this.label,
     required this.icon,
@@ -569,54 +569,73 @@ class _NavItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isDark = skin.isDark;
+    final isSelected = widget.selected;
+
+    final Color bg = isSelected
+        ? (isDark ? const Color(0xFF2E3137) : const Color(0xFFE8EAED))
+        : (_hovered
+            ? (isDark ? const Color(0xFF26282E) : const Color(0xFFF1F3F5))
+            : Colors.transparent);
+
+    final Color fg = isSelected
+        ? skin.text
+        : (_hovered ? skin.text : skin.text.withValues(alpha: 0.85));
+    final Color iconColor = isSelected ? Palette.accent : skin.muted;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 2),
-      child: QuietButton(
-        label: label,
-        selected: selected,
-        onTap: onTap,
-        builder:
-            (context, {required hover, required focus, required pressed}) =>
-                Container(
-                  constraints: const BoxConstraints(minHeight: 34),
-                  alignment: Alignment.centerLeft,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? skin.sidebarSelected
-                        : hover || pressed
-                        ? skin.hover
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(UiRadius.control),
-                    border: focus ? Border.all(color: skin.accentText) : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        icon,
-                        size: 16,
-                        color: selected ? Palette.accent : skin.muted,
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          label,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                selected ? FontWeight.w600 : FontWeight.w400,
-                            color: skin.text,
-                          ),
-                        ),
-                      ),
-                    ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 100),
+            constraints: const BoxConstraints(minHeight: 34),
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 7,
+            ),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(UiRadius.control),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  widget.icon,
+                  size: 16,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w400,
+                      color: fg,
+                    ),
                   ),
                 ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -917,53 +936,4 @@ class _LanguageChoice extends StatelessWidget {
   }
 }
 
-class _ActionPill extends StatefulWidget {
-  const _ActionPill({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  State<_ActionPill> createState() => _ActionPillState();
-}
-
-class _ActionPillState extends State<_ActionPill> {
-  bool _hovered = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final skin = context.skin;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hovered = true),
-      onExit: (_) => setState(() => _hovered = false),
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          constraints: const BoxConstraints(minHeight: 32),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: _hovered
-                ? skin.hover
-                : Color.alphaBlend(skin.surfaceVariant, skin.surface),
-            borderRadius: BorderRadius.circular(UiRadius.control),
-            border: Border.all(
-              color: _hovered ? skin.divider : skin.hairlineBorder,
-              width: 1,
-            ),
-          ),
-          child: Text(
-            widget.label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: skin.text,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
+typedef _ActionPill = ActionPill;

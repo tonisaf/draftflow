@@ -4,6 +4,7 @@ import '../../data/notes_repository.dart';
 import '../../modules/core/app_module.dart';
 import '../../modules/core/module_scope.dart';
 import '../theme.dart';
+import 'settings_widgets.dart';
 
 class ModulesSettingsTab extends StatefulWidget {
   final NotesRepository? repository;
@@ -41,18 +42,20 @@ class _ModulesSettingsTabState extends State<ModulesSettingsTab> {
           padding: const EdgeInsets.only(bottom: 16),
           child: Text(
             'Подключайте внешние сервисы и медиатеки. Включенные модули появляются отдельным пунктом в боковой панели.',
-            style: TextStyle(fontSize: 12, color: skin.faint, height: 1.4),
+            style: TextStyle(fontSize: 13, color: skin.muted, height: 1.4),
           ),
         ),
-        for (final module in moduleManager.allModules) ...[
-          _buildModuleCard(context, module, moduleManager, skin),
-          const SizedBox(height: 16),
-        ],
+        SettingsCard(
+          children: [
+            for (final module in moduleManager.allModules)
+              _buildModuleItem(context, module, moduleManager, skin),
+          ],
+        ),
       ],
     );
   }
 
-  Widget _buildModuleCard(
+  Widget _buildModuleItem(
     BuildContext context,
     AppModule module,
     dynamic moduleManager,
@@ -60,85 +63,73 @@ class _ModulesSettingsTabState extends State<ModulesSettingsTab> {
   ) {
     final isEnabled = moduleManager.isEnabled(module.id);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: skin.surfaceSubtle,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: skin.hairlineBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header row with toggle
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: isEnabled
-                        ? Palette.accent.withValues(alpha: 0.15)
-                        : skin.hover,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    module.icon,
-                    size: 20,
-                    color: isEnabled ? Palette.accent : skin.muted,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        module.title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: skin.text,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        module.description,
-                        style: TextStyle(fontSize: 12, color: skin.muted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                CupertinoSwitch(
-                  value: isEnabled,
-                  activeColor: Palette.accent,
-                  onChanged: (val) {
-                    moduleManager.setEnabled(module.id, val);
-                    setState(() {
-                      if (val) {
-                        _expandedModuleIds.add(module.id);
-                      }
-                    });
-                  },
-                ),
-              ],
-            ),
-          ),
-
-          // If enabled & repository available, show module settings
-          if (isEnabled && widget.repository != null) ...[
-            Divider(height: 1, color: skin.divider),
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: module.buildSettings(
-                context,
-                repository: widget.repository!,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: isEnabled
+                    ? Palette.accent.withValues(alpha: 0.12)
+                    : (skin.isDark ? const Color(0xFF26282E) : const Color(0xFFF1F3F5)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                module.icon,
+                size: 18,
+                color: isEnabled ? Palette.accent : skin.muted,
               ),
             ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    module.title,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    module.description,
+                    style: TextStyle(fontSize: 12, color: skin.muted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            CupertinoSwitch(
+              value: isEnabled,
+              activeColor: Palette.accent,
+              onChanged: (val) {
+                moduleManager.setEnabled(module.id, val);
+                setState(() {
+                  if (val) {
+                    _expandedModuleIds.add(module.id);
+                  }
+                });
+              },
+            ),
           ],
+        ),
+        if (isEnabled && widget.repository != null) ...[
+          const SizedBox(height: 12),
+          Divider(height: 1, color: skin.hairlineBorder),
+          Padding(
+            padding: const EdgeInsets.only(top: 10, left: 50),
+            child: module.buildSettings(
+              context,
+              repository: widget.repository!,
+            ),
+          ),
         ],
-      ),
+      ],
     );
   }
 }

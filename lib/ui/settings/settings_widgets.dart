@@ -431,6 +431,100 @@ class SettingToggleRow extends StatelessWidget {
   }
 }
 
+/// A pill-shaped action button for dialog actions (e.g. Open, Change, Check).
+/// Follows Antigravity's Modern Desktop aesthetic with crisp hovers and no focus rings.
+class ActionPill extends StatefulWidget {
+  const ActionPill({
+    super.key,
+    required this.label,
+    required this.onTap,
+    this.primary = false,
+    this.icon,
+  });
+
+  final String label;
+  final VoidCallback? onTap;
+  final bool primary;
+  final IconData? icon;
+
+  @override
+  State<ActionPill> createState() => _ActionPillState();
+}
+
+class _ActionPillState extends State<ActionPill> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final isDark = skin.isDark;
+    final enabled = widget.onTap != null;
+    final isPrimary = widget.primary;
+
+    Color bg;
+    Color fg;
+    BorderSide? border;
+
+    if (isPrimary) {
+      bg = enabled
+          ? (_hovered ? Palette.accent.withValues(alpha: 0.9) : Palette.accent)
+          : Palette.accent.withValues(alpha: 0.4);
+      fg = Colors.white;
+      border = null;
+    } else {
+      bg = enabled
+          ? (_hovered
+              ? (isDark ? const Color(0xFF2C2F36) : const Color(0xFFE8EAED))
+              : (isDark ? const Color(0xFF26282D) : const Color(0xFFF1F3F5)))
+          : (isDark ? const Color(0xFF222428) : const Color(0xFFF7F8FA));
+      fg = enabled ? skin.text : skin.muted;
+      border = BorderSide(
+        color: _hovered
+            ? (isDark ? const Color(0xFF3E434D) : const Color(0xFFD0D3D8))
+            : (isDark ? const Color(0xFF33373E) : const Color(0xFFE2E4E8)),
+        width: 1,
+      );
+    }
+
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : MouseCursor.defer,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 100),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          constraints: const BoxConstraints(minHeight: 32),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(UiRadius.control),
+            border: border == null ? null : Border.fromBorderSide(border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.icon != null) ...[
+                Icon(widget.icon, size: 14, color: fg),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                widget.label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: fg,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A selectable card for choosing options visually (inspired by Antigravity's Interface Layout cards).
 /// Displays an icon, bold title, and description, with an active accent border and soft tint.
 class SelectableOptionCard extends StatefulWidget {
@@ -459,7 +553,23 @@ class _SelectableOptionCardState extends State<SelectableOptionCard> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isDark = skin.isDark;
     final isSelected = widget.selected;
+
+    // Solid, harmonious colors that never flash dark in light theme:
+    final Color bg = isSelected
+        ? (isDark ? const Color(0xFF1E2A3B) : const Color(0xFFEFF5FE))
+        : (_hovered
+            ? (isDark ? const Color(0xFF282B31) : const Color(0xFFF6F8FB))
+            : (isDark ? const Color(0xFF222428) : Colors.white));
+
+    final Color borderColor = isSelected
+        ? Palette.accent
+        : (_hovered
+            ? Palette.accent.withValues(alpha: 0.4)
+            : (isDark ? const Color(0xFF33373E) : const Color(0xFFE2E4E8)));
+
+    final double borderWidth = isSelected ? 1.5 : 1.0;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -468,18 +578,15 @@ class _SelectableOptionCardState extends State<SelectableOptionCard> {
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOut,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected
-                ? Palette.accent.withValues(alpha: skin.isDark ? 0.12 : 0.06)
-                : (_hovered ? skin.hover : skin.surfaceSubtle),
+            color: bg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isSelected
-                  ? Palette.accent
-                  : (_hovered ? skin.divider : skin.hairlineBorder),
-              width: isSelected ? 1.5 : 1.0,
+              color: borderColor,
+              width: borderWidth,
             ),
           ),
           child: Column(
@@ -489,7 +596,9 @@ class _SelectableOptionCardState extends State<SelectableOptionCard> {
               Icon(
                 widget.icon,
                 size: 20,
-                color: isSelected ? Palette.accent : skin.muted,
+                color: isSelected
+                    ? Palette.accent
+                    : (isDark ? const Color(0xFFC4C8CE) : const Color(0xFF4B515B)),
               ),
               const SizedBox(height: 10),
               Text(
@@ -497,7 +606,9 @@ class _SelectableOptionCardState extends State<SelectableOptionCard> {
                 style: TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w600,
-                  color: skin.text,
+                  color: isSelected
+                      ? (isDark ? const Color(0xFF93C5FD) : Palette.accent)
+                      : skin.text,
                 ),
               ),
               const SizedBox(height: 3),
