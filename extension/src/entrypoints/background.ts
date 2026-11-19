@@ -6,6 +6,7 @@ import {
   fetchRemotePages,
   getOrCreateInboxPage,
   saveNewPageWithBlocks,
+  makeInboxProperties,
 } from '../services/syncEngine';
 
 export default defineBackground(() => {
@@ -100,9 +101,6 @@ async function handleQuickClipSave(data: {
   selectedText?: string;
   articleMarkdown?: string;
 }): Promise<DraftFlowPage> {
-  const pages = await fetchRemotePages();
-  const inbox = await getOrCreateInboxPage(pages);
-
   const markdown = buildMarkdownForClip({
     mode: data.mode,
     url: data.url,
@@ -120,12 +118,26 @@ async function handleQuickClipSave(data: {
     }
   }
 
+  const inboxType =
+    data.mode === 'selection'
+      ? 'quote'
+      : data.mode === 'article'
+      ? 'article'
+      : data.mode === 'screenshot'
+      ? 'screenshot'
+      : 'link';
+
   const clipPage: DraftFlowPage = {
     id: pageId,
     title: clipTitle,
-    parent_id: inbox.id,
+    parent_id: null,
     icon: data.mode === 'selection' ? '💬' : '📄',
     order_key: 'a0',
+    properties: makeInboxProperties({
+      type: inboxType,
+      url: data.url,
+      excerpt: data.selectedText,
+    }),
     created_at: Math.floor(Date.now() / 1000),
     trashed_at: null,
   };

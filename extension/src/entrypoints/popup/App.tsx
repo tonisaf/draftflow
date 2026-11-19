@@ -28,6 +28,7 @@ import {
   fetchRemotePages,
   getOrCreateInboxPage,
   saveNewPageWithBlocks,
+  makeInboxProperties,
 } from '@/services/syncEngine';
 import { uploadScreenshotToStorage } from '@/services/supabase';
 import {
@@ -338,12 +339,43 @@ export default function App() {
         screenshotUrl: finalScreenshotUrl,
       });
 
-      let parentPage: DraftFlowPage;
+      let parentId: string | null = null;
+      let properties: string | null = null;
+
+      const inboxType =
+        mode === 'article'
+          ? 'article'
+          : mode === 'selection'
+          ? 'quote'
+          : mode === 'screenshot'
+          ? 'screenshot'
+          : 'link';
+
       if (targetPageId === 'inbox') {
-        parentPage = await getOrCreateInboxPage(pages);
+        parentId = null;
+        properties = makeInboxProperties({
+          type: inboxType,
+          url: meta.url,
+          faviconUrl: meta.faviconUrl,
+          previewImageUrl: finalScreenshotUrl,
+          excerpt: mode === 'selection' ? selectedText : meta.description,
+          author: meta.author,
+        });
       } else {
         const found = pages.find((p) => p.id === targetPageId);
-        parentPage = found || (await getOrCreateInboxPage(pages));
+        if (found) {
+          parentId = found.id;
+        } else {
+          parentId = null;
+          properties = makeInboxProperties({
+            type: inboxType,
+            url: meta.url,
+            faviconUrl: meta.faviconUrl,
+            previewImageUrl: finalScreenshotUrl,
+            excerpt: mode === 'selection' ? selectedText : meta.description,
+            author: meta.author,
+          });
+        }
       }
 
       // Generate distinct title based on capture mode
@@ -363,9 +395,10 @@ export default function App() {
       const clipPage: DraftFlowPage = {
         id: pageId,
         title: clipTitle,
-        parent_id: parentPage.id,
+        parent_id: parentId,
         icon: mode === 'article' ? '📄' : mode === 'selection' ? '💬' : mode === 'screenshot' ? '📸' : '🔖',
         order_key: 'a0',
+        properties,
         created_at: Math.floor(Date.now() / 1000),
         trashed_at: null,
       };
@@ -399,7 +432,6 @@ export default function App() {
     setError(null);
 
     try {
-      const inbox = await getOrCreateInboxPage(pages);
       const pageId = generateUuid();
       const firstLine = scratchpadText.trim().split('\n')[0].substring(0, 50);
       const title = firstLine.replace(/^#+\s*/, '') || 'Быстрая заметка';
@@ -407,9 +439,13 @@ export default function App() {
       const page: DraftFlowPage = {
         id: pageId,
         title,
-        parent_id: inbox.id,
+        parent_id: null,
         icon: '📝',
         order_key: 'a0',
+        properties: makeInboxProperties({
+          type: 'note',
+          excerpt: scratchpadText.trim().substring(0, 200),
+        }),
         created_at: Math.floor(Date.now() / 1000),
         trashed_at: null,
       };

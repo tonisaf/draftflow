@@ -83,6 +83,38 @@ export async function getOrCreateInboxPage(pages: DraftFlowPage[]): Promise<Draf
   return newInbox;
 }
 
+export function makeInboxProperties(params: {
+  type: 'article' | 'link' | 'quote' | 'screenshot' | 'note';
+  url?: string;
+  domain?: string;
+  faviconUrl?: string;
+  previewImageUrl?: string;
+  excerpt?: string;
+  author?: string;
+}): string {
+  let domain = params.domain;
+  if (!domain && params.url) {
+    try {
+      domain = new URL(params.url).hostname.replace(/^www\./, '');
+    } catch (_) {}
+  }
+
+  return JSON.stringify({
+    _draftflow_inbox_item: {
+      isInboxItem: true,
+      type: params.type,
+      url: params.url || null,
+      domain: domain || null,
+      faviconUrl: params.faviconUrl || null,
+      previewImageUrl: params.previewImageUrl || null,
+      excerpt: params.excerpt || null,
+      author: params.author || null,
+      isArchived: false,
+      savedAt: new Date().toISOString(),
+    },
+  });
+}
+
 /**
  * Pushes a new page and its blocks atomically to Supabase via notes_sync_push_v2
  */
@@ -113,7 +145,7 @@ export async function saveNewPageWithBlocks(
       cover: null,
       order_key: page.order_key || 'a0',
       database_id: null,
-      properties: null,
+      properties: page.properties || null,
       created_at:
         typeof page.created_at === 'number'
           ? page.created_at

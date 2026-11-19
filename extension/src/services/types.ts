@@ -15,6 +15,7 @@ export interface PageMetadata {
   faviconUrl?: string;
   description?: string;
   selectedText?: string;
+  author?: string;
 }
 
 export interface ClipPayload {
@@ -35,6 +36,7 @@ export interface DraftFlowPage {
   database_id?: string | null;
   icon: string | null;
   order_key: string;
+  properties?: string | null;
   created_at: number;
   trashed_at: string | null;
 }

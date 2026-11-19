@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { X, Send, Loader2, Layers, AlertCircle } from 'lucide-react';
 import { DraftFlowPage } from '../services/types';
 import { markdownToDraftFlowBlocks, generateUuid } from '../services/blockEncoder';
-import { saveNewPageWithBlocks, getOrCreateInboxPage } from '../services/syncEngine';
+import {
+  saveNewPageWithBlocks,
+  getOrCreateInboxPage,
+  makeInboxProperties,
+} from '../services/syncEngine';
 
 const COMMON_ICONS = ['📝', '💡', '⚡', '📌', '🚀', '🎯', '📚', '🛠️', '📄'];
 
@@ -30,21 +34,36 @@ export default function NewNoteModal({
     setError(null);
 
     try {
-      let parentPage: DraftFlowPage;
+      let parentId: string | null = null;
+      let properties: string | null = null;
+
       if (targetParentId === 'inbox') {
-        parentPage = await getOrCreateInboxPage(pages);
+        parentId = null;
+        properties = makeInboxProperties({
+          type: 'note',
+          excerpt: content.trim().substring(0, 200),
+        });
       } else {
         const found = pages.find((p) => p.id === targetParentId);
-        parentPage = found || (await getOrCreateInboxPage(pages));
+        if (found) {
+          parentId = found.id;
+        } else {
+          parentId = null;
+          properties = makeInboxProperties({
+            type: 'note',
+            excerpt: content.trim().substring(0, 200),
+          });
+        }
       }
 
       const pageId = generateUuid();
       const newPage: DraftFlowPage = {
         id: pageId,
         title: title.trim(),
-        parent_id: parentPage.id,
+        parent_id: parentId,
         icon,
         order_key: 'a0',
+        properties,
         created_at: Math.floor(Date.now() / 1000),
         trashed_at: null,
       };
