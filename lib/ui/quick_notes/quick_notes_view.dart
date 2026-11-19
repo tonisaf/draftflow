@@ -647,38 +647,38 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                 message: _selectedColor == color ? 'Снять фильтр цвета' : 'Фильтр по цвету: $color',
                 preferBelow: false,
                 verticalOffset: 14,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 140),
-                  margin: const EdgeInsets.only(right: 5),
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: QuickNoteColors.getSwatch(color),
-                    border: Border.all(
-                      color: _selectedColor == color
-                          ? Palette.accent
-                          : skin.hairlineBorder,
-                      width: _selectedColor == color ? 2.5 : 1.0,
+                child: AnimatedScale(
+                  scale: _selectedColor == color ? 1.15 : 1.0,
+                  duration: const Duration(milliseconds: 120),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: QuickNoteColors.getSwatch(color),
+                      border: Border.all(
+                        color: skin.hairlineBorder,
+                        width: 1.0,
+                      ),
+                      boxShadow: _selectedColor == color
+                          ? [
+                              BoxShadow(
+                                color: skin.surface,
+                                spreadRadius: 2,
+                                blurRadius: 0,
+                              ),
+                              BoxShadow(
+                                color: skin.isDark
+                                    ? Colors.white.withValues(alpha: 0.35)
+                                    : Colors.black.withValues(alpha: 0.28),
+                                spreadRadius: 3.5,
+                                blurRadius: 0,
+                              ),
+                            ]
+                          : null,
                     ),
-                    boxShadow: _selectedColor == color
-                        ? [
-                            BoxShadow(
-                              color: Palette.accent.withValues(alpha: 0.35),
-                              blurRadius: 4,
-                            ),
-                          ]
-                        : null,
                   ),
-                  child: _selectedColor == color
-                      ? const Center(
-                          child: Icon(
-                            AppIcons.checkMark,
-                            size: 9,
-                            color: Colors.black87,
-                          ),
-                        )
-                      : null,
                 ),
               ),
             ),
@@ -703,7 +703,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
         onTap: () => setState(() => _activeFilter = filter),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: ShapeDecoration(
             color: isSelected
                 ? Palette.accent.withValues(alpha: 0.10)
@@ -713,6 +713,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                 color: isSelected
                     ? Palette.accent.withValues(alpha: 0.25)
                     : Colors.transparent,
+                width: 1.0,
               ),
             ),
           ),
@@ -730,13 +731,13 @@ class _QuickNotesViewState extends State<QuickNotesView> {
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: UiType.caption,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? Palette.accent : skin.muted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Palette.accent : skin.text,
                 ),
               ),
               if (count > 0 || isSelected) ...[
-                const SizedBox(width: 5),
+                const SizedBox(width: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
@@ -816,7 +817,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
   }
 
   Widget _buildEmptyState(Skin skin) {
-    final isSearching = _searchQuery.isNotEmpty;
+    final hasFilters = _hasActiveFilters;
 
     return Center(
       child: Padding(
@@ -836,7 +837,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
               ),
               child: Center(
                 child: Icon(
-                  isSearching ? AppIcons.search : AppIcons.docText,
+                  hasFilters ? AppIcons.search : AppIcons.docText,
                   size: 24,
                   color: skin.muted,
                 ),
@@ -844,23 +845,19 @@ class _QuickNotesViewState extends State<QuickNotesView> {
             ),
             const SizedBox(height: 14),
             Text(
-              isSearching ? 'Ничего не найдено' : 'Здесь пока нет заметок',
+              hasFilters
+                  ? 'По выбранным фильтрам ничего не найдено'
+                  : 'Здесь пока нет заметок',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: skin.text,
               ),
             ),
-            const SizedBox(height: 6),
-            if (isSearching)
-              Text(
-                'По запросу "$_searchQuery" ничего не найдено',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: skin.muted,
-                ),
-              )
-            else
+            const SizedBox(height: 8),
+            if (hasFilters) ...[
+              _ResetFiltersButton(onTap: _clearAllFilters),
+            ] else ...[
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -899,6 +896,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                   ),
                 ],
               ),
+            ],
           ],
         ),
       ),
@@ -1127,61 +1125,37 @@ class _QuickNotesViewState extends State<QuickNotesView> {
             ),
           ],
 
-          // Палитра выбора цвета для новой заметки
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final color in QuickNoteColors.all) ...[
-                if (color != QuickNoteColors.defaultColor) ...[
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _newNoteColor = _newNoteColor == color ? null : color;
-                      });
-                    },
-                    child: Tooltip(
-                      message: _newNoteColor == color
-                          ? 'Сбросить цвет заметки'
-                          : 'Цвет заметки: $color',
-                      preferBelow: false,
-                      verticalOffset: 14,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                        width: 14,
-                        height: 14,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: QuickNoteColors.getSwatch(color),
-                          border: Border.all(
-                            color: _newNoteColor == color
-                                ? Palette.accent
-                                : skin.hairlineBorder,
-                            width: _newNoteColor == color ? 2.0 : 1.0,
-                          ),
-                          boxShadow: _newNoteColor == color
-                              ? [
-                                  BoxShadow(
-                                    color: Palette.accent.withValues(alpha: 0.35),
-                                    blurRadius: 4,
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: _newNoteColor == color
-                            ? const Center(
-                                child: Icon(
-                                  AppIcons.checkMark,
-                                  size: 8,
-                                  color: Colors.black87,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+          // Компактный триггер выбора цвета с выпадающим поповером (Apple HIG / Linear)
+          PopupMenuButton<String?>(
+            tooltip: _newNoteColor != null ? 'Цвет заметки: $_newNoteColor' : 'Выбрать цвет заметки',
+            offset: const Offset(0, 36),
+            color: skin.surface,
+            elevation: 4,
+            shadowColor: Colors.black.withValues(alpha: 0.12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: skin.isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.08),
+              ),
+            ),
+            padding: EdgeInsets.zero,
+            itemBuilder: (context) => [
+              _ComposerColorPickerEntry(
+                selectedColor: _newNoteColor,
+                skin: skin,
+              ),
             ],
+            onSelected: (val) {
+              setState(() {
+                _newNoteColor = val == '__RESET__' ? null : val;
+              });
+            },
+            child: _ColorPickerTriggerButton(
+              selectedColor: _newNoteColor,
+              skin: skin,
+            ),
           ),
 
           const SizedBox(width: 6),
@@ -1306,6 +1280,270 @@ class _QuickCaptureAddButtonState extends State<_QuickCaptureAddButton> {
                   color: iconColor,
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorPickerTriggerButton extends StatefulWidget {
+  final String? selectedColor;
+  final Skin skin;
+
+  const _ColorPickerTriggerButton({
+    required this.selectedColor,
+    required this.skin,
+  });
+
+  @override
+  State<_ColorPickerTriggerButton> createState() => _ColorPickerTriggerButtonState();
+}
+
+class _ColorPickerTriggerButtonState extends State<_ColorPickerTriggerButton> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = widget.skin;
+    final selectedColor = widget.selectedColor;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: _hover
+              ? (skin.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05))
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selectedColor != null
+                  ? QuickNoteColors.getSwatch(selectedColor)
+                  : Colors.transparent,
+              border: Border.all(
+                color: selectedColor != null
+                    ? Colors.black.withValues(alpha: 0.15)
+                    : skin.muted.withValues(alpha: 0.45),
+                width: 1.5,
+              ),
+            ),
+            child: selectedColor == null
+                ? Center(
+                    child: Container(
+                      width: 3,
+                      height: 3,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: skin.muted.withValues(alpha: 0.6),
+                      ),
+                    ),
+                  )
+                : null,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ComposerColorPickerEntry extends PopupMenuEntry<String?> {
+  final String? selectedColor;
+  final Skin skin;
+
+  const _ComposerColorPickerEntry({
+    required this.selectedColor,
+    required this.skin,
+  });
+
+  @override
+  double get height => 34.0;
+
+  @override
+  bool represents(String? value) => value == selectedColor;
+
+  @override
+  State<_ComposerColorPickerEntry> createState() => _ComposerColorPickerEntryState();
+}
+
+class _ComposerColorPickerEntryState extends State<_ComposerColorPickerEntry> {
+  @override
+  Widget build(BuildContext context) {
+    final skin = widget.skin;
+    final selected = widget.selectedColor;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Сброс к цвету по умолчанию
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop('__RESET__'),
+            child: Tooltip(
+              message: 'По умолчанию',
+              preferBelow: false,
+              verticalOffset: 14,
+              child: AnimatedScale(
+                scale: selected == null ? 1.15 : 1.0,
+                duration: const Duration(milliseconds: 120),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: skin.surfaceSubtle,
+                    border: Border.all(
+                      color: selected == null ? skin.text : skin.hairlineBorder,
+                      width: selected == null ? 1.5 : 1.0,
+                    ),
+                    boxShadow: selected == null
+                        ? [
+                            BoxShadow(
+                              color: skin.surface,
+                              spreadRadius: 2,
+                              blurRadius: 0,
+                            ),
+                            BoxShadow(
+                              color: skin.isDark
+                                  ? Colors.white.withValues(alpha: 0.35)
+                                  : Colors.black.withValues(alpha: 0.28),
+                              spreadRadius: 3.5,
+                              blurRadius: 0,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 4,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: skin.muted,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // 6 цветов
+          for (final color in QuickNoteColors.all)
+            if (color != QuickNoteColors.defaultColor)
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(color),
+                child: Tooltip(
+                  message: 'Цвет: $color',
+                  preferBelow: false,
+                  verticalOffset: 14,
+                  child: AnimatedScale(
+                    scale: selected == color ? 1.15 : 1.0,
+                    duration: const Duration(milliseconds: 120),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: QuickNoteColors.getSwatch(color),
+                        border: Border.all(
+                          color: skin.hairlineBorder,
+                          width: 1.0,
+                        ),
+                        boxShadow: selected == color
+                            ? [
+                                BoxShadow(
+                                  color: skin.surface,
+                                  spreadRadius: 2,
+                                  blurRadius: 0,
+                                ),
+                                BoxShadow(
+                                  color: skin.isDark
+                                      ? Colors.white.withValues(alpha: 0.35)
+                                      : Colors.black.withValues(alpha: 0.28),
+                                  spreadRadius: 3.5,
+                                  blurRadius: 0,
+                                ),
+                              ]
+                            : null,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResetFiltersButton extends StatefulWidget {
+  final VoidCallback onTap;
+  const _ResetFiltersButton({required this.onTap});
+
+  @override
+  State<_ResetFiltersButton> createState() => _ResetFiltersButtonState();
+}
+
+class _ResetFiltersButtonState extends State<_ResetFiltersButton> {
+  bool _hover = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+
+    final bgColor = skin.isDark
+        ? (_hover ? Colors.white.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.06))
+        : (_hover ? Colors.black.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.04));
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.xmark, size: 11, color: skin.muted),
+                const SizedBox(width: 5),
+                Text(
+                  'Сбросить фильтры',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: skin.isDark ? const Color(0xFFD1D5DB) : const Color(0xFF374151),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
