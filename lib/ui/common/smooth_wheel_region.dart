@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,7 +11,6 @@ import '../theme.dart';
 /// (Mac trackpad / Windows precision touchpad) or discrete mechanical mouse wheel notches.
 abstract final class _TrackpadTracker {
   static DateTime? _lastTime;
-  static double _lastDelta = 0;
 
   static bool isTrackpad(PointerScrollEvent event) {
     // 1. Explicit trackpad device kind in Flutter (PointerDeviceKind.trackpad)
@@ -37,7 +35,6 @@ abstract final class _TrackpadTracker {
     final now = DateTime.now();
     final last = _lastTime;
     _lastTime = now;
-    _lastDelta = delta;
 
     if (last != null) {
       final diffMs = now.difference(last).inMilliseconds;

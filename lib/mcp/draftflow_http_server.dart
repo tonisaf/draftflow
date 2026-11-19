@@ -36,7 +36,7 @@ class DraftFlowHttpServer extends ChangeNotifier {
     var config = await store.load() ??
         McpConfig(port: 0, token: McpConfig.newToken());
 
-    HttpServer? server;
+    late final HttpServer server;
     try {
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, config.port);
     } on SocketException {
@@ -49,17 +49,15 @@ class DraftFlowHttpServer extends ChangeNotifier {
       }
     }
 
-    if (server != null) {
-      config = config.withPort(server.port);
-      try {
-        await store.save(config);
-      } catch (e) {
-        _error = 'Failed to save mcp.json: $e';
-      }
-      _server = server;
-      _config = config;
-      unawaited(_listen(server, config));
+    config = config.withPort(server.port);
+    try {
+      await store.save(config);
+    } catch (e) {
+      _error = 'Failed to save mcp.json: $e';
     }
+    _server = server;
+    _config = config;
+    unawaited(_listen(server, config));
 
     notifyListeners();
   }

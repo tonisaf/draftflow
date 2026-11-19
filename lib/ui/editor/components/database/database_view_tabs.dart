@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Page;
 import 'package:notes_here/data/db/app_database.dart';
 import 'package:notes_here/l10n/locale_controller.dart';

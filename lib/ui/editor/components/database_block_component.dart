@@ -11,6 +11,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:appflowy_editor/appflowy_editor.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide Page, DataCell;
 import 'package:notes_here/data/db/app_database.dart';
 import 'package:notes_here/data/notes_repository.dart';
