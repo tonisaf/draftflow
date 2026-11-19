@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart'
     show
-        CupertinoButton,
         CupertinoIcons,
         CupertinoSlidingSegmentedControl;
 import 'package:flutter/material.dart';
@@ -106,37 +105,65 @@ Widget _general(
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      _Caption(l10n.settingsAppearance),
-      SettingsCard(
-        children: [
-          row(l10n.theme, l10n.themeHelp, _ThemeChoice(controller: theme)),
-          row(
-            l10n.language,
-            l10n.languageHelp,
-            _LanguageChoice(controller: locale),
-          ),
-        ],
-      ),
-      if (onOpenBackup != null) ...[
+      if (desktop) ...[
+        _Caption(l10n.settingsAppearance),
+        _ThemeCardsChoice(controller: theme),
         const SizedBox(height: 24),
         _Caption(l10n.workspaceSection),
         SettingsCard(
           children: [
             row(
-              l10n.workspaceBackup,
-              l10n.workspaceBackupHelp,
-              _ActionPill(
-                label: l10n.openAction,
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onOpenBackup();
-                },
+              l10n.language,
+              l10n.languageHelp,
+              _LanguageChoice(controller: locale),
+            ),
+            if (onOpenBackup != null)
+              row(
+                l10n.workspaceBackup,
+                l10n.workspaceBackupHelp,
+                _ActionPill(
+                  label: l10n.openAction,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    onOpenBackup();
+                  },
+                ),
               ),
+          ],
+        ),
+      ] else ...[
+        _Caption(l10n.settingsAppearance),
+        SettingsCard(
+          children: [
+            row(l10n.theme, l10n.themeHelp, _ThemeChoice(controller: theme)),
+            row(
+              l10n.language,
+              l10n.languageHelp,
+              _LanguageChoice(controller: locale),
             ),
           ],
         ),
+        if (onOpenBackup != null) ...[
+          const SizedBox(height: 24),
+          _Caption(l10n.workspaceSection),
+          SettingsCard(
+            children: [
+              row(
+                l10n.workspaceBackup,
+                l10n.workspaceBackupHelp,
+                _ActionPill(
+                  label: l10n.openAction,
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    onOpenBackup();
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
-      const SizedBox(height: 16),
+      const SizedBox(height: 14),
       Text(
         l10n.settingsAutoApply,
         style: TextStyle(fontSize: 12, color: context.skin.muted),
@@ -216,17 +243,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
                       child: SingleChildScrollView(
                         controller: _scroll,
                         physics: const ClampingScrollPhysics(),
-                        padding: const EdgeInsets.fromLTRB(32, 28, 32, 24),
+                        padding: const EdgeInsets.fromLTRB(36, 28, 36, 28),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Padding(
-                              padding: const EdgeInsets.only(right: 20),
+                              padding: const EdgeInsets.only(right: 24),
                               child: Text(
                                 current.$2,
                                 style: const TextStyle(
-                                  fontSize: 23,
-                                  fontWeight: FontWeight.w500,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w600,
                                   letterSpacing: -0.5,
                                 ),
                               ),
@@ -236,8 +263,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                               Text(
                                 l10n.generalSettingsHelp,
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 13,
                                   color: skin.muted,
+                                  height: 1.4,
                                 ),
                               ),
                             const SizedBox(height: 24),
@@ -271,9 +299,9 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     return LayoutBuilder(
                       builder: (context, constraints) {
                         final dialogWidth =
-                            constraints.maxWidth.clamp(320.0, 820.0);
+                            constraints.maxWidth.clamp(360.0, 840.0);
                         final dialogHeight =
-                            constraints.maxHeight.clamp(380.0, 620.0);
+                            constraints.maxHeight.clamp(420.0, 640.0);
                         return SizedBox(
                           key: const ValueKey('settings-window'),
                           width: dialogWidth,
@@ -285,22 +313,30 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             children: [
                               Container(
                                 key: const ValueKey('settings-sidebar'),
-                                width: 170,
-                                color: skin.surfaceVariant,
+                                width: 196,
+                                decoration: BoxDecoration(
+                                  color: skin.sidebar,
+                                  border: Border(
+                                    right: BorderSide(
+                                      color: skin.hairlineBorder,
+                                      width: 1.0,
+                                    ),
+                                  ),
+                                ),
                                 child: LayoutBuilder(
                                   builder: (context, constraints) =>
                                       SingleChildScrollView(
                                         physics: const ClampingScrollPhysics(),
                                         padding: const EdgeInsets.fromLTRB(
-                                          10,
-                                          20,
-                                          10,
+                                          12,
                                           18,
+                                          12,
+                                          14,
                                         ),
                                         child: ConstrainedBox(
                                           constraints: BoxConstraints(
                                             minHeight:
-                                                (constraints.maxHeight - 38)
+                                                (constraints.maxHeight - 32)
                                                     .clamp(0, double.infinity),
                                           ),
                                           child: Column(
@@ -324,9 +360,10 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                                     child: Text(
                                                       l10n.settings,
                                                       style: TextStyle(
-                                                        fontSize: 12,
+                                                        fontSize: 11,
                                                         fontWeight:
-                                                            FontWeight.w500,
+                                                            FontWeight.w600,
+                                                        letterSpacing: 0.6,
                                                         color: skin.muted,
                                                       ),
                                                     ),
@@ -334,14 +371,33 @@ class _SettingsDialogState extends State<SettingsDialog> {
                                                   navigation(),
                                                 ],
                                               ),
-                                              const Padding(
-                                                padding: EdgeInsets.fromLTRB(
-                                                  10,
-                                                  24,
-                                                  10,
-                                                  0,
-                                                ),
-                                                child: _AboutCompact(),
+                                              Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.stretch,
+                                                children: [
+                                                  const Padding(
+                                                    padding:
+                                                        EdgeInsets.fromLTRB(
+                                                          8,
+                                                          16,
+                                                          8,
+                                                          8,
+                                                        ),
+                                                    child: _AboutCompact(),
+                                                  ),
+                                                  _UserSidebarTile(
+                                                    account: AccountScope.maybeOf(context),
+                                                    onTap: () {
+                                                      final syncIdx = tabs.indexWhere(
+                                                        (t) => t.$1 == _SectionKind.sync,
+                                                      );
+                                                      if (syncIdx >= 0) {
+                                                        if (_scroll.hasClients) _scroll.jumpTo(0);
+                                                        setState(() => _tab = syncIdx);
+                                                      }
+                                                    },
+                                                  ),
+                                                ],
                                               ),
                                             ],
                                           ),
@@ -353,8 +409,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
                             ],
                           ),
                           Positioned(
-                            top: 12,
-                            right: 12,
+                            top: 14,
+                            right: 14,
                             child: CloseCross(
                               tooltip: l10n.close,
                               onTap: () => Navigator.pop(context),
@@ -401,6 +457,104 @@ class _AboutCompact extends StatelessWidget {
   }
 }
 
+class _UserSidebarTile extends StatefulWidget {
+  const _UserSidebarTile({
+    super.key,
+    required this.account,
+    required this.onTap,
+  });
+
+  final AccountController? account;
+  final VoidCallback onTap;
+
+  @override
+  State<_UserSidebarTile> createState() => _UserSidebarTileState();
+}
+
+class _UserSidebarTileState extends State<_UserSidebarTile> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final user = widget.account?.account;
+    final email = user?.email;
+    final hasUser = email != null && email.isNotEmpty;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          decoration: BoxDecoration(
+            color: _hovered ? skin.hover : Colors.transparent,
+            borderRadius: BorderRadius.circular(UiRadius.control),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: Palette.accent.withValues(
+                    alpha: skin.isDark ? 0.22 : 0.12,
+                  ),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: hasUser
+                    ? Text(
+                        email.substring(0, 1).toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: Palette.accent,
+                        ),
+                      )
+                    : Icon(
+                        CupertinoIcons.person,
+                        size: 15,
+                        color: skin.muted,
+                      ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      hasUser ? email : 'Локальный режим',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: skin.text,
+                      ),
+                    ),
+                    Text(
+                      hasUser ? 'Синхронизировано' : 'Оффлайн',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        color: skin.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.label,
@@ -418,7 +572,7 @@ class _NavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final skin = context.skin;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 3),
+      padding: const EdgeInsets.only(bottom: 2),
       child: QuietButton(
         label: label,
         selected: selected,
@@ -426,11 +580,11 @@ class _NavItem extends StatelessWidget {
         builder:
             (context, {required hover, required focus, required pressed}) =>
                 Container(
-                  constraints: const BoxConstraints(minHeight: 36),
+                  constraints: const BoxConstraints(minHeight: 34),
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 8,
+                    vertical: 7,
                   ),
                   decoration: BoxDecoration(
                     color: selected
@@ -438,7 +592,7 @@ class _NavItem extends StatelessWidget {
                         : hover || pressed
                         ? skin.hover
                         : Colors.transparent,
-                    borderRadius: BorderRadius.circular(UiRadius.inner),
+                    borderRadius: BorderRadius.circular(UiRadius.control),
                     border: focus ? Border.all(color: skin.accentText) : null,
                   ),
                   child: Row(
@@ -448,7 +602,7 @@ class _NavItem extends StatelessWidget {
                         size: 16,
                         color: selected ? Palette.accent : skin.muted,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 9),
                       Expanded(
                         child: Text(
                           label,
@@ -599,12 +753,83 @@ class _Caption extends StatelessWidget {
     child: Text(
       text,
       style: TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
+        fontSize: 14,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.2,
         color: context.skin.text,
       ),
     ),
   );
+}
+
+class _ThemeCardsChoice extends StatelessWidget {
+  const _ThemeCardsChoice({required this.controller});
+
+  final ThemeController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final current = controller.mode;
+    final isRu = Localizations.localeOf(context).languageCode == 'ru';
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 440;
+        final cards = [
+          SelectableOptionCard(
+            title: l10n.themeAuto,
+            description: isRu
+                ? 'Следовать теме операционной системы'
+                : 'Follow operating system appearance',
+            icon: CupertinoIcons.device_desktop,
+            selected: current == ThemeMode.system,
+            onTap: () => controller.setMode(ThemeMode.system),
+          ),
+          SelectableOptionCard(
+            title: l10n.themeLightShort,
+            description: isRu
+                ? 'Контрастный дневной интерфейс'
+                : 'Crisp high-contrast day palette',
+            icon: CupertinoIcons.sun_max,
+            selected: current == ThemeMode.light,
+            onTap: () => controller.setMode(ThemeMode.light),
+          ),
+          SelectableOptionCard(
+            title: l10n.themeDarkShort,
+            description: isRu
+                ? 'Комфортная ночная палитра'
+                : 'Comfortable low-glare night palette',
+            icon: CupertinoIcons.moon,
+            selected: current == ThemeMode.dark,
+            onTap: () => controller.setMode(ThemeMode.dark),
+          ),
+        ];
+
+        if (compact) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (i, card) in cards.indexed) ...[
+                if (i > 0) const SizedBox(height: 8),
+                card,
+              ],
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final (i, card) in cards.indexed) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: card),
+            ],
+          ],
+        );
+      },
+    );
+  }
 }
 
 class _ThemeChoice extends StatelessWidget {
@@ -692,27 +917,51 @@ class _LanguageChoice extends StatelessWidget {
   }
 }
 
-class _ActionPill extends StatelessWidget {
+class _ActionPill extends StatefulWidget {
   const _ActionPill({required this.label, required this.onTap});
 
   final String label;
   final VoidCallback onTap;
 
   @override
+  State<_ActionPill> createState() => _ActionPillState();
+}
+
+class _ActionPillState extends State<_ActionPill> {
+  bool _hovered = false;
+
+  @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return CupertinoButton(
-      onPressed: onTap,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-      minSize: 32,
-      color: Color.alphaBlend(skin.surfaceVariant, skin.surface),
-      borderRadius: BorderRadius.circular(UiRadius.control),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
-          color: skin.text,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 120),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+          constraints: const BoxConstraints(minHeight: 32),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: _hovered
+                ? skin.hover
+                : Color.alphaBlend(skin.surfaceVariant, skin.surface),
+            borderRadius: BorderRadius.circular(UiRadius.control),
+            border: Border.all(
+              color: _hovered ? skin.divider : skin.hairlineBorder,
+              width: 1,
+            ),
+          ),
+          child: Text(
+            widget.label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: skin.text,
+            ),
+          ),
         ),
       ),
     );

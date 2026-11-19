@@ -62,9 +62,9 @@ class _ModulesSettingsTabState extends State<ModulesSettingsTab> {
 
     return Container(
       decoration: BoxDecoration(
-        color: skin.sidebar,
-        borderRadius: BorderRadius.circular(UiRadius.card),
-        border: Border.all(color: skin.outline),
+        color: skin.surfaceSubtle,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: skin.hairlineBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -430,3 +430,90 @@ class SettingToggleRow extends StatelessWidget {
     );
   }
 }
+
+/// A selectable card for choosing options visually (inspired by Antigravity's Interface Layout cards).
+/// Displays an icon, bold title, and description, with an active accent border and soft tint.
+class SelectableOptionCard extends StatefulWidget {
+  const SelectableOptionCard({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final String description;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  State<SelectableOptionCard> createState() => _SelectableOptionCardState();
+}
+
+class _SelectableOptionCardState extends State<SelectableOptionCard> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final isSelected = widget.selected;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? Palette.accent.withValues(alpha: skin.isDark ? 0.12 : 0.06)
+                : (_hovered ? skin.hover : skin.surfaceSubtle),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected
+                  ? Palette.accent
+                  : (_hovered ? skin.divider : skin.hairlineBorder),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                widget.icon,
+                size: 20,
+                color: isSelected ? Palette.accent : skin.muted,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: skin.text,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                widget.description,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: skin.muted,
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
