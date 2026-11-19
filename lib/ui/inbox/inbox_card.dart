@@ -251,7 +251,7 @@ class _InboxCardState extends State<InboxCard> {
     );
   }
 
-  Widget _buildDomainChip(String domain, String? faviconUrl, AppSkin skin) {
+  Widget _buildDomainChip(String domain, String? faviconUrl, Skin skin) {
     return GestureDetector(
       onTap: widget.onSelectDomain != null ? () => widget.onSelectDomain!(domain) : null,
       child: Container(
@@ -298,7 +298,7 @@ class _InboxCardState extends State<InboxCard> {
     );
   }
 
-  Widget _buildTypeBadge(InboxItemType type, AppSkin skin) {
+  Widget _buildTypeBadge(InboxItemType type, Skin skin) {
     Color bg;
     Color fg;
 

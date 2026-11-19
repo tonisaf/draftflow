@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide Page;
 
 import '../../data/db/app_database.dart';
 import '../../data/notes_repository.dart';
@@ -462,7 +462,7 @@ class _InboxViewState extends State<InboxView> {
     required String title,
     required int count,
     required bool isSelected,
-    required AppSkin skin,
+    required Skin skin,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
@@ -524,7 +524,7 @@ class _InboxViewState extends State<InboxView> {
     required String label,
     required int count,
     required bool isActive,
-    required AppSkin skin,
+    required Skin skin,
     required VoidCallback onTap,
     IconData? icon,
   }) {
@@ -582,7 +582,7 @@ class _InboxViewState extends State<InboxView> {
   Widget _buildDomainDropdown(
     List<String> sortedDomains,
     Map<String, int> domainCounts,
-    AppSkin skin,
+    Skin skin,
   ) {
     final hasSelection = _selectedDomainFilter != null;
 
@@ -682,7 +682,7 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 
-  Widget _buildSortButton(AppSkin skin) {
+  Widget _buildSortButton(Skin skin) {
     return GestureDetector(
       onTap: () => setState(() => _sortByDomain = !_sortByDomain),
       child: Container(

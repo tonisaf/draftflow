@@ -300,7 +300,7 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
     );
   }
 
-  Widget _buildTypePicker(AppSkin skin) {
+  Widget _buildTypePicker(Skin skin) {
     return PopupMenuButton<InboxItemType>(
       tooltip: 'Тип материала',
       offset: const Offset(0, 36),
@@ -353,7 +353,7 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
     );
   }
 
-  Widget _buildSubmitButton(AppSkin skin) {
+  Widget _buildSubmitButton(Skin skin) {
     final hasText = _controller.text.trim().isNotEmpty || _extractedMetadata != null;
 
     return GestureDetector(

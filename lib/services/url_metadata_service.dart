@@ -84,11 +84,11 @@ class UrlMetadataService {
 
         // OG Image: <meta property="og:image" content="..."
         final ogImageMatch = RegExp(
-          r'<meta\s+[^>]*property=["'']og:image["'']\s+content=["'']([^"'']+)["'']',
+          r"""<meta\s+[^>]*property=["']og:image["']\s+content=["']([^"']+)["']""",
           caseSensitive: false,
         ).firstMatch(body) ??
             RegExp(
-              r'<meta\s+[^>]*content=["'']([^"'']+)["'']\s+property=["'']og:image["'']',
+              r"""<meta\s+[^>]*content=["']([^"']+)["']\s+property=["']og:image["']""",
               caseSensitive: false,
             ).firstMatch(body);
 
@@ -106,11 +106,11 @@ class UrlMetadataService {
 
         // OG Title or <title>
         final ogTitleMatch = RegExp(
-          r'<meta\s+[^>]*property=["'']og:title["'']\s+content=["'']([^"'']+)["'']',
+          r"""<meta\s+[^>]*property=["']og:title["']\s+content=["']([^"']+)["']""",
           caseSensitive: false,
         ).firstMatch(body) ??
             RegExp(
-              r'<meta\s+[^>]*content=["'']([^"'']+)["'']\s+property=["'']og:title["'']',
+              r"""<meta\s+[^>]*content=["']([^"']+)["']\s+property=["']og:title["']""",
               caseSensitive: false,
             ).firstMatch(body);
 
@@ -118,7 +118,7 @@ class UrlMetadataService {
           title = _cleanHtmlEntities(ogTitleMatch.group(1) ?? domain);
         } else {
           final titleTagMatch = RegExp(
-            r'<title[^>]*>([^<]+)<\/title>',
+            r'<title[^>]*>([^<]+)</title>',
             caseSensitive: false,
           ).firstMatch(body);
           if (titleTagMatch != null) {
@@ -128,11 +128,11 @@ class UrlMetadataService {
 
         // OG Description or <meta name="description">
         final ogDescMatch = RegExp(
-          r'<meta\s+[^>]*property=["'']og:description["'']\s+content=["'']([^"'']+)["'']',
+          r"""<meta\s+[^>]*property=["']og:description["']\s+content=["']([^"']+)["']""",
           caseSensitive: false,
         ).firstMatch(body) ??
             RegExp(
-              r'<meta\s+[^>]*name=["'']description["'']\s+content=["'']([^"'']+)["'']',
+              r"""<meta\s+[^>]*name=["']description["']\s+content=["']([^"']+)["']""",
               caseSensitive: false,
             ).firstMatch(body);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/material.dart' show Icons;
 
 /// Shared outline action icons, matching Tasks Here's Cupertino icon family.
 /// User-selected page emoji and cover artwork remain content.
@@ -28,9 +29,7 @@ abstract final class AppIcons {
   static const checkmarkCircle = CupertinoIcons.checkmark_circle;
   static const checkmarkSquare = CupertinoIcons.checkmark_square;
   static const arrowUpRight = CupertinoIcons.arrow_up_right;
-  static const archivebox = CupertinoIcons.archivebox;
   static const checkmark = CupertinoIcons.checkmark;
-  static const checkmarkCircle = CupertinoIcons.checkmark_circle;
   static const chevronDown = CupertinoIcons.chevron_down;
   static const chevronLeft = CupertinoIcons.chevron_left;
   static const chevronLeftSlashChevronRight =
@@ -56,7 +55,7 @@ abstract final class AppIcons {
   static const lock = CupertinoIcons.lock;
   static const moon = CupertinoIcons.moon;
   static const number = CupertinoIcons.number;
-  static const palette = CupertinoIcons.paintpalette;
+  static const palette = Icons.palette_outlined;
   static const pencil = CupertinoIcons.pencil;
   static const person = CupertinoIcons.person;
   static const personCropCircle = CupertinoIcons.person_crop_circle;

@@ -280,7 +280,16 @@ class NotesRepository {
     final updatedProps = mergeInboxItemToProperties(page.properties, updatedMetadata);
     await db.replaceRowProperties(pageId, updatedProps);
     if (targetParentId != null) {
-      await movePage(pageId, targetParentId: targetParentId);
+      await movePage(pageId, targetParentId);
+    }
+  }
+
+  Future<List<Block>> getPageBlocks(String pageId) async {
+    try {
+      final snapshot = await db.getPageBlocksSnapshot(pageId);
+      return snapshot.blocks;
+    } catch (_) {
+      return const [];
     }
   }
 
