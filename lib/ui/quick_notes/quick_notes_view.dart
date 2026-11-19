@@ -53,12 +53,23 @@ class _QuickNotesViewState extends State<QuickNotesView> {
   List<QuickNoteCardData>? _loadedCards;
   StreamSubscription<List<Page>>? _subscription;
   int _loadGeneration = 0;
+  String? _newNoteColor;
 
   @override
   void initState() {
     super.initState();
     _loadedCards = _globalCardsCache;
+    _inputController.addListener(_handleInputChange);
+    _inputFocusNode.addListener(_handleFocusChange);
     _subscribeToPages();
+  }
+
+  void _handleInputChange() {
+    if (mounted) setState(() {});
+  }
+
+  void _handleFocusChange() {
+    if (mounted) setState(() {});
   }
 
   @override
@@ -110,6 +121,8 @@ class _QuickNotesViewState extends State<QuickNotesView> {
   @override
   void dispose() {
     _subscription?.cancel();
+    _inputController.removeListener(_handleInputChange);
+    _inputFocusNode.removeListener(_handleFocusChange);
     _searchController.dispose();
     _inputController.dispose();
     _inputFocusNode.dispose();
@@ -145,12 +158,14 @@ class _QuickNotesViewState extends State<QuickNotesView> {
         isCode: _createAsCode,
         isPinned: _createAsPinned,
         tag: _selectedTag ?? (_createAsCode ? 'Код' : null),
+        cardColor: _newNoteColor,
       );
 
       if (mounted) {
         setState(() {
           _inputController.clear();
           _selectedTag = null;
+          _newNoteColor = null;
           _createAsPinned = false;
           _createAsCode = false;
         });
@@ -293,7 +308,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                     ? UiSpace.s16
                     : math.max(
                         UiSpace.s24,
-                        (constraints.maxWidth - UiLayout.editorWideMaxWidth) / 2,
+                        (constraints.maxWidth - 960.0) / 2,
                       );
                 final gridWidth = constraints.maxWidth - (horizontalPadding * 2);
 
@@ -382,100 +397,113 @@ class _QuickNotesViewState extends State<QuickNotesView> {
 
                     const SizedBox(height: UiSpace.s16),
 
-                    // Фильтр-таблетки и палитра цветов
-                    Wrap(
-                      spacing: UiSpace.s6,
-                      runSpacing: UiSpace.s6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    // Фильтр-таблетки и палитра цветов на одной линии (Apple HIG / Linear)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        _buildFilterChip('Все (${allCards.length})', QuickNoteFilter.all),
-                        _buildFilterChip(
-                          '${context.l10n.pinned} (${allCards.where((c) => c.settings.isPinned).length})',
-                          QuickNoteFilter.pinned,
-                          icon: AppIcons.pin,
-                        ),
-                        _buildFilterChip(
-                          'Код & Пресеты (${allCards.where((c) => c.codeSnippet != null).length})',
-                          QuickNoteFilter.code,
-                          icon: AppIcons.bolt,
-                        ),
-                        _buildFilterChip(
-                          'Чек-листы (${allCards.where((c) => c.todoItems.isNotEmpty).length})',
-                          QuickNoteFilter.checklists,
-                          icon: AppIcons.checkmarkSquare,
-                        ),
-                        if (_hasActiveFilters)
-                          GestureDetector(
-                            onTap: _clearAllFilters,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: UiSpace.s10,
-                                vertical: UiSpace.s5,
-                              ),
-                              decoration: ShapeDecoration(
-                                color: skin.hover,
-                                shape: const StadiumBorder(),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(AppIcons.xmark, size: UiSpace.s11, color: skin.muted),
-                                  const SizedBox(width: UiSpace.s4),
-                                  Text(
-                                    'Сбросить фильтры',
-                                    style: TextStyle(
-                                      fontSize: UiType.caption,
-                                      color: skin.muted,
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildFilterChip(
+                                  'Все',
+                                  allCards.length,
+                                  QuickNoteFilter.all,
+                                ),
+                                const SizedBox(width: 4),
+                                _buildFilterChip(
+                                  context.l10n.pinned,
+                                  allCards.where((c) => c.settings.isPinned).length,
+                                  QuickNoteFilter.pinned,
+                                  icon: AppIcons.pin,
+                                ),
+                                const SizedBox(width: 4),
+                                _buildFilterChip(
+                                  'Код & Пресеты',
+                                  allCards.where((c) => c.codeSnippet != null).length,
+                                  QuickNoteFilter.code,
+                                  icon: AppIcons.bolt,
+                                ),
+                                const SizedBox(width: 4),
+                                _buildFilterChip(
+                                  'Чек-листы',
+                                  allCards.where((c) => c.todoItems.isNotEmpty).length,
+                                  QuickNoteFilter.checklists,
+                                  icon: AppIcons.checkmarkSquare,
+                                ),
+
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 14,
+                                  color: skin.divider,
+                                ),
+                                const SizedBox(width: 8),
+
+                                _buildColorFilterDots(skin),
+
+                                if (_hasActiveFilters) ...[
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: _clearAllFilters,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: ShapeDecoration(
+                                        color: skin.hover,
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(AppIcons.xmark, size: 10, color: skin.muted),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Сбросить',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: skin.muted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
-                              ),
+                              ],
                             ),
                           ),
+                        ),
                       ],
                     ),
 
-                    // Строка фильтрации по тегам и цветам
+                    // Строка фильтрации по тегам
                     if (sortedTags.isNotEmpty || _selectedFilterTag != null) ...[
-                      const SizedBox(height: UiSpace.s10),
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  for (final tag in sortedTags) ...[
-                                    _buildTagChip(
-                                      tag,
-                                      allCards.where((c) => c.hasTag(tag)).length,
-                                      _selectedFilterTag == tag,
-                                      skin,
-                                    ),
-                                    const SizedBox(width: UiSpace.s6),
-                                  ],
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: UiSpace.s12),
-                          _buildColorFilterDots(skin),
-                        ],
-                      ),
-                    ] else ...[
                       const SizedBox(height: UiSpace.s8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          _buildColorFilterDots(skin),
-                        ],
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final tag in sortedTags) ...[
+                              _buildTagChip(
+                                tag,
+                                allCards.where((c) => c.hasTag(tag)).length,
+                                _selectedFilterTag == tag,
+                                skin,
+                              ),
+                              const SizedBox(width: UiSpace.s6),
+                            ],
+                          ],
+                        ),
                       ),
                     ],
 
                     const SizedBox(height: UiSpace.s16),
 
-                    // Панель быстрого добавления заметки в точном стиле скриншота пользователя
+                    // Панель быстрого добавления заметки (Smart Input)
                     _buildQuickCaptureBar(skin),
 
                     const SizedBox(height: UiSpace.s20),
@@ -520,14 +548,8 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                         ),
                       ),
                     ] else if (filteredCards.isEmpty) ...[
-                      const SizedBox(height: UiSpace.s60),
-                      Center(
-                        child: Text(
-                          _searchQuery.isNotEmpty
-                              ? 'Ничего не найдено по запросу "$_searchQuery"'
-                              : 'Здесь пока нет заметок.\nВведите текст в строке выше и нажмите +, чтобы сохранить.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
+                      _buildEmptyState(skin),
+                    ],
                             fontSize: UiType.body,
                             color: skin.muted,
                             height: 1.5,
@@ -631,11 +653,12 @@ class _QuickNotesViewState extends State<QuickNotesView> {
               child: Tooltip(
                 message: _selectedColor == color ? 'Снять фильтр цвета' : 'Фильтр по цвету: $color',
                 preferBelow: false,
-                verticalOffset: UiSpace.s14,
-                child: Container(
-                  margin: const EdgeInsets.only(right: UiSpace.s6),
-                  width: UiSpace.s20,
-                  height: UiSpace.s20,
+                verticalOffset: 14,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 140),
+                  margin: const EdgeInsets.only(right: 5),
+                  width: 16,
+                  height: 16,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: QuickNoteColors.getSwatch(color),
@@ -658,7 +681,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                       ? const Center(
                           child: Icon(
                             AppIcons.checkMark,
-                            size: UiSpace.s10,
+                            size: 9,
                             color: Colors.black87,
                           ),
                         )
@@ -672,42 +695,76 @@ class _QuickNotesViewState extends State<QuickNotesView> {
     );
   }
 
-  Widget _buildFilterChip(String label, QuickNoteFilter filter, {IconData? icon}) {
+  Widget _buildFilterChip(
+    String label,
+    int count,
+    QuickNoteFilter filter, {
+    IconData? icon,
+  }) {
     final skin = context.skin;
     final isSelected = _activeFilter == filter;
 
-    return GestureDetector(
-      onTap: () => setState(() => _activeFilter = filter),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: UiSpace.s12, vertical: UiSpace.s5),
-        decoration: ShapeDecoration(
-          color: isSelected ? Palette.accent.withValues(alpha: 0.12) : skin.hover,
-          shape: StadiumBorder(
-            side: BorderSide(
-              color: isSelected ? Palette.accent.withValues(alpha: 0.35) : skin.hairlineBorder,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => setState(() => _activeFilter = filter),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: ShapeDecoration(
+            color: isSelected
+                ? Palette.accent.withValues(alpha: 0.10)
+                : Colors.transparent,
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: isSelected
+                    ? Palette.accent.withValues(alpha: 0.25)
+                    : Colors.transparent,
+              ),
             ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: UiSpace.s12,
-                color: isSelected ? skin.accentText : skin.muted,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 13,
+                  color: isSelected ? Palette.accent : skin.muted,
+                ),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: UiType.caption,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? Palette.accent : skin.muted,
+                ),
               ),
-              const SizedBox(width: UiSpace.s4),
+              if (count > 0 || isSelected) ...[
+                const SizedBox(width: 5),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Palette.accent.withValues(alpha: 0.16)
+                        : (skin.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: UiType.tabular,
+                      color: isSelected ? Palette.accent : skin.muted,
+                    ),
+                  ),
+                ),
+              ],
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: UiType.caption,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? skin.accentText : skin.muted,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -765,20 +822,119 @@ class _QuickNotesViewState extends State<QuickNotesView> {
     );
   }
 
-  Widget _buildQuickCaptureBar(Skin skin) {
-    return Container(
-      decoration: ShapeDecoration(
-        color: skin.card,
-        shape: StadiumBorder(
-          side: BorderSide(
-            color: skin.hairlineBorder,
-          ),
+  Widget _buildEmptyState(Skin skin) {
+    final isSearching = _searchQuery.isNotEmpty;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 48),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: skin.isDark
+                    ? const Color(0xFF26282C)
+                    : const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: skin.hairlineBorder),
+              ),
+              child: Center(
+                child: Icon(
+                  isSearching ? AppIcons.search : AppIcons.docText,
+                  size: 24,
+                  color: skin.muted,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              isSearching ? 'Ничего не найдено' : 'Здесь пока нет заметок',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: skin.text,
+              ),
+            ),
+            const SizedBox(height: 6),
+            if (isSearching)
+              Text(
+                'По запросу "$_searchQuery" ничего не найдено',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: skin.muted,
+                ),
+              )
+            else
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Введите текст выше и нажмите ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: skin.muted,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: skin.isDark
+                          ? const Color(0xFF2D3035)
+                          : const Color(0xFFE5E7EB),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: skin.hairlineBorder),
+                    ),
+                    child: Text(
+                      '↵ Enter',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: skin.text,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    ', чтобы сохранить',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: skin.muted,
+                    ),
+                  ),
+                ],
+              ),
+          ],
         ),
-        shadows: [
+      ),
+    );
+  }
+
+  Widget _buildQuickCaptureBar(Skin skin) {
+    final hasFocus = _inputFocusNode.hasFocus;
+    final hasText = _inputController.text.trim().isNotEmpty;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      height: 48,
+      decoration: BoxDecoration(
+        color: skin.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: hasFocus
+              ? Palette.accent.withValues(alpha: 0.45)
+              : skin.hairlineBorder,
+          width: hasFocus ? 1.5 : 1.0,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: skin.shadow.withValues(alpha: 0.05),
-            blurRadius: 14,
-            offset: const Offset(0, 3),
+            color: hasFocus
+                ? Palette.accent.withValues(alpha: 0.12)
+                : skin.shadow.withValues(alpha: 0.04),
+            blurRadius: hasFocus ? 12 : 8,
+            offset: const Offset(0, 2),
           ),
           BoxShadow(
             color: skin.shadow.withValues(alpha: 0.02),
@@ -787,10 +943,10 @@ class _QuickNotesViewState extends State<QuickNotesView> {
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(UiSpace.s14, UiSpace.s5, UiSpace.s6, UiSpace.s5),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          // Левая иконка с плюсом в круге (⊕)
+          // Левая нейтральная иконка пера с меню опций
           PopupMenuButton<String>(
             tooltip: 'Опции заметки',
             offset: const Offset(0, 36),
@@ -815,10 +971,10 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                   children: [
                     Icon(
                       _createAsPinned ? AppIcons.pinFill : AppIcons.pin,
-                      size: UiSpace.s14,
+                      size: 14,
                       color: _createAsPinned ? Palette.accent : skin.muted,
                     ),
-                    const SizedBox(width: UiSpace.s8),
+                    const SizedBox(width: 8),
                     Text(
                       _createAsPinned ? 'Закрепить (вкл)' : 'Закрепить сразу',
                       style: TextStyle(fontSize: UiType.caption, color: skin.text),
@@ -832,10 +988,10 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                   children: [
                     Icon(
                       AppIcons.bolt,
-                      size: UiSpace.s14,
+                      size: 14,
                       color: _createAsCode ? Palette.accent : skin.muted,
                     ),
-                    const SizedBox(width: UiSpace.s8),
+                    const SizedBox(width: 8),
                     Text(
                       _createAsCode ? 'Формат: Код (вкл)' : 'Формат: Код / Пресет',
                       style: TextStyle(fontSize: UiType.caption, color: skin.text),
@@ -845,24 +1001,24 @@ class _QuickNotesViewState extends State<QuickNotesView> {
               ),
             ],
             child: Padding(
-              padding: const EdgeInsets.all(UiSpace.s4),
+              padding: const EdgeInsets.all(4),
               child: Icon(
                 _createAsPinned
                     ? AppIcons.pinFill
-                    : (_createAsCode ? AppIcons.bolt : AppIcons.plusCircle),
-                size: 20,
+                    : (_createAsCode ? AppIcons.bolt : AppIcons.pencil),
+                size: 18,
                 color: (_createAsPinned || _createAsCode) ? Palette.accent : skin.muted,
               ),
             ),
           ),
 
-          const SizedBox(width: UiSpace.s10),
+          const SizedBox(width: 8),
 
           // Индикаторы активных режимов
           if (_createAsCode) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: UiSpace.s8, vertical: UiSpace.s3),
-              margin: const EdgeInsets.only(right: UiSpace.s6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              margin: const EdgeInsets.only(right: 6),
               decoration: ShapeDecoration(
                 color: Palette.accent.withValues(alpha: 0.15),
                 shape: const StadiumBorder(),
@@ -870,20 +1026,20 @@ class _QuickNotesViewState extends State<QuickNotesView> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(AppIcons.bolt, size: UiSpace.s12, color: Palette.accent),
-                  const SizedBox(width: UiSpace.s4),
+                  const Icon(AppIcons.bolt, size: 11, color: Palette.accent),
+                  const SizedBox(width: 4),
                   const Text(
                     'Код',
                     style: TextStyle(
-                      fontSize: UiType.caption,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Palette.accent,
                     ),
                   ),
-                  const SizedBox(width: UiSpace.s4),
+                  const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => setState(() => _createAsCode = false),
-                    child: const Icon(AppIcons.xmark, size: UiSpace.s10, color: Palette.accent),
+                    child: const Icon(AppIcons.xmark, size: 10, color: Palette.accent),
                   ),
                 ],
               ),
@@ -891,8 +1047,8 @@ class _QuickNotesViewState extends State<QuickNotesView> {
           ],
           if (_createAsPinned) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: UiSpace.s8, vertical: UiSpace.s3),
-              margin: const EdgeInsets.only(right: UiSpace.s6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              margin: const EdgeInsets.only(right: 6),
               decoration: ShapeDecoration(
                 color: Palette.accent.withValues(alpha: 0.15),
                 shape: const StadiumBorder(),
@@ -900,20 +1056,20 @@ class _QuickNotesViewState extends State<QuickNotesView> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(AppIcons.pinFill, size: UiSpace.s12, color: Palette.accent),
-                  const SizedBox(width: UiSpace.s4),
+                  const Icon(AppIcons.pinFill, size: 11, color: Palette.accent),
+                  const SizedBox(width: 4),
                   const Text(
                     'Закрепить',
                     style: TextStyle(
-                      fontSize: UiType.caption,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Palette.accent,
                     ),
                   ),
-                  const SizedBox(width: UiSpace.s4),
+                  const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => setState(() => _createAsPinned = false),
-                    child: const Icon(AppIcons.xmark, size: UiSpace.s10, color: Palette.accent),
+                    child: const Icon(AppIcons.xmark, size: 10, color: Palette.accent),
                   ),
                 ],
               ),
@@ -941,7 +1097,7 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                 ),
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(vertical: UiSpace.s8),
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
               ),
               textInputAction: TextInputAction.done,
               onSubmitted: (_) => _handleSaveQuickNote(),
@@ -951,8 +1107,8 @@ class _QuickNotesViewState extends State<QuickNotesView> {
           // Выбранный тег
           if (_selectedTag != null) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: UiSpace.s8, vertical: UiSpace.s3),
-              margin: const EdgeInsets.only(right: UiSpace.s6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              margin: const EdgeInsets.only(right: 6),
               decoration: ShapeDecoration(
                 color: Palette.accent.withValues(alpha: 0.12),
                 shape: const StadiumBorder(),
@@ -963,20 +1119,79 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                   Text(
                     '#$_selectedTag',
                     style: const TextStyle(
-                      fontSize: UiType.caption,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Palette.accent,
                     ),
                   ),
-                  const SizedBox(width: UiSpace.s4),
+                  const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => setState(() => _selectedTag = null),
-                    child: const Icon(AppIcons.xmark, size: UiSpace.s10, color: Palette.accent),
+                    child: const Icon(AppIcons.xmark, size: 10, color: Palette.accent),
                   ),
                 ],
               ),
             ),
           ],
+
+          // Палитра выбора цвета для новой заметки
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final color in QuickNoteColors.all) ...[
+                if (color != QuickNoteColors.defaultColor) ...[
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _newNoteColor = _newNoteColor == color ? null : color;
+                      });
+                    },
+                    child: Tooltip(
+                      message: _newNoteColor == color
+                          ? 'Сбросить цвет заметки'
+                          : 'Цвет заметки: $color',
+                      preferBelow: false,
+                      verticalOffset: 14,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                        width: 14,
+                        height: 14,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: QuickNoteColors.getSwatch(color),
+                          border: Border.all(
+                            color: _newNoteColor == color
+                                ? Palette.accent
+                                : skin.hairlineBorder,
+                            width: _newNoteColor == color ? 2.0 : 1.0,
+                          ),
+                          boxShadow: _newNoteColor == color
+                              ? [
+                                  BoxShadow(
+                                    color: Palette.accent.withValues(alpha: 0.35),
+                                    blurRadius: 4,
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: _newNoteColor == color
+                            ? const Center(
+                                child: Icon(
+                                  AppIcons.checkMark,
+                                  size: 8,
+                                  color: Colors.black87,
+                                ),
+                              )
+                            : null,
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ],
+          ),
+
+          const SizedBox(width: 6),
 
           // Иконка тега (🏷)
           PopupMenuButton<String>(
@@ -994,27 +1209,30 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                   value: t,
                   child: Row(
                     children: [
-                      Icon(AppIcons.tag, size: UiSpace.s12, color: skin.muted),
-                      const SizedBox(width: UiSpace.s8),
+                      Icon(AppIcons.tag, size: 12, color: skin.muted),
+                      const SizedBox(width: 8),
                       Text(t, style: TextStyle(fontSize: UiType.caption, color: skin.text)),
                     ],
                   ),
                 ),
             ],
             child: Padding(
-              padding: const EdgeInsets.all(UiSpace.s6),
+              padding: const EdgeInsets.all(6),
               child: Icon(
                 AppIcons.tag,
-                size: 20,
+                size: 18,
                 color: _selectedTag != null ? Palette.accent : skin.muted,
               ),
             ),
           ),
 
-          const SizedBox(width: UiSpace.s6),
+          const SizedBox(width: 4),
 
-          // Круглая кнопка с плюсом (+) в точном стиле скриншота
-          _QuickCaptureAddButton(onTap: _handleSaveQuickNote),
+          // Акцентная кнопка сохранения заметки
+          _QuickCaptureAddButton(
+            isEnabled: hasText,
+            onTap: _handleSaveQuickNote,
+          ),
         ],
       ),
     );
@@ -1022,9 +1240,13 @@ class _QuickNotesViewState extends State<QuickNotesView> {
 }
 
 class _QuickCaptureAddButton extends StatefulWidget {
+  final bool isEnabled;
   final VoidCallback onTap;
 
-  const _QuickCaptureAddButton({required this.onTap});
+  const _QuickCaptureAddButton({
+    required this.isEnabled,
+    required this.onTap,
+  });
 
   @override
   State<_QuickCaptureAddButton> createState() => _QuickCaptureAddButtonState();
@@ -1037,17 +1259,22 @@ class _QuickCaptureAddButtonState extends State<_QuickCaptureAddButton> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isEnabled = widget.isEnabled;
 
-    final bgColor = skin.isDark
-        ? (_hover ? const Color(0xFF383B41) : const Color(0xFF26282C))
-        : (_hover ? const Color(0xFFE5E7EB) : const Color(0xFFF3F4F6));
+    final bgColor = isEnabled
+        ? Palette.accent
+        : (skin.isDark
+            ? (_hover ? const Color(0xFF383B41) : const Color(0xFF26282C))
+            : (_hover ? const Color(0xFFE5E7EB) : const Color(0xFFF3F4F6)));
 
-    final borderColor = skin.isDark
-        ? const Color(0xFF42464D)
-        : const Color(0xFFE5E7EB);
+    final borderColor = isEnabled
+        ? Palette.accent
+        : (skin.isDark ? const Color(0xFF42464D) : const Color(0xFFE5E7EB));
+
+    final iconColor = isEnabled ? Colors.white : skin.muted;
 
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
+      cursor: isEnabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
@@ -1056,21 +1283,35 @@ class _QuickCaptureAddButtonState extends State<_QuickCaptureAddButton> {
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
         child: AnimatedScale(
-          scale: _pressed ? 0.94 : 1.0,
+          scale: _pressed ? 0.94 : (_hover && isEnabled ? 1.05 : 1.0),
           duration: const Duration(milliseconds: 100),
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: bgColor,
-              border: Border.all(color: borderColor),
-            ),
-            child: Center(
-              child: Icon(
-                AppIcons.plus,
-                size: 18,
-                color: skin.text,
+          child: Tooltip(
+            message: isEnabled ? 'Сохранить заметку (Enter)' : 'Новая заметка',
+            preferBelow: false,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: bgColor,
+                border: Border.all(color: borderColor),
+                boxShadow: isEnabled
+                    ? [
+                        BoxShadow(
+                          color: Palette.accent.withValues(alpha: 0.35),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: Icon(
+                  isEnabled ? AppIcons.arrowUp : AppIcons.plus,
+                  size: 16,
+                  color: iconColor,
+                ),
               ),
             ),
           ),
