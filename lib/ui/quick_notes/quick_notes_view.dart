@@ -550,13 +550,6 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                     ] else if (filteredCards.isEmpty) ...[
                       _buildEmptyState(skin),
                     ],
-                            fontSize: UiType.body,
-                            color: skin.muted,
-                            height: 1.5,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
                 ),
               );
