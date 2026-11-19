@@ -237,8 +237,20 @@ class AppUpdateService extends ChangeNotifier {
       } catch (_) {}
       targetDir ??= Directory.systemTemp;
 
+      if (!targetDir.existsSync()) {
+        try {
+          targetDir.createSync(recursive: true);
+        } catch (_) {
+          targetDir = Directory.systemTemp;
+        }
+      }
+
       final fileName = asset.name.isNotEmpty ? asset.name : 'DraftFlow-Update.zip';
-      final file = File('${targetDir.path}/$fileName');
+      File file = File('${targetDir.path}/$fileName');
+      try {
+        file.parent.createSync(recursive: true);
+      } catch (_) {}
+
       if (file.existsSync()) {
         try {
           file.deleteSync();
@@ -252,7 +264,20 @@ class AppUpdateService extends ChangeNotifier {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final totalBytes = response.contentLength ?? asset.size;
         var receivedBytes = 0;
-        final raf = file.openSync(mode: FileMode.write);
+
+        RandomAccessFile raf;
+        try {
+          if (!file.parent.existsSync()) {
+            file.parent.createSync(recursive: true);
+          }
+          raf = file.openSync(mode: FileMode.write);
+        } catch (_) {
+          file = File('${Directory.systemTemp.path}/$fileName');
+          if (!file.parent.existsSync()) {
+            file.parent.createSync(recursive: true);
+          }
+          raf = file.openSync(mode: FileMode.write);
+        }
 
         try {
           await for (final chunk in response.stream.timeout(const Duration(seconds: 45))) {
