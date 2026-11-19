@@ -27,6 +27,10 @@ abstract final class AppIcons {
   static const checkMark = CupertinoIcons.check_mark;
   static const checkmarkCircle = CupertinoIcons.checkmark_circle;
   static const checkmarkSquare = CupertinoIcons.checkmark_square;
+  static const arrowUpRight = CupertinoIcons.arrow_up_right;
+  static const archivebox = CupertinoIcons.archivebox;
+  static const checkmark = CupertinoIcons.checkmark;
+  static const checkmarkCircle = CupertinoIcons.checkmark_circle;
   static const chevronDown = CupertinoIcons.chevron_down;
   static const chevronLeft = CupertinoIcons.chevron_left;
   static const chevronLeftSlashChevronRight =
@@ -44,6 +48,7 @@ abstract final class AppIcons {
   static const exclamationmarkCircle = CupertinoIcons.exclamationmark_circle;
   static const eye = CupertinoIcons.eye;
   static const folder = CupertinoIcons.folder;
+  static const globe = CupertinoIcons.globe;
   static const lineHorizontal3Decrease =
       CupertinoIcons.line_horizontal_3_decrease;
   static const link = CupertinoIcons.link;
@@ -51,6 +56,7 @@ abstract final class AppIcons {
   static const lock = CupertinoIcons.lock;
   static const moon = CupertinoIcons.moon;
   static const number = CupertinoIcons.number;
+  static const palette = CupertinoIcons.paintpalette;
   static const pencil = CupertinoIcons.pencil;
   static const person = CupertinoIcons.person;
   static const personCropCircle = CupertinoIcons.person_crop_circle;
@@ -73,6 +79,8 @@ abstract final class AppIcons {
   static const sunMax = CupertinoIcons.sun_max;
   static const table = CupertinoIcons.table;
   static const tag = CupertinoIcons.tag;
+  static const tray = CupertinoIcons.tray;
+  static const trayFill = CupertinoIcons.tray_fill;
   static const textAligncenter = CupertinoIcons.text_aligncenter;
   static const textAlignleft = CupertinoIcons.text_alignleft;
   static const textAlignright = CupertinoIcons.text_alignright;

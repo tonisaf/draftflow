@@ -16,6 +16,8 @@ import 'common/page_entrance.dart';
 import 'common/page_link_utils.dart';
 import 'common/quick_search_dialog.dart';
 import 'editor/page_editor_view.dart';
+import 'inbox/inbox_models.dart';
+import 'inbox/inbox_view.dart';
 import 'quick_notes/quick_notes_view.dart';
 import 'settings/settings_dialog.dart';
 import 'sidebar/sidebar.dart';
@@ -47,6 +49,16 @@ class QuickNotesNavLocation extends NavLocation {
 
   @override
   int get hashCode => 0;
+}
+
+class InboxNavLocation extends NavLocation {
+  const InboxNavLocation();
+
+  @override
+  bool operator ==(Object other) => other is InboxNavLocation;
+
+  @override
+  int get hashCode => 2;
 }
 
 class TrashNavLocation extends NavLocation {
@@ -86,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedModuleId;
   bool _isShowingTrash = false;
   bool _isShowingQuickNotes = false;
+  bool _isShowingInbox = false;
   bool _isSidebarVisible = true;
 
   final List<NavLocation> _backStack = [];
@@ -97,6 +110,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_selectedModuleId != null) return ModuleNavLocation(_selectedModuleId!);
     if (_isShowingTrash) return const TrashNavLocation();
     if (_isShowingQuickNotes) return const QuickNotesNavLocation();
+    if (_isShowingInbox) return const InboxNavLocation();
     if (_selectedPageId != null) return PageNavLocation(_selectedPageId!);
     return null;
   }
@@ -141,19 +155,28 @@ class _HomeScreenState extends State<HomeScreen> {
         case PageNavLocation(:final pageId):
           _isShowingTrash = false;
           _isShowingQuickNotes = false;
+          _isShowingInbox = false;
           _selectedModuleId = null;
           _selectedPageId = pageId;
         case QuickNotesNavLocation():
           _isShowingTrash = false;
           _isShowingQuickNotes = true;
+          _isShowingInbox = false;
+          _selectedModuleId = null;
+        case InboxNavLocation():
+          _isShowingTrash = false;
+          _isShowingQuickNotes = false;
+          _isShowingInbox = true;
           _selectedModuleId = null;
         case TrashNavLocation():
           _isShowingQuickNotes = false;
+          _isShowingInbox = false;
           _isShowingTrash = true;
           _selectedModuleId = null;
         case ModuleNavLocation(:final moduleId):
           _isShowingTrash = false;
           _isShowingQuickNotes = false;
+          _isShowingInbox = false;
           _selectedModuleId = moduleId;
       }
     });
@@ -222,6 +245,18 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } else {
       _navigateTo(const QuickNotesNavLocation());
+    }
+  }
+
+  void _handleToggleInbox() {
+    if (_isShowingInbox) {
+      if (_canNavigateBack) {
+        _navigateBack();
+      } else {
+        setState(() => _isShowingInbox = false);
+      }
+    } else {
+      _navigateTo(const InboxNavLocation());
     }
   }
 
@@ -487,7 +522,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               .where(
                                 (p) =>
                                     !pageSettingsFromProperties(p.properties)
-                                        .isQuickNote,
+                                        .isQuickNote &&
+                                    !inboxItemFromProperties(p.properties)
+                                        .isInboxItem,
                               )
                               .toList();
                           final quickNotes = pages
@@ -497,10 +534,25 @@ class _HomeScreenState extends State<HomeScreen> {
                                         .isQuickNote,
                               )
                               .toList();
+                          final inboxItems = pages
+                              .where(
+                                (p) =>
+                                    inboxItemFromProperties(p.properties)
+                                        .isInboxItem,
+                              )
+                              .toList();
+                          final unreadInboxCount = inboxItems
+                              .where(
+                                (p) =>
+                                    !inboxItemFromProperties(p.properties)
+                                        .isArchived,
+                              )
+                              .length;
 
-                          // Auto-select first page if none selected and not in trash, quick notes or module
+                          // Auto-select first page if none selected and not in trash, quick notes, inbox or module
                           if (!_isShowingTrash &&
                               !_isShowingQuickNotes &&
+                              !_isShowingInbox &&
                               _selectedModuleId == null &&
                               _selectedPageId == null &&
                               regularPages.isNotEmpty) {
@@ -508,6 +560,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               if (mounted &&
                                   !_isShowingTrash &&
                                   !_isShowingQuickNotes &&
+                                  !_isShowingInbox &&
                                   _selectedModuleId == null &&
                                   _selectedPageId == null &&
                                   regularPages.isNotEmpty) {
@@ -559,6 +612,15 @@ class _HomeScreenState extends State<HomeScreen> {
                               key: const ValueKey('quick_notes_entrance'),
                               child: QuickNotesView(
                                 key: const ValueKey('quick_notes_view'),
+                                repository: widget.repository,
+                                onNavigateToPage: _handleSelectPage,
+                              ),
+                            );
+                          } else if (_isShowingInbox) {
+                            mainPane = PageEntrance(
+                              key: const ValueKey('inbox_entrance'),
+                              child: InboxView(
+                                key: const ValueKey('inbox_view'),
                                 repository: widget.repository,
                                 onNavigateToPage: _handleSelectPage,
                               ),
@@ -712,6 +774,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                             isShowingTrash: _isShowingTrash,
                                             trashedCount: trashedCount,
                                             onToggleTrash: _handleToggleTrash,
+                                            isShowingInbox: _isShowingInbox,
+                                            inboxCount: unreadInboxCount,
+                                            onToggleInbox: _handleToggleInbox,
                                             isShowingQuickNotes:
                                                 _isShowingQuickNotes,
                                             pinnedCount: pinnedCount,

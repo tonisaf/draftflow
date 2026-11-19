@@ -8,6 +8,7 @@ import '../../l10n/locale_controller.dart';
 import '../../platform/desktop_services.dart' show macosSidebarWidth;
 import '../settings/settings_dialog.dart';
 import '../theme.dart';
+import 'sidebar_inbox_row.dart';
 import 'sidebar_item.dart';
 import 'sidebar_module_row.dart';
 import 'sidebar_quick_notes_row.dart';
@@ -16,6 +17,7 @@ import '../../modules/core/module_scope.dart';
 
 export 'sidebar_drop_indicator.dart';
 export 'sidebar_header_actions.dart';
+export 'sidebar_inbox_row.dart';
 export 'sidebar_item.dart';
 export 'sidebar_module_row.dart';
 export 'sidebar_quick_notes_row.dart';
@@ -47,6 +49,9 @@ class Sidebar extends StatefulWidget {
   final bool isShowingTrash;
   final int trashedCount;
   final VoidCallback onToggleTrash;
+  final bool isShowingInbox;
+  final int inboxCount;
+  final VoidCallback? onToggleInbox;
   final bool isShowingQuickNotes;
   final int pinnedCount;
   final VoidCallback? onToggleQuickNotes;
@@ -76,6 +81,9 @@ class Sidebar extends StatefulWidget {
     this.isShowingTrash = false,
     this.trashedCount = 0,
     required this.onToggleTrash,
+    this.isShowingInbox = false,
+    this.inboxCount = 0,
+    this.onToggleInbox,
     this.isShowingQuickNotes = false,
     this.pinnedCount = 0,
     this.onToggleQuickNotes,
@@ -311,6 +319,15 @@ class _SidebarState extends State<Sidebar> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const SizedBox(height: UiSpace.s4),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: UiSpace.s10),
+            child: SidebarInboxRow(
+              isSelected: widget.isShowingInbox,
+              unreadCount: widget.inboxCount,
+              onTap: widget.onToggleInbox ?? () {},
+            ),
+          ),
           const SizedBox(height: UiSpace.s4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: UiSpace.s10),

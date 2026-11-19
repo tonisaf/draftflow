@@ -100,13 +100,17 @@ class _QuickNoteCardState extends State<QuickNoteCard> {
       tagColor = Palette.accent;
     }
 
-    final shape = UiRadius.squircle(
-      UiRadius.card,
+    final borderColor = _hovered
+        ? (isPinned
+            ? Palette.accent.withValues(alpha: 0.6)
+            : (skin.isDark ? Colors.white.withValues(alpha: 0.20) : Colors.black.withValues(alpha: 0.12)))
+        : skin.hairlineBorder;
+
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(UiRadius.card),
       side: BorderSide(
-        color: _hovered
-            ? (isPinned ? Palette.accent.withValues(alpha: 0.55) : skin.outline.withValues(alpha: 0.35))
-            : skin.hairlineBorder,
-        width: UiSpace.s1,
+        color: borderColor,
+        width: 1.0,
       ),
     );
 
@@ -116,22 +120,18 @@ class _QuickNoteCardState extends State<QuickNoteCard> {
       child: GestureDetector(
         onTap: () => widget.onOpenPage(page.id),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOut,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          transform: Matrix4.translationValues(0, _hovered ? -1.0 : 0.0, 0),
           decoration: ShapeDecoration(
             color: QuickNoteColors.getBackground(cardData.settings.cardColor, skin),
             shape: shape,
             shadows: _hovered
                 ? [
                     BoxShadow(
-                      color: skin.shadow.withValues(alpha: 0.09),
-                      blurRadius: 16,
+                      color: Colors.black.withValues(alpha: skin.isDark ? 0.30 : 0.06),
+                      blurRadius: 12,
                       offset: const Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: skin.shadow.withValues(alpha: 0.04),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
                     ),
                   ]
                 : skin.cardShadows,
@@ -141,13 +141,14 @@ class _QuickNoteCardState extends State<QuickNoteCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Верхняя полоса: Категория или иконка и Кнопка закрепления (Pin)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (categoryTag != null)
-                    Row(
-                      children: [
+              // Верхняя полоса: Бейдж типа (Код / Чек-лист) и Кнопка закрепления (Pin)
+              if (categoryTag != null || isPinned || _hovered)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: UiSpace.s4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      if (categoryTag != null)
                         Text(
                           categoryTag,
                           style: TextStyle(
@@ -156,33 +157,27 @@ class _QuickNoteCardState extends State<QuickNoteCard> {
                             letterSpacing: 0.4,
                             color: tagColor,
                           ),
+                        )
+                      else if (page.icon?.isNotEmpty == true)
+                        PageIconView(icon: page.icon!, size: UiType.caption)
+                      else
+                        const SizedBox.shrink(),
+                      AnimatedOpacity(
+                        opacity: (isPinned || _hovered) ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 140),
+                        child: IgnorePointer(
+                          ignoring: !isPinned && !_hovered,
+                          child: _CardIconButton(
+                            icon: isPinned ? AppIcons.pinFill : AppIcons.pin,
+                            tooltip: isPinned ? 'Открепить' : 'Закрепить',
+                            iconColor: isPinned ? Palette.accent : null,
+                            onTap: widget.onTogglePin,
+                          ),
                         ),
-                      ],
-                    )
-                  else
-                    Row(
-                      children: [
-                        if (page.icon?.isNotEmpty == true)
-                          PageIconView(icon: page.icon!, size: UiType.caption)
-                        else
-                          Icon(AppIcons.docText, size: UiSpace.s13, color: skin.muted),
-                      ],
-                    ),
-                  AnimatedOpacity(
-                    opacity: (isPinned || _hovered) ? 1.0 : 0.0,
-                    duration: const Duration(milliseconds: 140),
-                    child: IgnorePointer(
-                      ignoring: !isPinned && !_hovered,
-                      child: _CardIconButton(
-                        icon: isPinned ? AppIcons.pinFill : AppIcons.pin,
-                        tooltip: isPinned ? 'Открепить' : 'Закрепить',
-                        iconColor: isPinned ? Palette.accent : null,
-                        onTap: widget.onTogglePin,
                       ),
-                    ),
+                    ],
                   ),
-                ],
-              ),
+                ),
               // Заголовок карточки (если есть отдельный заголовок)
               if (title.isNotEmpty) ...[
                 const SizedBox(height: UiSpace.s6),

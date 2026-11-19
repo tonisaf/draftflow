@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -39,7 +40,7 @@ class QuickNoteModalDialog extends StatefulWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'Close note',
-      barrierColor: Colors.black.withValues(alpha: 0.45),
+      barrierColor: Colors.black.withValues(alpha: 0.25),
       transitionDuration: const Duration(milliseconds: 280),
       pageBuilder: (ctx, anim, secondaryAnim) => QuickNoteModalDialog(
         cardData: cardData,
@@ -52,12 +53,18 @@ class QuickNoteModalDialog extends StatefulWidget {
           curve: Curves.easeOutCubic,
           reverseCurve: Curves.easeInCubic,
         );
-        return FadeTransition(
-          opacity: curve,
-          child: ScaleTransition(
-            alignment: alignment,
-            scale: Tween<double>(begin: 0.65, end: 1.0).animate(curve),
-            child: child,
+        return BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: 2.0 * animation.value,
+            sigmaY: 2.0 * animation.value,
+          ),
+          child: FadeTransition(
+            opacity: curve,
+            child: ScaleTransition(
+              alignment: alignment,
+              scale: Tween<double>(begin: 0.65, end: 1.0).animate(curve),
+              child: child,
+            ),
           ),
         );
       },
@@ -184,68 +191,70 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                   minWidth: 360,
                 ),
                 child: Container(
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(UiRadius.dialog),
-                border: Border.all(color: skin.hairlineBorder),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 32,
-                    offset: const Offset(0, 8),
-                  ),
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Шапка: Заголовок и булавка закрепления
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(UiSpace.s20, UiSpace.s16, UiSpace.s12, UiSpace.s6),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _titleController,
-                            selectAllOnFocus: false,
-                            style: TextStyle(
-                              fontSize: UiType.pageTitle * 0.75,
-                              fontWeight: FontWeight.w700,
-                              color: skin.text,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Заголовок',
-                              hintStyle: TextStyle(
-                                fontSize: UiType.pageTitle * 0.75,
-                                fontWeight: FontWeight.w700,
-                                color: skin.muted.withValues(alpha: 0.6),
-                              ),
-                              border: InputBorder.none,
-                              isDense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: _isPinned ? context.l10n.unpin : context.l10n.pin,
-                          onPressed: () => setState(() => _isPinned = !_isPinned),
-                          icon: Icon(
-                            _isPinned ? AppIcons.pinFill : AppIcons.pin,
-                            size: 20,
-                            color: _isPinned ? Palette.accent : skin.muted,
-                          ),
-                        ),
-                      ],
+                  decoration: BoxDecoration(
+                    color: backgroundColor,
+                    borderRadius: BorderRadius.circular(UiRadius.dialog),
+                    border: Border.all(
+                      color: skin.isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : Colors.black.withValues(alpha: 0.06),
+                      width: 1.0,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: skin.isDark ? 0.35 : 0.12),
+                        blurRadius: 32,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: skin.isDark ? 0.15 : 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Шапка: Заголовок и булавка закрепления
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(UiSpace.s20, UiSpace.s16, UiSpace.s12, UiSpace.s6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _titleController,
+                                selectAllOnFocus: false,
+                                style: TextStyle(
+                                  fontSize: UiType.pageTitle * 0.75,
+                                  fontWeight: FontWeight.w700,
+                                  color: skin.text,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Заголовок',
+                                  hintStyle: TextStyle(
+                                    fontSize: UiType.pageTitle * 0.75,
+                                    fontWeight: FontWeight.w700,
+                                    color: skin.muted.withValues(alpha: 0.6),
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                            _ModalIconButton(
+                              tooltip: _isPinned ? context.l10n.unpin : context.l10n.pin,
+                              onTap: () => setState(() => _isPinned = !_isPinned),
+                              icon: _isPinned ? AppIcons.pinFill : AppIcons.pin,
+                              iconColor: _isPinned ? Palette.accent : null,
+                            ),
+                          ],
+                        ),
+                      ),
 
                   // Выбранный тег (если есть)
                   if (_tag != null && _tag!.isNotEmpty)
@@ -413,11 +422,11 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Инструменты: Код, Цвет, Тег, Удалить
+                        // Инструменты: Код, Цвет, Тег, Разделитель, Удалить
                         Row(
                           children: [
                             // Переключатель Код / Текст
-                            _ModalToolbarButton(
+                            _ModalIconButton(
                               icon: AppIcons.bolt,
                               tooltip: _isCode ? 'Обычный текст' : 'Формат: Код / Пресет',
                               iconColor: _isCode ? Palette.accent : null,
@@ -425,13 +434,13 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                             ),
                             const SizedBox(width: UiSpace.s4),
 
-                            // Выбор цвета (Google Keep Palette)
+                            // Выбор цвета
                             PopupMenuButton<String>(
                               tooltip: '',
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
-                                minWidth: UiSpace.s28,
-                                minHeight: UiSpace.s28,
+                                minWidth: 32,
+                                minHeight: 32,
                               ),
                               offset: const Offset(0, 36),
                               color: skin.glassSurface,
@@ -470,12 +479,25 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                                   ),
                                 ),
                               ],
-                              child: _ModalToolbarPopupTrigger(
-                                icon: AppIcons.circleLefthalfFill,
+                              child: _ModalIconButton(
                                 tooltip: 'Цвет заметки',
-                                iconColor: _cardColor != null && _cardColor != QuickNoteColors.defaultColor
-                                    ? QuickNoteColors.getSwatch(_cardColor!)
-                                    : null,
+                                child: (_cardColor != null && _cardColor != QuickNoteColors.defaultColor)
+                                    ? Container(
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: QuickNoteColors.getSwatch(_cardColor!),
+                                          border: Border.all(
+                                            color: Colors.black.withValues(alpha: 0.15),
+                                            width: 1.0,
+                                          ),
+                                        ),
+                                      )
+                                    : const Icon(
+                                        AppIcons.palette,
+                                        size: 16,
+                                      ),
                               ),
                             ),
                             const SizedBox(width: UiSpace.s4),
@@ -485,8 +507,8 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                               tooltip: '',
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
-                                minWidth: UiSpace.s28,
-                                minHeight: UiSpace.s28,
+                                minWidth: 32,
+                                minHeight: 32,
                               ),
                               offset: const Offset(0, 36),
                               color: skin.glassSurface,
@@ -508,18 +530,28 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                                     ),
                                   ),
                               ],
-                              child: _ModalToolbarPopupTrigger(
+                              child: _ModalIconButton(
                                 icon: AppIcons.tag,
                                 tooltip: 'Тег',
                                 iconColor: _tag != null ? Palette.accent : null,
                               ),
                             ),
-                            const SizedBox(width: UiSpace.s4),
 
-                            // Кнопка удаления
-                            _ModalToolbarButton(
+                            // Вертикальный волосяной разделитель
+                            Container(
+                              width: 1,
+                              height: 16,
+                              margin: const EdgeInsets.symmetric(horizontal: UiSpace.s4),
+                              color: skin.isDark
+                                  ? Colors.white.withValues(alpha: 0.10)
+                                  : Colors.black.withValues(alpha: 0.08),
+                            ),
+
+                            // Кнопка удаления (деструктивное действие)
+                            _ModalIconButton(
                               icon: AppIcons.trash,
                               tooltip: 'Удалить заметку',
+                              isDestructive: true,
                               onTap: _handleDelete,
                             ),
 
@@ -536,17 +568,8 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
                         ),
 
                         // Кнопка "Закрыть"
-                        TextButton(
+                        _ModalCloseButton(
                           onPressed: _saveAndClose,
-                          style: TextButton.styleFrom(
-                            foregroundColor: skin.text,
-                            padding: const EdgeInsets.symmetric(horizontal: UiSpace.s16, vertical: UiSpace.s8),
-                            shape: const StadiumBorder(),
-                          ),
-                          child: const Text(
-                            'Закрыть',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
                         ),
                       ],
                     ),
@@ -563,29 +586,76 @@ class _QuickNoteModalDialogState extends State<QuickNoteModalDialog> {
   }
 }
 
-class _ModalToolbarButton extends StatefulWidget {
-  final IconData icon;
+class _ModalIconButton extends StatefulWidget {
+  final IconData? icon;
+  final Widget? child;
   final String tooltip;
   final VoidCallback? onTap;
   final Color? iconColor;
+  final bool isDestructive;
 
-  const _ModalToolbarButton({
-    required this.icon,
+  const _ModalIconButton({
+    this.icon,
+    this.child,
     required this.tooltip,
     this.onTap,
     this.iconColor,
+    this.isDestructive = false,
   });
 
   @override
-  State<_ModalToolbarButton> createState() => _ModalToolbarButtonState();
+  State<_ModalIconButton> createState() => _ModalIconButtonState();
 }
 
-class _ModalToolbarButtonState extends State<_ModalToolbarButton> {
+class _ModalIconButtonState extends State<_ModalIconButton> {
   bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isDark = skin.isDark;
+
+    Color bg;
+    Color? iconColor;
+
+    if (widget.isDestructive) {
+      bg = _hovered
+          ? Colors.red.withValues(alpha: isDark ? 0.20 : 0.10)
+          : Colors.transparent;
+      iconColor = _hovered
+          ? const Color(0xFFDC2626)
+          : (widget.iconColor ?? skin.muted);
+    } else {
+      bg = _hovered
+          ? (isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05))
+          : Colors.transparent;
+      iconColor = widget.iconColor ?? (_hovered ? skin.text : skin.muted);
+    }
+
+    final content = AnimatedScale(
+      scale: _pressed ? 0.95 : 1.0,
+      duration: const Duration(milliseconds: 100),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 120),
+        curve: Curves.easeOutCubic,
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Center(
+          child: widget.child ??
+              Icon(
+                widget.icon,
+                size: 16,
+                color: iconColor,
+              ),
+        ),
+      ),
+    );
+
     return Tooltip(
       message: widget.tooltip,
       preferBelow: false,
@@ -595,76 +665,76 @@ class _ModalToolbarButtonState extends State<_ModalToolbarButton> {
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
-        child: GestureDetector(
-          onTap: widget.onTap,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            curve: Curves.easeOutCubic,
-            width: UiSpace.s28,
-            height: UiSpace.s28,
-            decoration: ShapeDecoration(
-              color: _hovered ? skin.controlHover : Palette.transparent,
-              shape: UiRadius.squircle(UiRadius.control),
-            ),
-            child: Center(
-              child: Icon(
-                widget.icon,
-                size: UiSpace.s16,
-                color: widget.iconColor ?? (_hovered ? skin.text : skin.muted),
+        child: widget.onTap != null
+            ? GestureDetector(
+                onTap: widget.onTap,
+                onTapDown: (_) => setState(() => _pressed = true),
+                onTapUp: (_) => setState(() => _pressed = false),
+                onTapCancel: () => setState(() => _pressed = false),
+                behavior: HitTestBehavior.opaque,
+                child: content,
+              )
+            : Listener(
+                onPointerDown: (_) => setState(() => _pressed = true),
+                onPointerUp: (_) => setState(() => _pressed = false),
+                onPointerCancel: (_) => setState(() => _pressed = false),
+                child: content,
               ),
-            ),
-          ),
-        ),
       ),
     );
   }
 }
 
-class _ModalToolbarPopupTrigger extends StatefulWidget {
-  final IconData icon;
-  final String tooltip;
-  final Color? iconColor;
+class _ModalCloseButton extends StatefulWidget {
+  final VoidCallback onPressed;
 
-  const _ModalToolbarPopupTrigger({
-    required this.icon,
-    required this.tooltip,
-    this.iconColor,
-  });
+  const _ModalCloseButton({required this.onPressed});
 
   @override
-  State<_ModalToolbarPopupTrigger> createState() => _ModalToolbarPopupTriggerState();
+  State<_ModalCloseButton> createState() => _ModalCloseButtonState();
 }
 
-class _ModalToolbarPopupTriggerState extends State<_ModalToolbarPopupTrigger> {
+class _ModalCloseButtonState extends State<_ModalCloseButton> {
   bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return Tooltip(
-      message: widget.tooltip,
-      preferBelow: false,
-      verticalOffset: UiSpace.s16,
-      waitDuration: Motion.tooltipDelay,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          curve: Curves.easeOutCubic,
-          width: UiSpace.s28,
-          height: UiSpace.s28,
-          decoration: ShapeDecoration(
-            color: _hovered ? skin.controlHover : Palette.transparent,
-            shape: UiRadius.squircle(UiRadius.control),
-          ),
-          child: Center(
-            child: Icon(
-              widget.icon,
-              size: UiSpace.s16,
-              color: widget.iconColor ?? (_hovered ? skin.text : skin.muted),
+    final isDark = skin.isDark;
+
+    final bgColor = _hovered
+        ? (isDark ? Colors.white.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.08))
+        : (isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04));
+
+    final textColor = isDark ? Colors.white : const Color(0xFF111827);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onPressed,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.98 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Закрыть',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
             ),
           ),
         ),

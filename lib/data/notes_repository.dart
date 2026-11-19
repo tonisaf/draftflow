@@ -1,5 +1,6 @@
 import 'model/trash_entry.dart';
 import 'model/database_paste.dart';
+import '../ui/inbox/inbox_models.dart';
 
 import 'dart:convert';
 
@@ -200,6 +201,92 @@ class NotesRepository {
 
   Future<void> updateSubpageLayout(String pageId, SubpageLayout layout) =>
       updatePageSettings(pageId, subpageLayout: layout);
+
+  Future<String> createInboxItem({
+    required String title,
+    InboxItemType type = InboxItemType.link,
+    String? url,
+    String? domain,
+    String? faviconUrl,
+    String? previewImageUrl,
+    String? excerpt,
+    String? body,
+    String? author,
+    bool isArchived = false,
+  }) async {
+    final effectiveTitle = title.trim().isNotEmpty ? title.trim() : (domain ?? 'Входящее');
+    final pageId = await createPage(title: effectiveTitle);
+
+    final metadata = InboxItemMetadata(
+      isInboxItem: true,
+      type: type,
+      url: url,
+      domain: domain,
+      faviconUrl: faviconUrl,
+      previewImageUrl: previewImageUrl,
+      excerpt: excerpt,
+      author: author,
+      isArchived: isArchived,
+      savedAt: DateTime.now(),
+    );
+
+    final page = await getPage(pageId);
+    final updatedProps = mergeInboxItemToProperties(page?.properties, metadata);
+    await db.replaceRowProperties(pageId, updatedProps);
+
+    final rawContent = (body != null && body.trim().isNotEmpty)
+        ? body.trim()
+        : (excerpt != null && excerpt.trim().isNotEmpty ? excerpt.trim() : null);
+
+    if (rawContent != null && rawContent.isNotEmpty) {
+      final blockType = type == InboxItemType.quote ? 'quote' : 'paragraph';
+      final blockContent = jsonEncode({
+        'type': blockType,
+        'data': {
+          'delta': [
+            {'insert': rawContent}
+          ],
+        },
+      });
+      final key = FractionalIndexer.generateKeyBetween(null, null)!;
+      await db.insertBlocksBatch([
+        BlocksCompanion(
+          id: drift.Value(_uuid.v4()),
+          pageId: drift.Value(pageId),
+          type: drift.Value(blockType),
+          content: drift.Value(blockContent),
+          orderKey: drift.Value(key),
+        ),
+      ]);
+    }
+
+    return pageId;
+  }
+
+  Future<void> updateInboxItemStatus(String pageId, {required bool isArchived}) async {
+    final page = await getPage(pageId);
+    if (page == null) return;
+    final metadata = inboxItemFromProperties(page.properties);
+    final updatedMetadata = metadata.copyWith(isArchived: isArchived);
+    final updatedProps = mergeInboxItemToProperties(page.properties, updatedMetadata);
+    await db.replaceRowProperties(pageId, updatedProps);
+  }
+
+  Future<void> convertInboxItemToPage(String pageId, {String? targetParentId}) async {
+    final page = await getPage(pageId);
+    if (page == null) return;
+    final metadata = inboxItemFromProperties(page.properties);
+    final updatedMetadata = metadata.copyWith(isInboxItem: false, isArchived: true);
+    final updatedProps = mergeInboxItemToProperties(page.properties, updatedMetadata);
+    await db.replaceRowProperties(pageId, updatedProps);
+    if (targetParentId != null) {
+      await movePage(pageId, targetParentId: targetParentId);
+    }
+  }
+
+  Future<void> deleteInboxItem(String pageId) async {
+    await trashPage(pageId);
+  }
 
   Stream<List<TrashEntry>> watchTrashEntries() => db.watchTrashEntries();
 

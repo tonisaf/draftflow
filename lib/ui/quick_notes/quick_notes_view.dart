@@ -522,17 +522,21 @@ class _QuickNotesViewState extends State<QuickNotesView> {
                       const SizedBox(height: UiSpace.s20),
                     ],
 
-                    // Секция 2: Другие
+                    // Секция 2: Другие (заголовок отображается только при наличии закрепленных заметок)
                     if (otherCards.isNotEmpty) ...[
-                      _buildSectionHeader(
-                        context.l10n.otherNotes,
-                        otherCards.length,
-                        _isOtherExpanded,
-                        () => setState(() => _isOtherExpanded = !_isOtherExpanded),
-                        skin,
-                      ),
-                      const SizedBox(height: UiSpace.s10),
-                      if (_isOtherExpanded) _buildMasonryGrid(otherCards, gridWidth),
+                      if (pinnedCards.isNotEmpty) ...[
+                        _buildSectionHeader(
+                          context.l10n.otherNotes,
+                          otherCards.length,
+                          _isOtherExpanded,
+                          () => setState(() => _isOtherExpanded = !_isOtherExpanded),
+                          skin,
+                        ),
+                        const SizedBox(height: UiSpace.s10),
+                        if (_isOtherExpanded) _buildMasonryGrid(otherCards, gridWidth),
+                      ] else ...[
+                        _buildMasonryGrid(otherCards, gridWidth),
+                      ],
                     ],
 
                     if (isLoading && filteredCards.isEmpty) ...[
@@ -1303,54 +1307,55 @@ class _ColorPickerTriggerButton extends StatefulWidget {
 
 class _ColorPickerTriggerButtonState extends State<_ColorPickerTriggerButton> {
   bool _hover = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final skin = widget.skin;
     final selectedColor = widget.selectedColor;
+    final hasColor = selectedColor != null && selectedColor != QuickNoteColors.defaultColor;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: _hover
-              ? (skin.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05))
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
-          child: Container(
-            width: 12,
-            height: 12,
+      child: GestureDetector(
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapUp: (_) => setState(() => _pressed = false),
+        onTapCancel: () => setState(() => _pressed = false),
+        child: AnimatedScale(
+          scale: _pressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: selectedColor != null
-                  ? QuickNoteColors.getSwatch(selectedColor)
+              color: _hover
+                  ? (skin.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05))
                   : Colors.transparent,
-              border: Border.all(
-                color: selectedColor != null
-                    ? Colors.black.withValues(alpha: 0.15)
-                    : skin.muted.withValues(alpha: 0.45),
-                width: 1.5,
-              ),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: selectedColor == null
-                ? Center(
-                    child: Container(
-                      width: 3,
-                      height: 3,
+            child: Center(
+              child: hasColor
+                  ? Container(
+                      width: 12,
+                      height: 12,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: skin.muted.withValues(alpha: 0.6),
+                        color: QuickNoteColors.getSwatch(selectedColor),
+                        border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          width: 1.0,
+                        ),
                       ),
+                    )
+                  : Icon(
+                      AppIcons.palette,
+                      size: 16,
+                      color: _hover ? skin.text : skin.muted,
                     ),
-                  )
-                : null,
+            ),
           ),
         ),
       ),
