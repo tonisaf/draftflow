@@ -155,77 +155,109 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _isFocused
-                ? Palette.accent.withValues(alpha: 0.5)
-                : (isDark
-                    ? Colors.white.withValues(alpha: 0.10)
-                    : Colors.black.withValues(alpha: 0.08)),
-            width: 1.0,
+                ? Palette.accent.withValues(alpha: 0.45)
+                : skin.hairlineBorder,
+            width: _isFocused ? 1.5 : 1.0,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(
-                alpha: _isFocused ? (isDark ? 0.35 : 0.08) : (isDark ? 0.20 : 0.03),
-              ),
-              blurRadius: _isFocused ? 16 : 8,
+              color: _isFocused
+                  ? Palette.accent.withValues(alpha: 0.12)
+                  : skin.shadow.withValues(alpha: 0.04),
+              blurRadius: _isFocused ? 12 : 8,
               offset: const Offset(0, 2),
+            ),
+            BoxShadow(
+              color: skin.shadow.withValues(alpha: 0.02),
+              blurRadius: 2,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Icon(
-                  _extractedMetadata != null
-                      ? AppIcons.link
-                      : (_selectedType == InboxItemType.note
-                          ? AppIcons.pencil
-                          : AppIcons.plusCircle),
-                  size: 18,
-                  color: _isFocused ? Palette.accent : skin.muted,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: skin.text,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Сохранить ссылку, статью или мысль… (↵ Enter)',
-                      hintStyle: TextStyle(
-                        fontSize: 14,
-                        color: skin.muted.withValues(alpha: 0.6),
-                      ),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            SizedBox(
+              height: 32,
+              child: Row(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      _extractedMetadata != null
+                          ? AppIcons.link
+                          : AppIcons.pencil,
+                      size: 18,
+                      color: _isFocused ? Palette.accent : skin.muted,
                     ),
                   ),
-                ),
-                if (_isLoadingMetadata)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 6),
-                    child: SizedBox(
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      focusNode: _focusNode,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: skin.text,
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Новая ссылка или заметка…',
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          color: skin.muted.withValues(alpha: 0.6),
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  if (_isLoadingMetadata) ...[
+                    const SizedBox(
                       width: 14,
                       height: 14,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                  ],
 
-                // Выбор типа входящего
-                _buildTypePicker(skin),
+                  if (_extractedMetadata != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Palette.accent.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(AppIcons.link, size: 10, color: Palette.accent),
+                          const SizedBox(width: 4),
+                          Text(
+                            _extractedMetadata!.domain,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Palette.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                  ],
 
-                const SizedBox(width: 6),
+                  // Выбор типа входящего
+                  _buildTypePicker(skin),
 
-                // Кнопка сохранения
-                _buildSubmitButton(skin),
-              ],
+                  const SizedBox(width: 6),
+
+                  // Кнопка сохранения
+                  _buildSubmitButton(skin),
+                ],
+              ),
             ),
 
             // Распознанная плашка метаданных
@@ -331,21 +363,25 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
           ),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: skin.isDark
               ? Colors.white.withValues(alpha: 0.06)
               : Colors.black.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_selectedType.icon, size: 12, color: skin.muted),
-            const SizedBox(width: 4),
+            Icon(_selectedType.icon, size: 13, color: skin.muted),
+            const SizedBox(width: 5),
             Text(
               _selectedType.label,
-              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: skin.muted),
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: skin.muted,
+              ),
             ),
           ],
         ),
@@ -359,19 +395,19 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
     return GestureDetector(
       onTap: _handleSubmit,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        width: 28,
-        height: 28,
+        duration: const Duration(milliseconds: 140),
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
           color: hasText
               ? Palette.accent
-              : (skin.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05)),
-          borderRadius: BorderRadius.circular(8),
+              : (skin.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
+          shape: BoxShape.circle,
         ),
         child: Center(
           child: Icon(
             AppIcons.plus,
-            size: 15,
+            size: 16,
             color: hasText ? Colors.white : skin.muted,
           ),
         ),

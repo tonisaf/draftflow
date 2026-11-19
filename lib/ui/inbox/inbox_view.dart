@@ -163,7 +163,7 @@ class _InboxViewState extends State<InboxView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Заголовок страницы и табы "Входящие" / "Архив"
+                    // Заголовок страницы, переключатель вкладок и строка поиска (Apple HIG / Linear)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -174,7 +174,7 @@ class _InboxViewState extends State<InboxView> {
                             Text(
                               'Входящие',
                               style: TextStyle(
-                                fontSize: UiType.pageTitle * 0.9,
+                                fontSize: 24,
                                 fontWeight: FontWeight.w700,
                                 color: skin.text,
                                 letterSpacing: -0.5,
@@ -184,48 +184,185 @@ class _InboxViewState extends State<InboxView> {
                             Text(
                               'Веб-клипы, статьи, ссылки и цитаты для разбора',
                               style: TextStyle(
-                                fontSize: UiType.body * 0.9,
+                                fontSize: 13,
                                 color: skin.muted,
                               ),
                             ),
                           ],
                         ),
 
-                        // Переключатель Неразобранное / Архив
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.06)
-                                : Colors.black.withValues(alpha: 0.04),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _buildTabSwitch(
-                                title: 'Входящие',
-                                count: activeCount,
-                                isSelected: !_isArchiveTab,
-                                skin: skin,
-                                onTap: () => setState(() => _isArchiveTab = false),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Переключатель Входящие / Архив
+                            Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withValues(alpha: 0.06)
+                                    : Colors.black.withValues(alpha: 0.04),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              _buildTabSwitch(
-                                title: 'Архив',
-                                count: archiveCount,
-                                isSelected: _isArchiveTab,
-                                skin: skin,
-                                onTap: () => setState(() => _isArchiveTab = true),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  _buildTabSwitch(
+                                    title: 'Входящие',
+                                    count: activeCount,
+                                    isSelected: !_isArchiveTab,
+                                    skin: skin,
+                                    onTap: () => setState(() => _isArchiveTab = false),
+                                  ),
+                                  _buildTabSwitch(
+                                    title: 'Архив',
+                                    count: archiveCount,
+                                    isSelected: _isArchiveTab,
+                                    skin: skin,
+                                    onTap: () => setState(() => _isArchiveTab = true),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+
+                            const SizedBox(width: 12),
+
+                            // Строка поиска в правом верхнем углу (как в Заметках)
+                            Container(
+                              width: 200,
+                              height: 32,
+                              decoration: ShapeDecoration(
+                                color: skin.hover,
+                                shape: const StadiumBorder(),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Row(
+                                children: [
+                                  Icon(AppIcons.search, size: 13, color: skin.muted),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: skin.text,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: 'Поиск…',
+                                        hintStyle: TextStyle(
+                                          fontSize: 12,
+                                          color: skin.muted.withValues(alpha: 0.8),
+                                        ),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.zero,
+                                      ),
+                                      onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                                    ),
+                                  ),
+                                  if (_searchQuery.isNotEmpty)
+                                    GestureDetector(
+                                      onTap: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = '');
+                                      },
+                                      child: const Icon(AppIcons.xmark, size: 12),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Панель фильтров: Типы материалов + Источник + Сортировка на одной линии
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                _buildFilterChip(
+                                  'Все',
+                                  tabCards.length,
+                                  _selectedTypeFilter == null,
+                                  () => setState(() => _selectedTypeFilter = null),
+                                ),
+                                const SizedBox(width: 4),
+                                for (final t in InboxItemType.values) ...[
+                                  _buildFilterChip(
+                                    t.label,
+                                    typeCounts[t] ?? 0,
+                                    _selectedTypeFilter == t,
+                                    () => setState(() {
+                                      _selectedTypeFilter =
+                                          _selectedTypeFilter == t ? null : t;
+                                    }),
+                                    icon: t.icon,
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 14,
+                                  color: skin.divider,
+                                ),
+                                const SizedBox(width: 8),
+
+                                // Селектор источника (Домена)
+                                _buildDomainDropdown(sortedDomains, domainCounts, skin),
+
+                                const SizedBox(width: 4),
+
+                                // Переключатель сортировки
+                                _buildSortButton(skin),
+
+                                if (hasActiveFilters) ...[
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: _resetFilters,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: ShapeDecoration(
+                                        color: skin.hover,
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(AppIcons.xmark, size: 10, color: skin.muted),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            'Сбросить',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: skin.muted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
-                    // Поле умного захвата (Smart Input) в активной вкладке
+                    // Поле умного захвата (Smart Input) прямо над карточками
                     if (!_isArchiveTab) ...[
                       InboxSmartInput(
                         onSubmit: ({
@@ -250,103 +387,8 @@ class _InboxViewState extends State<InboxView> {
                           );
                         },
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                     ],
-
-                    // Панель фильтров: Типы материалов + Селектор доменов + Поиск + Сортировка
-                    Row(
-                      children: [
-                        // Фильтры-пиллы по типам
-                        Expanded(
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              children: [
-                                _buildFilterPill(
-                                  label: 'Все',
-                                  count: tabCards.length,
-                                  isActive: _selectedTypeFilter == null,
-                                  skin: skin,
-                                  onTap: () => setState(() => _selectedTypeFilter = null),
-                                ),
-                                const SizedBox(width: 6),
-                                for (final t in InboxItemType.values) ...[
-                                  _buildFilterPill(
-                                    label: t.label,
-                                    count: typeCounts[t] ?? 0,
-                                    isActive: _selectedTypeFilter == t,
-                                    skin: skin,
-                                    icon: t.icon,
-                                    onTap: () => setState(() {
-                                      _selectedTypeFilter =
-                                          _selectedTypeFilter == t ? null : t;
-                                    }),
-                                  ),
-                                  const SizedBox(width: 6),
-                                ],
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        // Селектор источника (Домена)
-                        _buildDomainDropdown(sortedDomains, domainCounts, skin),
-
-                        const SizedBox(width: 8),
-
-                        // Переключатель сортировки
-                        _buildSortButton(skin),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Поле поиска (Search)
-                    Container(
-                      height: 38,
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Colors.black.withValues(alpha: 0.03),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(
-                        children: [
-                          Icon(AppIcons.search, size: 15, color: skin.muted),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              style: TextStyle(fontSize: 13, color: skin.text),
-                              decoration: InputDecoration(
-                                hintText: 'Поиск по заголовку, домену или тексту…',
-                                hintStyle: TextStyle(
-                                  fontSize: 13,
-                                  color: skin.muted.withValues(alpha: 0.6),
-                                ),
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                            ),
-                          ),
-                          if (_searchQuery.isNotEmpty)
-                            GestureDetector(
-                              onTap: () {
-                                _searchController.clear();
-                                setState(() => _searchQuery = '');
-                              },
-                              child: Icon(AppIcons.xmarkCircle, size: 15, color: skin.muted),
-                            ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
 
                     // Сетка карточек или состояние пустого экрана
                     if (filteredCards.isEmpty) ...[
@@ -520,60 +562,77 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 
-  Widget _buildFilterPill({
-    required String label,
-    required int count,
-    required bool isActive,
-    required Skin skin,
-    required VoidCallback onTap,
+  Widget _buildFilterChip(
+    String label,
+    int count,
+    bool isSelected,
+    VoidCallback onTap, {
     IconData? icon,
   }) {
-    final isDark = skin.isDark;
+    final skin = context.skin;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isActive
-              ? Palette.accent.withValues(alpha: 0.10)
-              : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? Palette.accent.withValues(alpha: 0.3) : Colors.transparent,
-            width: 1.0,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: ShapeDecoration(
+            color: isSelected
+                ? Palette.accent.withValues(alpha: 0.10)
+                : Colors.transparent,
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: isSelected
+                    ? Palette.accent.withValues(alpha: 0.25)
+                    : Colors.transparent,
+                width: 1.0,
+              ),
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 12,
-                color: isActive ? Palette.accent : skin.muted,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 13,
+                  color: isSelected ? Palette.accent : skin.muted,
+                ),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isSelected ? Palette.accent : skin.text,
+                ),
               ),
-              const SizedBox(width: 5),
+              if (count > 0 || isSelected) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? Palette.accent.withValues(alpha: 0.16)
+                        : (skin.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: UiType.tabular,
+                      color: isSelected ? Palette.accent : skin.muted,
+                    ),
+                  ),
+                ),
+              ],
             ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                color: isActive ? Palette.accent : skin.text,
-              ),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: isActive ? Palette.accent : skin.muted,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -646,58 +705,94 @@ class _InboxViewState extends State<InboxView> {
             ),
           ),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: hasSelection
-              ? Palette.accent.withValues(alpha: 0.10)
-              : (skin.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: hasSelection ? Palette.accent.withValues(alpha: 0.3) : Colors.transparent,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              AppIcons.globe,
-              size: 13,
-              color: hasSelection ? Palette.accent : skin.muted,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              _selectedDomainFilter ?? 'Все сайты',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: hasSelection ? Palette.accent : skin.text,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: ShapeDecoration(
+            color: hasSelection
+                ? Palette.accent.withValues(alpha: 0.10)
+                : Colors.transparent,
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: hasSelection
+                    ? Palette.accent.withValues(alpha: 0.25)
+                    : skin.hairlineBorder,
+                width: 1.0,
               ),
             ),
-            const SizedBox(width: 4),
-            Icon(AppIcons.chevronDown, size: 11, color: skin.muted),
-          ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                AppIcons.globe,
+                size: 13,
+                color: hasSelection ? Palette.accent : skin.muted,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                _selectedDomainFilter ?? 'Все сайты',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: hasSelection ? Palette.accent : skin.text,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(AppIcons.chevronDown, size: 10, color: skin.muted),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildSortButton(Skin skin) {
-    return GestureDetector(
-      onTap: () => setState(() => _sortByDomain = !_sortByDomain),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: _sortByDomain
-              ? Palette.accent.withValues(alpha: 0.10)
-              : (skin.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: _sortByDomain ? Palette.accent.withValues(alpha: 0.3) : Colors.transparent,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => setState(() => _sortByDomain = !_sortByDomain),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: ShapeDecoration(
+            color: _sortByDomain
+                ? Palette.accent.withValues(alpha: 0.10)
+                : Colors.transparent,
+            shape: StadiumBorder(
+              side: BorderSide(
+                color: _sortByDomain
+                    ? Palette.accent.withValues(alpha: 0.25)
+                    : skin.hairlineBorder,
+                width: 1.0,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                AppIcons.lineHorizontal3Decrease,
+                size: 13,
+                color: _sortByDomain ? Palette.accent : skin.muted,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                _sortByDomain ? 'По сайту (A-Z)' : 'Сначала новые',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: _sortByDomain ? Palette.accent : skin.text,
+                ),
+              ),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+      ),
+    );
+  }
           children: [
             Icon(
               AppIcons.lineHorizontal3Decrease,

@@ -49,7 +49,9 @@ class _InboxCardState extends State<InboxCard> {
     final type = meta.type;
     final domain = meta.domain ?? '';
 
-    final borderColor = _hovered
+    final rawTitle = page.title.trim();
+    final cleanTitle = rawTitle.replaceFirst(RegExp(r'^[📄📌🔖💬📸📝]\s*'), '').trim();
+    final displayTitle = cleanTitle.isNotEmpty ? cleanTitle : (meta.url ?? 'Без названия');
         ? (skin.isDark
             ? Colors.white.withValues(alpha: 0.20)
             : Colors.black.withValues(alpha: 0.12))
@@ -118,7 +120,7 @@ class _InboxCardState extends State<InboxCard> {
 
                     // Заголовок карточки
                     Text(
-                      page.title.isNotEmpty ? page.title : (meta.url ?? 'Без названия'),
+                      displayTitle,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -299,68 +301,56 @@ class _InboxCardState extends State<InboxCard> {
   }
 
   Widget _buildTypeBadge(InboxItemType type, Skin skin) {
-    Color bg;
-    Color fg;
+    String label;
+    Color color;
 
     switch (type) {
       case InboxItemType.article:
-        bg = Palette.accent.withValues(alpha: 0.10);
-        fg = Palette.accent;
+        label = '📄 СТАТЬЯ';
+        color = Palette.accent;
         break;
       case InboxItemType.link:
-        bg = skin.isDark
-            ? Colors.white.withValues(alpha: 0.08)
-            : Colors.black.withValues(alpha: 0.05);
-        fg = skin.muted;
+        label = '🔗 ССЫЛКА';
+        color = skin.muted;
         break;
       case InboxItemType.quote:
-        bg = const Color(0xFFD97706).withValues(alpha: 0.12);
-        fg = const Color(0xFFD97706);
+        label = '💬 ЦИТАТА';
+        color = const Color(0xFFD97706);
         break;
       case InboxItemType.screenshot:
-        bg = const Color(0xFF8B5CF6).withValues(alpha: 0.12);
-        fg = const Color(0xFF8B5CF6);
+        label = '📸 СКРИНШОТ';
+        color = const Color(0xFF8B5CF6);
         break;
       case InboxItemType.note:
-        bg = const Color(0xFF10B981).withValues(alpha: 0.12);
-        fg = const Color(0xFF10B981);
+        label = '📝 ЗАМЕТКА';
+        color = const Color(0xFF10B981);
         break;
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(type.icon, size: 10, color: fg),
-          const SizedBox(width: 3.5),
-          Text(
-            type.label,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              color: fg,
-            ),
-          ),
-        ],
+    return Text(
+      label,
+      style: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0.4,
+        color: color,
       ),
     );
   }
 
-  String _formatDate(DateTime dt) {
+  String _formatDate(DateTime date) {
     final now = DateTime.now();
-    final diff = now.difference(dt);
-    if (diff.inMinutes < 1) return 'Только что';
-    if (diff.inHours < 1) return '${diff.inMinutes} мин назад';
-    if (diff.inDays == 0) {
-      return 'Сегодня, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0 && now.day == date.day) {
+      final hour = date.hour.toString().padLeft(2, '0');
+      final minute = date.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } else if (difference.inDays <= 1 || (now.day - date.day == 1 && difference.inDays < 2)) {
+      return 'Вчера';
+    } else {
+      return '${date.day}.${date.month.toString().padLeft(2, '0')}';
     }
-    if (diff.inDays == 1) return 'Вчера';
-    return '${dt.day}.${dt.month.toString().padLeft(2, '0')}';
   }
 }
 
