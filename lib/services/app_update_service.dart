@@ -180,19 +180,13 @@ class AppUpdateService extends ChangeNotifier {
         'https://api.github.com/repos/$gitHubRepoOwner/$gitHubRepoName/releases/latest',
       );
 
-      final client = http.Client();
-      http.Response res;
-      try {
-        res = await client.get(
-          uri,
-          headers: {
-            'Accept': 'application/vnd.github.v3+json',
-            'User-Agent': 'DraftFlow-App-Updater',
-          },
-        );
-      } finally {
-        client.close();
-      }
+      final res = await _client.get(
+        uri,
+        headers: {
+          'Accept': 'application/vnd.github.v3+json',
+          'User-Agent': 'DraftFlow-App-Updater',
+        },
+      );
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
