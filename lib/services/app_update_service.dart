@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../modules/core/url_utils.dart';
 
-const String currentAppVersion = '1.0.16';
+const String currentAppVersion = '1.0.17';
 const String gitHubRepoOwner = 'tonisaf';
 const String gitHubRepoName = 'draftflow';
 
@@ -252,16 +252,11 @@ class AppUpdateService extends ChangeNotifier {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final totalBytes = response.contentLength ?? asset.size;
         var receivedBytes = 0;
-        final sink = file.openWrite();
-        dynamic sinkError;
-        sink.done.catchError((e) {
-          sinkError = e;
-        });
+        final raf = file.openSync(mode: FileMode.write);
 
         try {
           await for (final chunk in response.stream.timeout(const Duration(seconds: 45))) {
-            if (sinkError != null) throw sinkError;
-            sink.add(chunk);
+            raf.writeFromSync(chunk);
             receivedBytes += chunk.length;
             if (totalBytes > 0) {
               _downloadProgress = (receivedBytes / totalBytes).clamp(0.0, 1.0);
@@ -272,11 +267,12 @@ class AppUpdateService extends ChangeNotifier {
             }
           }
         } finally {
-          await sink.flush().timeout(const Duration(seconds: 5), onTimeout: () {});
-          await sink.close().timeout(const Duration(seconds: 5), onTimeout: () {});
+          try {
+            raf.flushSync();
+            raf.closeSync();
+          } catch (_) {}
         }
 
-        if (sinkError != null) throw sinkError;
         if (!file.existsSync() || file.lengthSync() == 0) {
           throw Exception('Файл обновления не был записан на диск');
         }
