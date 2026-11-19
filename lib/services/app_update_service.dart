@@ -180,13 +180,19 @@ class AppUpdateService extends ChangeNotifier {
         'https://api.github.com/repos/$gitHubRepoOwner/$gitHubRepoName/releases/latest',
       );
 
-      final res = await _client.get(
-        uri,
-        headers: {
-          'Accept': 'application/vnd.github.v3+json',
-          'User-Agent': 'DraftFlow-App-Updater',
-        },
-      );
+      final client = http.Client();
+      http.Response res;
+      try {
+        res = await client.get(
+          uri,
+          headers: {
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'DraftFlow-App-Updater',
+          },
+        );
+      } finally {
+        client.close();
+      }
 
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
@@ -399,12 +405,20 @@ for i in {1..50}; do
   sleep 0.1
 done
 
-# Remove quarantine attribute so Gatekeeper allows the app
+# Remove quarantine attribute so Gatekeeper allows the new app
 xattr -dr com.apple.quarantine "\$NEW_APP" 2>/dev/null || true
 
-rm -rf "\$TARGET_APP"
-cp -R "\$NEW_APP" "\$TARGET_APP"
-xattr -dr com.apple.quarantine "\$TARGET_APP" 2>/dev/null || true
+# 1. Attempt direct replacement
+if rm -rf "\$TARGET_APP" 2>/dev/null && cp -R "\$NEW_APP" "\$TARGET_APP" 2>/dev/null; then
+  xattr -dr com.apple.quarantine "\$TARGET_APP" 2>/dev/null || true
+  open "\$TARGET_APP"
+  rm -rf "\$TEMP_DIR"
+  exit 0
+fi
+
+# 2. Fallback: if direct replacement failed (e.g. App Sandbox restrictions or write permission),
+# invoke AppleScript with administrator privileges
+osascript -e "do shell script \\"rm -rf \\\\\\"\$TARGET_APP\\\\\\" && cp -R \\\\\\"\$NEW_APP\\\\\\" \\\\\\"\$TARGET_APP\\\\\\" && xattr -dr com.apple.quarantine \\\\\\"\$TARGET_APP\\\\\\"\\" with administrator privileges"
 open "\$TARGET_APP"
 rm -rf "\$TEMP_DIR"
 ''';
