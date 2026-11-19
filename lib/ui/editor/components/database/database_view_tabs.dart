@@ -312,7 +312,12 @@ class DatabaseViewTabs extends StatelessWidget {
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      physics: const ClampingScrollPhysics(),
+      physics: defaultTargetPlatform == TargetPlatform.macOS ||
+              defaultTargetPlatform == TargetPlatform.iOS
+          ? const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            )
+          : const ClampingScrollPhysics(),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

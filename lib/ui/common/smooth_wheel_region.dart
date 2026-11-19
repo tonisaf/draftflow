@@ -8,8 +8,53 @@ import 'package:flutter/services.dart';
 import 'app_scroll_behavior.dart';
 import '../theme.dart';
 
+/// Tracks whether incoming scroll events represent a continuous trackpad stream
+/// (Mac trackpad / Windows precision touchpad) or discrete mechanical mouse wheel notches.
+abstract final class _TrackpadTracker {
+  static DateTime? _lastTime;
+  static double _lastDelta = 0;
+
+  static bool isTrackpad(PointerScrollEvent event) {
+    // 1. Explicit trackpad device kind in Flutter (PointerDeviceKind.trackpad)
+    if (event.kind == PointerDeviceKind.trackpad) return true;
+
+    final dx = event.scrollDelta.dx;
+    final dy = event.scrollDelta.dy;
+
+    // 2. Diagonal simultaneous scrolling is unique to trackpads
+    if (dx != 0 && dy != 0) return true;
+
+    final delta = (dy.abs() > 0 ? dy : dx).abs();
+
+    // 3. Sub-pixel / fractional micro-deltas are exclusively from trackpads.
+    // Mechanical mouse wheels produce integer step sizes (e.g. 40, 48, 50, 100, 120).
+    if (delta > 0 && delta < 30.0 && (delta % 1.0 != 0.0)) {
+      return true;
+    }
+
+    // 4. Frequency check: trackpad streams events every 8-16ms (60-120Hz).
+    // Mouse wheel notches are spaced by at least 35-50ms even when spun quickly.
+    final now = DateTime.now();
+    final last = _lastTime;
+    _lastTime = now;
+    _lastDelta = delta;
+
+    if (last != null) {
+      final diffMs = now.difference(last).inMilliseconds;
+      if (diffMs <= 18 && delta < 45.0) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
 /// Place inside a viewport so the pointer-signal resolver can select the
 /// innermost scrollable before Flutter's immediate wheel handler runs.
+///
+/// Automatically delegates continuous trackpad gestures to native 120 FPS 1:1 scroll,
+/// while providing silky-smooth frame interpolation for discrete mouse wheels.
 class SmoothWheelRegion extends StatefulWidget {
   const SmoothWheelRegion({super.key, required this.child});
 
@@ -46,12 +91,16 @@ class _SmoothWheelRegionState extends State<SmoothWheelRegion> {
 
   void _onSignal(BuildContext context, PointerSignalEvent event) {
     if (event is! PointerScrollEvent ||
-        event.kind != PointerDeviceKind.mouse ||
-        defaultTargetPlatform == TargetPlatform.windows ||
         !isDesktopPlatform(
           ScrollConfiguration.of(context).getPlatform(context),
         ) ||
         MediaQuery.disableAnimationsOf(context)) {
+      return;
+    }
+
+    // High-frequency continuous trackpads (macOS 120Hz ProMotion / Windows precision touchpads)
+    // must scroll 1:1 natively without artificial animation latency or fighting with fingers.
+    if (_TrackpadTracker.isTrackpad(event)) {
       return;
     }
     final flip = HardwareKeyboard.instance.logicalKeysPressed.any(

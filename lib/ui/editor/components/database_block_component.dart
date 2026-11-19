@@ -756,7 +756,14 @@ class _DatabaseBlockComponentWidgetState
                             child: SingleChildScrollView(
                               controller: _horizontalScrollController,
                               scrollDirection: Axis.horizontal,
-                              physics: const ClampingScrollPhysics(),
+                              physics: defaultTargetPlatform ==
+                                          TargetPlatform.macOS ||
+                                      defaultTargetPlatform ==
+                                          TargetPlatform.iOS
+                                  ? const BouncingScrollPhysics(
+                                      parent: AlwaysScrollableScrollPhysics(),
+                                    )
+                                  : const ClampingScrollPhysics(),
                               child: SmoothWheelRegion(
                                 child: ConstrainedBox(
                                   constraints: const BoxConstraints(
@@ -925,6 +932,7 @@ class _DatabaseBlockComponentWidgetState
                                             ),
                                             controller: _rowsScrollController,
                                             primary: false,
+                                            cacheExtent: 500.0,
                                             itemCount: displayRows.length,
                                             findChildIndexCallback: (key) {
                                               final index = displayRows

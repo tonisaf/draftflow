@@ -11,10 +11,21 @@ class AppScrollBehavior extends MaterialScrollBehavior {
   const AppScrollBehavior();
 
   @override
-  ScrollPhysics getScrollPhysics(BuildContext context) =>
-      isDesktopPlatform(getPlatform(context))
-      ? const ClampingScrollPhysics()
-      : super.getScrollPhysics(context);
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    final platform = getPlatform(context);
+    switch (platform) {
+      case TargetPlatform.macOS:
+      case TargetPlatform.iOS:
+        return const BouncingScrollPhysics(
+          parent: AlwaysScrollableScrollPhysics(),
+        );
+      case TargetPlatform.windows:
+      case TargetPlatform.linux:
+      case TargetPlatform.android:
+      case TargetPlatform.fuchsia:
+        return const ClampingScrollPhysics();
+    }
+  }
 
   @override
   Widget buildOverscrollIndicator(

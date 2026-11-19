@@ -62,7 +62,7 @@ class _SmoothPageBlockComponent extends PageBlockComponent {
         addSemanticIndexes: page.addSemanticIndexes,
         addAutomaticKeepAlives: page.addAutomaticKeepAlives,
         addRepaintBoundaries: page.addRepaintBoundaries,
-        minCacheExtent: page.minCacheExtent,
+        minCacheExtent: page.minCacheExtent ?? 600.0,
         itemCount: page.itemCount,
         itemBuilder: (context, index) {
           final blockIndex = index - (header == null ? 0 : 1);
