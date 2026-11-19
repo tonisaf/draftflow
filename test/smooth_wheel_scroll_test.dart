@@ -249,32 +249,36 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
-  test('AppScrollBehavior configures Bouncing on macOS and Clamping on Windows', () {
+  testWidgets('AppScrollBehavior configures Bouncing on macOS and Clamping on Windows', (tester) async {
     const behavior = AppScrollBehavior();
-    // Test on macOS
-    final macContext = _FakeBuildContext(TargetPlatform.macOS);
-    final macPhysics = behavior.getScrollPhysics(macContext);
-    expect(macPhysics, isA<BouncingScrollPhysics>());
+    late ScrollPhysics macPhysics;
+    late ScrollPhysics winPhysics;
 
-    // Test on Windows
-    final winContext = _FakeBuildContext(TargetPlatform.windows);
-    final winPhysics = behavior.getScrollPhysics(winContext);
+    await tester.pumpWidget(
+      Theme(
+        data: ThemeData(platform: TargetPlatform.macOS),
+        child: Builder(
+          builder: (context) {
+            macPhysics = behavior.getScrollPhysics(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    await tester.pumpWidget(
+      Theme(
+        data: ThemeData(platform: TargetPlatform.windows),
+        child: Builder(
+          builder: (context) {
+            winPhysics = behavior.getScrollPhysics(context);
+            return const SizedBox();
+          },
+        ),
+      ),
+    );
+
+    expect(macPhysics, isA<BouncingScrollPhysics>());
     expect(winPhysics, isA<ClampingScrollPhysics>());
   });
-}
-
-class _FakeBuildContext implements BuildContext {
-  final TargetPlatform platform;
-  _FakeBuildContext(this.platform);
-
-  @override
-  T? dependOnInheritedWidgetOfExactType<T extends InheritedWidget>({Object? aspect}) {
-    if (T == Theme) {
-      return Theme(data: ThemeData(platform: platform), child: const SizedBox()) as T;
-    }
-    return null;
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
