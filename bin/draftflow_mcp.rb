@@ -8,7 +8,7 @@ require 'net/http'
 require 'uri'
 
 class DraftFlowMcp
-  VERSION = '1.0.17'
+  VERSION = '1.0.18'
 
   attr_reader :db, :db_path
 

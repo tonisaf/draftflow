@@ -1,6 +1,6 @@
 {
   "name": "draftflow-web-companion",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "DraftFlow Chrome Extension for quick notes, web clipping, and articles",
   "type": "module",
   "private": true,
