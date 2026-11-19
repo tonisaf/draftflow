@@ -793,26 +793,6 @@ class _InboxViewState extends State<InboxView> {
       ),
     );
   }
-          children: [
-            Icon(
-              AppIcons.lineHorizontal3Decrease,
-              size: 13,
-              color: _sortByDomain ? Palette.accent : skin.muted,
-            ),
-            const SizedBox(width: 5),
-            Text(
-              _sortByDomain ? 'По сайту (A-Z)' : 'Сначала новые',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: _sortByDomain ? Palette.accent : skin.text,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildMasonryGrid(List<InboxCardData> cards, double containerWidth) {
     int colCount = 2;
@@ -842,6 +822,7 @@ class _InboxViewState extends State<InboxView> {
                 context,
                 cardData: card,
                 repository: widget.repository,
+                onOpenInEditor: widget.onNavigateToPage,
               ),
               onToggleArchive: () async {
                 await widget.repository.updateInboxItemStatus(

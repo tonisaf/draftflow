@@ -52,6 +52,8 @@ class _InboxCardState extends State<InboxCard> {
     final rawTitle = page.title.trim();
     final cleanTitle = rawTitle.replaceFirst(RegExp(r'^[📄📌🔖💬📸📝]\s*'), '').trim();
     final displayTitle = cleanTitle.isNotEmpty ? cleanTitle : (meta.url ?? 'Без названия');
+
+    final borderColor = _hovered
         ? (skin.isDark
             ? Colors.white.withValues(alpha: 0.20)
             : Colors.black.withValues(alpha: 0.12))

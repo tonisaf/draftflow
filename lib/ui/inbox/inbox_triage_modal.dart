@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:ui';
-import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
+import 'package:flutter/material.dart' hide Page;
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../data/db/app_database.dart';
 import '../../data/notes_repository.dart';
 import '../common/app_icons.dart';
 import '../theme.dart';
@@ -11,12 +14,14 @@ class InboxTriageModal extends StatelessWidget {
   final InboxCardData cardData;
   final NotesRepository repository;
   final VoidCallback? onUpdated;
+  final ValueChanged<String>? onOpenInEditor;
 
   const InboxTriageModal({
     super.key,
     required this.cardData,
     required this.repository,
     this.onUpdated,
+    this.onOpenInEditor,
   });
 
   static Future<void> show(
@@ -24,6 +29,7 @@ class InboxTriageModal extends StatelessWidget {
     required InboxCardData cardData,
     required NotesRepository repository,
     VoidCallback? onUpdated,
+    ValueChanged<String>? onOpenInEditor,
   }) {
     return showGeneralDialog<void>(
       context: context,
@@ -35,6 +41,7 @@ class InboxTriageModal extends StatelessWidget {
         cardData: cardData,
         repository: repository,
         onUpdated: onUpdated,
+        onOpenInEditor: onOpenInEditor,
       ),
       transitionBuilder: (ctx, animation, secondaryAnimation, child) {
         final curve = CurvedAnimation(
@@ -183,10 +190,50 @@ class InboxTriageModal extends StatelessWidget {
                           ),
                         ],
                       ),
-                      IconButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: Icon(AppIcons.xmark, size: 16, color: skin.muted),
-                        splashRadius: 18,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (onOpenInEditor != null) ...[
+                            Tooltip(
+                              message: 'Открыть в редакторе',
+                              child: InkWell(
+                                onTap: () {
+                                  Navigator.of(context).pop();
+                                  onOpenInEditor?.call(page.id);
+                                },
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Palette.accent.withValues(alpha: 0.10),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(AppIcons.pencil, size: 12, color: Palette.accent),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Открыть в редакторе',
+                                        style: TextStyle(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                          color: Palette.accent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          IconButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            icon: Icon(AppIcons.xmark, size: 16, color: skin.muted),
+                            splashRadius: 18,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -244,30 +291,8 @@ class InboxTriageModal extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        // Содержимое / Сниппет / Текст цитаты
-                        if (cardData.textSnippet.isNotEmpty)
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? Colors.white.withValues(alpha: 0.03)
-                                  : Colors.black.withValues(alpha: 0.02),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.06)
-                                    : Colors.black.withValues(alpha: 0.05),
-                              ),
-                            ),
-                            child: SelectableText(
-                              cardData.textSnippet,
-                              style: TextStyle(
-                                fontSize: 14.5,
-                                height: 1.6,
-                                color: skin.text,
-                              ),
-                            ),
-                          ),
+                        // Содержимое / Статья со всеми блоками
+                        _buildBodyContent(skin, isDark),
                       ],
                     ),
                   ),
@@ -283,6 +308,20 @@ class InboxTriageModal extends StatelessWidget {
                     children: [
                       Row(
                         children: [
+                          // Кнопка: Открыть в редакторе
+                          if (onOpenInEditor != null) ...[
+                            _TriageActionButton(
+                              icon: AppIcons.pencil,
+                              label: 'В редактор',
+                              tooltip: 'Открыть полный документ в редакторе',
+                              onTap: () {
+                                Navigator.of(context).pop();
+                                onOpenInEditor?.call(page.id);
+                              },
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+
                           // Кнопка: Преобразовать в документ проекта
                           _TriageActionButton(
                             icon: AppIcons.folder,
@@ -360,6 +399,267 @@ class InboxTriageModal extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildBodyContent(Skin skin, bool isDark) {
+    if (cardData.blocks.isEmpty) {
+      if (cardData.textSnippet.isEmpty) return const SizedBox.shrink();
+      return Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.03)
+              : Colors.black.withValues(alpha: 0.02),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.06)
+                : Colors.black.withValues(alpha: 0.05),
+          ),
+        ),
+        child: SelectableText(
+          cardData.textSnippet,
+          style: TextStyle(
+            fontSize: 14.5,
+            height: 1.6,
+            color: skin.text,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: cardData.blocks.map((b) => _buildBlockItem(b, skin, isDark)).toList(),
+    );
+  }
+
+  Widget _buildBlockItem(Block b, Skin skin, bool isDark) {
+    Map<String, dynamic> dataMap = {};
+    try {
+      final decoded = jsonDecode(b.content);
+      if (decoded is Map && decoded['data'] is Map) {
+        dataMap = Map<String, dynamic>.from(decoded['data'] as Map);
+      }
+    } catch (_) {}
+
+    final spans = _parseDeltaSpans(dataMap['delta'], skin);
+
+    switch (b.type) {
+      case 'divider':
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: Divider(
+            height: 1,
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.08),
+          ),
+        );
+
+      case 'image':
+        final imageUrl = dataMap['url'] as String? ?? '';
+        if (imageUrl.isNotEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                imageUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+
+      case 'quote':
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.03)
+                : Colors.black.withValues(alpha: 0.02),
+            border: Border(
+              left: BorderSide(
+                color: Palette.accent,
+                width: 3.5,
+              ),
+            ),
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(8),
+              bottomRight: Radius.circular(8),
+            ),
+          ),
+          child: SelectableText.rich(
+            TextSpan(children: spans),
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.55,
+              fontStyle: FontStyle.italic,
+              color: skin.text,
+            ),
+          ),
+        );
+
+      case 'bulleted_list':
+        return Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2, right: 8),
+                child: Text(
+                  '•',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Palette.accent,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SelectableText.rich(
+                  TextSpan(children: spans),
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    height: 1.55,
+                    color: skin.text,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case 'numbered_list':
+        return Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 2, right: 8),
+                child: Text(
+                  '—',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Palette.accent,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              Expanded(
+                child: SelectableText.rich(
+                  TextSpan(children: spans),
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    height: 1.55,
+                    color: skin.text,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+      case 'heading':
+      case 'h1':
+      case 'h2':
+      case 'h3':
+        final level = dataMap['level'] as int? ?? 1;
+        final fontSize = level == 1 ? 18.0 : (level == 2 ? 16.0 : 15.0);
+        return Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 8),
+          child: SelectableText.rich(
+            TextSpan(children: spans),
+            style: TextStyle(
+              fontSize: fontSize,
+              fontWeight: FontWeight.w700,
+              height: 1.35,
+              color: skin.text,
+            ),
+          ),
+        );
+
+      case 'code':
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.04)
+                : Colors.black.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: skin.hairlineBorder),
+          ),
+          child: SelectableText.rich(
+            TextSpan(children: spans),
+            style: TextStyle(
+              fontFamily: 'Courier',
+              fontSize: 13,
+              height: 1.5,
+              color: skin.text,
+            ),
+          ),
+        );
+
+      case 'paragraph':
+      case 'text':
+      default:
+        if (spans.isEmpty) return const SizedBox(height: 6);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 10),
+          child: SelectableText.rich(
+            TextSpan(children: spans),
+            style: TextStyle(
+              fontSize: 14.5,
+              height: 1.6,
+              color: skin.text,
+            ),
+          ),
+        );
+    }
+  }
+
+  List<InlineSpan> _parseDeltaSpans(dynamic rawDelta, Skin skin) {
+    if (rawDelta is! List) return [];
+    final spans = <InlineSpan>[];
+    for (final op in rawDelta) {
+      if (op is Map && op['insert'] is String) {
+        final text = op['insert'] as String;
+        final attrs = op['attributes'] as Map?;
+        final isBold = attrs?['bold'] == true;
+        final isItalic = attrs?['italic'] == true;
+        final isUnderline = attrs?['underline'] == true;
+        final isStrike = attrs?['strike'] == true;
+        final href = attrs?['href'] as String?;
+
+        final isLink = href != null && href.isNotEmpty;
+        spans.add(
+          TextSpan(
+            text: text,
+            style: TextStyle(
+              fontWeight: isBold ? FontWeight.w700 : FontWeight.normal,
+              fontStyle: isItalic ? FontStyle.italic : FontStyle.normal,
+              color: isLink ? Palette.accent : skin.text,
+              decoration: isStrike
+                  ? TextDecoration.lineThrough
+                  : (isLink || isUnderline ? TextDecoration.underline : TextDecoration.none),
+            ),
+            recognizer: isLink
+                ? (TapGestureRecognizer()..onTap = () => _openExternalUrl(href))
+                : null,
+          ),
+        );
+      }
+    }
+    return spans;
   }
 }
 
