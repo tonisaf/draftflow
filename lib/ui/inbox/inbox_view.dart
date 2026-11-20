@@ -221,7 +221,7 @@ class _InboxViewState extends State<InboxView> {
                                     color: skin.text,
                                   ),
                                   decoration: InputDecoration(
-                                    hintText: '${context.l10n.search}…',
+                                    hintText: 'Поиск…',
                                     hintStyle: TextStyle(
                                       fontSize: UiType.title,
                                       color: skin.muted,
@@ -299,7 +299,7 @@ class _InboxViewState extends State<InboxView> {
                                     _isArchiveTab = !_isArchiveTab;
                                     _selectedTypeFilter = null;
                                   }),
-                                  icon: AppIcons.archiveBox,
+                                  icon: AppIcons.archivebox,
                                 ),
 
                                 const SizedBox(width: 8),
@@ -386,7 +386,19 @@ class _InboxViewState extends State<InboxView> {
                     ],
 
                     // Сетка карточек или состояние пустого экрана
-                    if (filteredCards.isEmpty) ...[
+                    if (_isLoading && _allCards.isEmpty) ...[
+                      const SizedBox(height: 60),
+                      Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: skin.muted.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ),
+                    ] else if (filteredCards.isEmpty) ...[
                       const SizedBox(height: 48),
                       Center(
                         child: hasActiveFilters
