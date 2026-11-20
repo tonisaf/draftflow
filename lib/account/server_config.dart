@@ -70,14 +70,6 @@ class ServerConfigStore {
       return ServerConfig(url: normalizeServerUrl(envUrl), key: envKey);
     }
 
-    // Fallback to preconfigured default Supabase instance
-    if (defaultSupabaseUrl.isNotEmpty && defaultSupabaseAnonKey.isNotEmpty) {
-      return const ServerConfig(
-        url: defaultSupabaseUrl,
-        key: defaultSupabaseAnonKey,
-      );
-    }
-
     return null;
   }
 

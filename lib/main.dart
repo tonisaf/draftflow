@@ -102,18 +102,8 @@ void main() async {
   ServerConfig? serverConfig = await ServerConfigStore.load();
   AccountAuth? auth;
   String? configurationError;
-  if (serverConfig != null) {
-    try {
-      auth = SupabaseAccountAuth.create(
-        url: serverConfig.url,
-        key: serverConfig.key,
-      );
-    } on AccountFailure catch (e) {
-      configurationError = e.message;
-    } catch (e) {
-      configurationError = 'Ошибка сервера синхронизации: $e';
-    }
-  } else {
+
+  if (serverConfig == null) {
     try {
       auth = SupabaseAccountAuth.fromEnvironment();
       if (auth != null) {
@@ -123,6 +113,26 @@ void main() async {
       }
     } on AccountFailure catch (e) {
       configurationError = e.message;
+    }
+
+    if (auth == null && defaultSupabaseUrl.isNotEmpty && defaultSupabaseAnonKey.isNotEmpty) {
+      serverConfig = const ServerConfig(
+        url: defaultSupabaseUrl,
+        key: defaultSupabaseAnonKey,
+      );
+    }
+  }
+
+  if (auth == null && serverConfig != null) {
+    try {
+      auth = SupabaseAccountAuth.create(
+        url: serverConfig.url,
+        key: serverConfig.key,
+      );
+    } on AccountFailure catch (e) {
+      configurationError = e.message;
+    } catch (e) {
+      configurationError = 'Ошибка сервера синхронизации: $e';
     }
   }
   FocusNode? syncFocus;
