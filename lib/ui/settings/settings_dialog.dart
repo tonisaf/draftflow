@@ -92,15 +92,11 @@ Widget _general(
   final l10n = context.l10n;
   final theme = ThemeScope.of(context);
   final locale = LocaleScope.of(context);
-  Widget row(String title, String subtitle, Widget control) => LayoutBuilder(
-    builder: (context, constraints) => SettingRow(
-      title: title,
-      subtitle: subtitle,
-      stacked:
-          constraints.maxWidth < 560 ||
-          MediaQuery.textScalerOf(context).scale(1) > 1.15,
-      trailing: control,
-    ),
+  Widget row(String title, String subtitle, Widget control) => SettingRow(
+    title: title,
+    subtitle: subtitle,
+    stacked: false,
+    trailing: control,
   );
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -238,8 +234,15 @@ class _SettingsDialogState extends State<SettingsDialog> {
                     );
                     final index = _tab.clamp(0, tabs.length - 1);
                     final current = tabs[index];
-                    final content = Scrollbar(
+                    final content = RawScrollbar(
                       controller: _scroll,
+                      thumbVisibility: false,
+                      thickness: 4.0,
+                      radius: const Radius.circular(2.0),
+                      thumbColor: skin.isDark
+                          ? Colors.white.withValues(alpha: 0.22)
+                          : Colors.black.withValues(alpha: 0.18),
+                      crossAxisMargin: 2.0,
                       child: SingleChildScrollView(
                         controller: _scroll,
                         physics: const ClampingScrollPhysics(),

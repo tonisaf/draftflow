@@ -302,16 +302,38 @@ class _SyncSectionState extends State<SyncSection> {
       children: [
         SettingRow(
           title: 'Учетная запись',
-          subtitle: '${c.account!.email} • ${syncLabel(context, c)}',
+          subtitle: c.account!.email,
           trailing: ActionPill(
             label: l10n.syncSignOut,
+            destructive: true,
             onTap: c.busy ? null : c.signOut,
           ),
         ),
         Divider(height: 25, thickness: 1, color: skin.hairlineBorder),
         SettingRow(
           title: 'Статус синхронизации',
-          subtitle: syncStatusText,
+          subtitleWidget: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: (engine?.phase == NotesSyncPhase.error || c.error != null)
+                      ? Colors.red
+                      : const Color(0xFF10B981), // bg-emerald-500
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  syncStatusText,
+                  style: TextStyle(fontSize: 12, color: skin.muted, height: 1.5),
+                ),
+              ),
+            ],
+          ),
           trailing: Row(
             mainAxisSize: MainAxisSize.min,
             children: [

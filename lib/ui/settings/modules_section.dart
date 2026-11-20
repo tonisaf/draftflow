@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import '../../data/notes_repository.dart';
 import '../../modules/core/app_module.dart';
@@ -104,9 +103,8 @@ class _ModulesSettingsTabState extends State<ModulesSettingsTab> {
               ),
             ),
             const SizedBox(width: 12),
-            CupertinoSwitch(
+            MacOSToggleSwitch(
               value: isEnabled,
-              activeColor: Palette.accent,
               onChanged: (val) {
                 moduleManager.setEnabled(module.id, val);
                 setState(() {

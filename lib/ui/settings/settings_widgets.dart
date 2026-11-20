@@ -115,13 +115,13 @@ class _SettingsChoiceState<T> extends State<SettingsChoice<T>> {
               skin.surfaceVariant,
               skin.surface,
             ),
-            minimumSize: const Size(130, 32),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            minimumSize: const Size(0, 32),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: Theme.of(context).textTheme.bodyMedium
                 ?.copyWith(fontSize: 13, fontWeight: FontWeight.w400),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(UiRadius.control),
+              borderRadius: BorderRadius.circular(8.0),
               side: BorderSide(color: skin.hairlineBorder),
             ),
           ),
@@ -330,7 +330,7 @@ class SettingsCard extends StatelessWidget {
                 color: skin.hairlineBorder,
               ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: child,
             ),
           ],
@@ -347,6 +347,7 @@ class SettingRow extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.subtitleWidget,
     this.subtitleStyle,
     this.trailing,
     this.stacked = false,
@@ -354,6 +355,7 @@ class SettingRow extends StatelessWidget {
 
   final String title;
   final String? subtitle;
+  final Widget? subtitleWidget;
   final TextStyle? subtitleStyle;
   final Widget? trailing;
   final bool stacked;
@@ -368,7 +370,10 @@ class SettingRow extends StatelessWidget {
           title,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
         ),
-        if (subtitle != null) ...[
+        if (subtitleWidget != null) ...[
+          const SizedBox(height: 2),
+          subtitleWidget!,
+        ] else if (subtitle != null) ...[
           const SizedBox(height: 2),
           Text(
             subtitle!,
@@ -387,11 +392,83 @@ class SettingRow extends StatelessWidget {
       );
     }
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(child: text),
-        const SizedBox(width: 12),
+        const SizedBox(width: 16),
         trailing!,
       ],
+    );
+  }
+}
+
+/// Crisp macOS-proportioned toggle switch: 40px × 24px track (w-10 h-6),
+/// 20px × 20px thumb (w-5 h-5), with smooth 200ms cubic-bezier(0.2, 0.8, 0.2, 1) slide.
+class MacOSToggleSwitch extends StatefulWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final Key? switchKey;
+
+  const MacOSToggleSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.switchKey,
+  });
+
+  @override
+  State<MacOSToggleSwitch> createState() => _MacOSToggleSwitchState();
+}
+
+class _MacOSToggleSwitchState extends State<MacOSToggleSwitch> {
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final isDark = skin.isDark;
+    final on = widget.value;
+
+    final trackColor = on
+        ? Palette.accent
+        : (isDark ? const Color(0xFF373A40) : const Color(0xFFD1D5DB));
+
+    return Semantics(
+      key: widget.switchKey,
+      toggled: on,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => widget.onChanged(!on),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: const Cubic(0.2, 0.8, 0.2, 1.0),
+          width: 40.0,
+          height: 24.0,
+          padding: const EdgeInsets.all(2.0),
+          decoration: BoxDecoration(
+            color: trackColor,
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+          child: AnimatedAlign(
+            duration: const Duration(milliseconds: 200),
+            curve: const Cubic(0.2, 0.8, 0.2, 1.0),
+            alignment: on ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: 20.0,
+              height: 20.0,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.18),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -418,14 +495,10 @@ class SettingToggleRow extends StatelessWidget {
     return SettingRow(
       title: title,
       subtitle: subtitle,
-      trailing: Transform.scale(
-        scale: 0.8,
-        alignment: Alignment.centerRight,
-        child: Switch(
-          key: switchKey,
-          value: value,
-          onChanged: onChanged,
-        ),
+      trailing: MacOSToggleSwitch(
+        switchKey: switchKey,
+        value: value,
+        onChanged: onChanged,
       ),
     );
   }
@@ -439,12 +512,14 @@ class ActionPill extends StatefulWidget {
     required this.label,
     required this.onTap,
     this.primary = false,
+    this.destructive = false,
     this.icon,
   });
 
   final String label;
   final VoidCallback? onTap;
   final bool primary;
+  final bool destructive;
   final IconData? icon;
 
   @override
@@ -453,6 +528,7 @@ class ActionPill extends StatefulWidget {
 
 class _ActionPillState extends State<ActionPill> {
   bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -460,6 +536,7 @@ class _ActionPillState extends State<ActionPill> {
     final isDark = skin.isDark;
     final enabled = widget.onTap != null;
     final isPrimary = widget.primary;
+    final isDestructive = widget.destructive;
 
     Color bg;
     Color fg;
@@ -471,6 +548,13 @@ class _ActionPillState extends State<ActionPill> {
           : Palette.accent.withValues(alpha: 0.4);
       fg = Colors.white;
       border = null;
+    } else if (isDestructive && enabled && _hovered) {
+      bg = isDark ? const Color(0x1FDC2626) : const Color(0x14EF4444); // hover:bg-red-500/[0.08]
+      fg = isDark ? const Color(0xFFF87171) : const Color(0xFFDC2626); // hover:text-red-600
+      border = BorderSide(
+        color: isDark ? const Color(0x33EF4444) : const Color(0x33DC2626), // hover:border-red-500/20
+        width: 1,
+      );
     } else {
       bg = enabled
           ? (_hovered
@@ -492,32 +576,39 @@ class _ActionPillState extends State<ActionPill> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
-        child: AnimatedContainer(
+        onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
+        onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
+        onTapCancel: enabled ? (_) => setState(() => _pressed = false) : null,
+        child: AnimatedScale(
+          scale: _pressed ? 0.98 : 1.0,
           duration: const Duration(milliseconds: 100),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          constraints: const BoxConstraints(minHeight: 32),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(UiRadius.control),
-            border: border == null ? null : Border.fromBorderSide(border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.icon != null) ...[
-                Icon(widget.icon, size: 14, color: fg),
-                const SizedBox(width: 6),
-              ],
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: fg,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            constraints: const BoxConstraints(minHeight: 32),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(UiRadius.control),
+              border: border == null ? null : Border.fromBorderSide(border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 14, color: fg),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: fg,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
