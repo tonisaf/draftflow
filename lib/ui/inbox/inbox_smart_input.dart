@@ -174,13 +174,17 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
             ),
           ],
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        height: _extractedMetadata != null ? null : 48,
+        padding: EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: _extractedMetadata != null ? 8 : 0,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SizedBox(
-              height: 32,
+              height: 46,
               child: Row(
                 children: [
                   Padding(

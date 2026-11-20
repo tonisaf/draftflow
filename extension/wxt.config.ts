@@ -8,7 +8,7 @@ export default defineConfig({
   manifest: {
     name: 'DraftFlow Web Companion',
     description: 'Quick notes, web clipping, quotes and articles directly into your DraftFlow workspace.',
-    version: '1.0.22',
+    version: '1.0.23',
     permissions: [
       'sidePanel',
       'contextMenus',

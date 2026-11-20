@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart' hide Page;
 
 import '../../data/db/app_database.dart';
 import '../../data/notes_repository.dart';
 import '../common/app_icons.dart';
+import '../common/section_transition.dart';
 import '../theme.dart';
 import 'inbox_card.dart';
 import 'inbox_models.dart';
@@ -147,23 +149,25 @@ class _InboxViewState extends State<InboxView> {
         _selectedDomainFilter != null ||
         _searchQuery.isNotEmpty;
 
-    return ColoredBox(
-      color: skin.surface,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const maxContentWidth = 960.0;
-          final availableWidth = constraints.maxWidth;
-          final contentWidth = availableWidth > maxContentWidth ? maxContentWidth : availableWidth;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 700;
+        final horizontalPadding = compact
+            ? UiSpace.s16
+            : math.max(
+                UiSpace.s24,
+                (constraints.maxWidth - 960.0) / 2,
+              );
+        final gridWidth = constraints.maxWidth - (horizontalPadding * 2);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: maxContentWidth),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Заголовок страницы и строка поиска (Apple HIG / Linear)
+        return SectionContent(
+          child: ListView(
+            padding: EdgeInsets.symmetric(
+              horizontal: horizontalPadding,
+              vertical: UiSpace.s24,
+            ),
+            children: [
+              // Заголовок страницы и строка поиска (Apple HIG / Linear)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -495,16 +499,13 @@ class _InboxViewState extends State<InboxView> {
                               ),
                       ),
                     ] else ...[
-                      _buildMasonryGrid(filteredCards, contentWidth),
+                      _buildMasonryGrid(filteredCards, gridWidth),
                     ],
                   ],
                 ),
-              ),
-            ),
+              );
+            },
           );
-        },
-      ),
-    );
   }
 
   Widget _buildFilterChip(
