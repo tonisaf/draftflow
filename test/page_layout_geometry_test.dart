@@ -101,7 +101,7 @@ void main() {
         );
         expect(menu.right, 1584);
         expect(menu.top, 8);
-        expect(cover.top, menu.bottom + 8);
+        expect(cover.top, UiLayout.pageToolbarHeight);
         final tile = t.getRect(find.byKey(const Key('page_icon_button'))),
             glyph = t.getRect(find.byKey(const Key('page_icon_glyph')));
         expect(tile.left, title.left);
