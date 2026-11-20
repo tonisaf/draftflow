@@ -362,28 +362,12 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
             ),
           ),
       ],
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-        decoration: BoxDecoration(
-          color: skin.isDark
-              ? Colors.white.withValues(alpha: 0.06)
-              : Colors.black.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(_selectedType.icon, size: 13, color: skin.muted),
-            const SizedBox(width: 5),
-            Text(
-              _selectedType.label,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w500,
-                color: skin.muted,
-              ),
-            ),
-          ],
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(
+          _selectedType.icon,
+          size: 18,
+          color: skin.muted,
         ),
       ),
     );
@@ -392,23 +376,42 @@ class _InboxSmartInputState extends State<InboxSmartInput> {
   Widget _buildSubmitButton(Skin skin) {
     final hasText = _controller.text.trim().isNotEmpty || _extractedMetadata != null;
 
+    final bgColor = hasText
+        ? Palette.accent
+        : (skin.isDark ? const Color(0xFF26282C) : const Color(0xFFF3F4F6));
+
+    final borderColor = hasText
+        ? Palette.accent
+        : (skin.isDark ? const Color(0xFF42464D) : const Color(0xFFE5E7EB));
+
     return GestureDetector(
       onTap: _handleSubmit,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        width: 30,
-        height: 30,
-        decoration: BoxDecoration(
-          color: hasText
-              ? Palette.accent
-              : (skin.isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04)),
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: Icon(
-            AppIcons.plus,
-            size: 16,
-            color: hasText ? Colors.white : skin.muted,
+      child: Tooltip(
+        message: hasText ? 'Сохранить (Enter)' : 'Новое входящее',
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: bgColor,
+            border: Border.all(color: borderColor),
+            boxShadow: hasText
+                ? [
+                    BoxShadow(
+                      color: Palette.accent.withValues(alpha: 0.35),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Center(
+            child: Icon(
+              hasText ? AppIcons.arrowUp : AppIcons.plus,
+              size: 16,
+              color: hasText ? Colors.white : skin.muted,
+            ),
           ),
         ),
       ),

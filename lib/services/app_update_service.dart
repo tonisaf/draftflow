@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../modules/core/url_utils.dart';
 
-const String currentAppVersion = '1.0.21';
+const String currentAppVersion = '1.0.22';
 const String gitHubRepoOwner = 'tonisaf';
 const String gitHubRepoName = 'draftflow';
 
@@ -410,11 +410,35 @@ if rm -rf "\$TARGET_APP" 2>/dev/null && cp -R "\$NEW_APP" "\$TARGET_APP" 2>/dev/
   exit 0
 fi
 
-# 2. Fallback: if direct replacement failed (e.g. App Sandbox restrictions or write permission),
-# invoke AppleScript with administrator privileges
-osascript -e "do shell script \\"rm -rf \\\\\\"\$TARGET_APP\\\\\\" && cp -R \\\\\\"\$NEW_APP\\\\\\" \\\\\\"\$TARGET_APP\\\\\\" && xattr -dr com.apple.quarantine \\\\\\"\$TARGET_APP\\\\\\"\\" with administrator privileges"
-open "\$TARGET_APP"
-rm -rf "\$TEMP_DIR"
+# 2. Attempt ditto replacement
+if ditto "\$NEW_APP" "\$TARGET_APP" 2>/dev/null; then
+  xattr -dr com.apple.quarantine "\$TARGET_APP" 2>/dev/null || true
+  open "\$TARGET_APP"
+  rm -rf "\$TEMP_DIR"
+  exit 0
+fi
+
+# 3. Fallback: prompt with administrator privileges
+if osascript -e "do shell script \\"rm -rf \\\\\\"\$TARGET_APP\\\\\\" && cp -R \\\\\\"\$NEW_APP\\\\\\" \\\\\\"\$TARGET_APP\\\\\\" && xattr -dr com.apple.quarantine \\\\\\"\$TARGET_APP\\\\\\"\\" with administrator privileges" 2>/dev/null; then
+  open "\$TARGET_APP"
+  rm -rf "\$TEMP_DIR"
+  exit 0
+fi
+
+# 4. Fallback to user Applications if /Applications was read-only
+USER_APPS="\$HOME/Applications"
+mkdir -p "\$USER_APPS" 2>/dev/null || true
+USER_TARGET="\$USER_APPS/DraftFlow.app"
+rm -rf "\$USER_TARGET" 2>/dev/null || true
+if cp -R "\$NEW_APP" "\$USER_TARGET" 2>/dev/null; then
+  xattr -dr com.apple.quarantine "\$USER_TARGET" 2>/dev/null || true
+  open "\$USER_TARGET"
+  rm -rf "\$TEMP_DIR"
+  exit 0
+fi
+
+# 5. Last resort: launch extracted new app directly so user has the update running
+open "\$NEW_APP"
 ''';
     await scriptFile.writeAsString(scriptContent);
     await Process.run('chmod', ['+x', scriptFile.path]);

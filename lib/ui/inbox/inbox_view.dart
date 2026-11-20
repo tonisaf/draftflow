@@ -163,122 +163,93 @@ class _InboxViewState extends State<InboxView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Заголовок страницы, переключатель вкладок и строка поиска (Apple HIG / Linear)
+                    // Заголовок страницы и строка поиска (Apple HIG / Linear)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Входящие',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w700,
-                                color: skin.text,
-                                letterSpacing: -0.5,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Входящие',
+                                style: TextStyle(
+                                  fontSize: UiType.pageTitle,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: -0.5,
+                                  color: skin.text,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Веб-клипы, статьи, ссылки и цитаты для разбора',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: skin.muted,
+                              const SizedBox(height: UiSpace.s4),
+                              Text(
+                                'Веб-клипы, статьи, ссылки и цитаты для разбора',
+                                style: TextStyle(
+                                  fontSize: UiType.caption,
+                                  color: skin.muted,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
 
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Переключатель Входящие / Архив
-                            Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                color: isDark
-                                    ? Colors.white.withValues(alpha: 0.06)
-                                    : Colors.black.withValues(alpha: 0.04),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  _buildTabSwitch(
-                                    title: 'Входящие',
-                                    count: activeCount,
-                                    isSelected: !_isArchiveTab,
-                                    skin: skin,
-                                    onTap: () => setState(() => _isArchiveTab = false),
-                                  ),
-                                  _buildTabSwitch(
-                                    title: 'Архив',
-                                    count: archiveCount,
-                                    isSelected: _isArchiveTab,
-                                    skin: skin,
-                                    onTap: () => setState(() => _isArchiveTab = true),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        const SizedBox(width: UiSpace.s16),
 
-                            const SizedBox(width: 12),
-
-                            // Строка поиска в правом верхнем углу (как в Заметках)
-                            Container(
-                              width: 200,
-                              height: 32,
-                              decoration: ShapeDecoration(
-                                color: skin.hover,
-                                shape: const StadiumBorder(),
+                        // Строка поиска в правом верхнем углу (как в Заметках)
+                        Container(
+                          width: UiSpace.s60 * 4,
+                          height: DesktopUx.sidebarSearchHeight,
+                          decoration: ShapeDecoration(
+                            color: skin.hover,
+                            shape: StadiumBorder(side: BorderSide(color: skin.hairlineBorder)),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: UiSpace.s10),
+                          child: Row(
+                            children: [
+                              Icon(
+                                AppIcons.search,
+                                size: DesktopUx.sidebarIconSize,
+                                color: skin.muted,
                               ),
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
-                              child: Row(
-                                children: [
-                                  Icon(AppIcons.search, size: 13, color: skin.muted),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _searchController,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: skin.text,
-                                      ),
-                                      decoration: InputDecoration(
-                                        hintText: 'Поиск…',
-                                        hintStyle: TextStyle(
-                                          fontSize: 12,
-                                          color: skin.muted.withValues(alpha: 0.8),
-                                        ),
-                                        border: InputBorder.none,
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.zero,
-                                      ),
-                                      onChanged: (val) => setState(() => _searchQuery = val.trim()),
-                                    ),
+                              const SizedBox(width: DesktopUx.sidebarIconGap),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchController,
+                                  selectAllOnFocus: false,
+                                  style: TextStyle(
+                                    fontSize: UiType.title,
+                                    color: skin.text,
                                   ),
-                                  if (_searchQuery.isNotEmpty)
-                                    GestureDetector(
-                                      onTap: () {
-                                        _searchController.clear();
-                                        setState(() => _searchQuery = '');
-                                      },
-                                      child: const Icon(AppIcons.xmark, size: 12),
+                                  decoration: InputDecoration(
+                                    hintText: '${context.l10n.search}…',
+                                    hintStyle: TextStyle(
+                                      fontSize: UiType.title,
+                                      color: skin.muted,
                                     ),
-                                ],
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                  onChanged: (val) => setState(() => _searchQuery = val.trim()),
+                                ),
                               ),
-                            ),
-                          ],
+                              if (_searchQuery.isNotEmpty)
+                                GestureDetector(
+                                  onTap: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = '');
+                                  },
+                                  child: const Icon(AppIcons.xmark, size: UiSpace.s12),
+                                ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
 
                     const SizedBox(height: 16),
 
-                    // Панель фильтров: Типы материалов + Источник + Сортировка на одной линии
+                    // Панель фильтров: Типы материалов + Архив + Источник + Сортировка на одной линии
                     Row(
                       children: [
                         Expanded(
@@ -288,17 +259,21 @@ class _InboxViewState extends State<InboxView> {
                               children: [
                                 _buildFilterChip(
                                   'Все',
-                                  tabCards.length,
-                                  _selectedTypeFilter == null,
-                                  () => setState(() => _selectedTypeFilter = null),
+                                  activeCount,
+                                  !_isArchiveTab && _selectedTypeFilter == null,
+                                  () => setState(() {
+                                    _isArchiveTab = false;
+                                    _selectedTypeFilter = null;
+                                  }),
                                 ),
                                 const SizedBox(width: 4),
                                 for (final t in InboxItemType.values) ...[
                                   _buildFilterChip(
                                     t.label,
                                     typeCounts[t] ?? 0,
-                                    _selectedTypeFilter == t,
+                                    !_isArchiveTab && _selectedTypeFilter == t,
                                     () => setState(() {
+                                      _isArchiveTab = false;
                                       _selectedTypeFilter =
                                           _selectedTypeFilter == t ? null : t;
                                     }),
@@ -306,6 +281,26 @@ class _InboxViewState extends State<InboxView> {
                                   ),
                                   const SizedBox(width: 4),
                                 ],
+
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 1,
+                                  height: 14,
+                                  color: skin.divider,
+                                ),
+                                const SizedBox(width: 8),
+
+                                // Архив как фильтр-таблетка
+                                _buildFilterChip(
+                                  'Архив',
+                                  archiveCount,
+                                  _isArchiveTab,
+                                  () => setState(() {
+                                    _isArchiveTab = !_isArchiveTab;
+                                    _selectedTypeFilter = null;
+                                  }),
+                                  icon: AppIcons.archiveBox,
+                                ),
 
                                 const SizedBox(width: 8),
                                 Container(
@@ -500,68 +495,6 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 
-  Widget _buildTabSwitch({
-    required String title,
-    required int count,
-    required bool isSelected,
-    required Skin skin,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 120),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? (skin.isDark ? Colors.white.withValues(alpha: 0.12) : Colors.white)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: isSelected && !skin.isDark
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ]
-              : null,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? skin.text : skin.muted,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Palette.accent.withValues(alpha: 0.15)
-                    : (skin.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05)),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? Palette.accent : skin.muted,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildFilterChip(
     String label,
     int count,
@@ -718,7 +651,7 @@ class _InboxViewState extends State<InboxView> {
               side: BorderSide(
                 color: hasSelection
                     ? Palette.accent.withValues(alpha: 0.25)
-                    : skin.hairlineBorder,
+                    : Colors.transparent,
                 width: 1.0,
               ),
             ),
@@ -765,7 +698,7 @@ class _InboxViewState extends State<InboxView> {
               side: BorderSide(
                 color: _sortByDomain
                     ? Palette.accent.withValues(alpha: 0.25)
-                    : skin.hairlineBorder,
+                    : Colors.transparent,
                 width: 1.0,
               ),
             ),
