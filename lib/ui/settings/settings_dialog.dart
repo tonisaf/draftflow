@@ -91,11 +91,21 @@ Widget _general(
   final l10n = context.l10n;
   final theme = ThemeScope.of(context);
   final locale = LocaleScope.of(context);
-  Widget row(String title, String subtitle, Widget control) => SettingRow(
-    title: title,
-    subtitle: subtitle,
-    stacked: false,
-    trailing: control,
+  Widget row(
+    String title,
+    String subtitle,
+    Widget control, {
+    bool? stacked,
+  }) => LayoutBuilder(
+    builder: (context, constraints) => SettingRow(
+      title: title,
+      subtitle: subtitle,
+      stacked: stacked ??
+          (!desktop &&
+              (constraints.maxWidth < 560 ||
+                  MediaQuery.textScalerOf(context).scale(1) > 1.15)),
+      trailing: control,
+    ),
   );
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
