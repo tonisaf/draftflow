@@ -83,6 +83,17 @@ class InboxTriageModal extends StatelessWidget {
     final meta = cardData.metadata;
     final page = cardData.page;
 
+    final rawTitle = page.title.trim();
+    String cleanTitle = rawTitle;
+    for (final prefix in ['📄', '📌', '🔖', '💬', '📸', '📝', '🔗', '🌐']) {
+      if (cleanTitle.startsWith(prefix)) {
+        cleanTitle = cleanTitle.substring(prefix.length).trim();
+        break;
+      }
+    }
+    cleanTitle = cleanTitle.replaceAll(RegExp(r'[\uD800-\uDFFF\uFFFD]'), '').trim();
+    final displayTitle = cleanTitle.isNotEmpty ? cleanTitle : (meta.url ?? 'Без названия');
+
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(
@@ -243,57 +254,59 @@ class InboxTriageModal extends StatelessWidget {
 
                 // Основное содержимое
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Обложка (если есть)
-                        if (meta.previewImageUrl != null && meta.previewImageUrl!.isNotEmpty) ...[
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              meta.previewImageUrl!,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                        ],
-
-                        // Заголовок
-                        SelectableText(
-                          page.title.isNotEmpty ? page.title : 'Без названия',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: skin.text,
-                            height: 1.3,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-
-                        if (meta.url != null && meta.url!.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          GestureDetector(
-                            onTap: () => _openExternalUrl(meta.url),
-                            child: Text(
-                              meta.url!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Palette.accent,
-                                decoration: TextDecoration.underline,
+                  child: RawScrollbar(
+                    thumbVisibility: false,
+                    thickness: 4.0,
+                    radius: const Radius.circular(4),
+                    thumbColor: isDark
+                        ? Colors.white.withValues(alpha: 0.18)
+                        : Colors.black.withValues(alpha: 0.18),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Обложка (если есть)
+                          if (meta.previewImageUrl != null && meta.previewImageUrl!.isNotEmpty) ...[
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: Image.network(
+                                meta.previewImageUrl!,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                               ),
                             ),
+                            const SizedBox(height: 18),
+                          ],
+
+                          // Заголовок (без системных эмодзи)
+                          SelectableText(
+                            displayTitle,
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: skin.text,
+                              height: 1.3,
+                              letterSpacing: -0.2,
+                            ),
                           ),
+
+                          // Тонкая однострочная ссылка на источник под заголовком
+                          if (meta.url != null && meta.url!.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            _SubtleUrlLink(
+                              url: meta.url!,
+                              onTap: () => _openExternalUrl(meta.url),
+                            ),
+                          ],
+
+                          const SizedBox(height: 16),
+
+                          // Содержимое / Статья со всеми блоками
+                          _buildBodyContent(skin, isDark),
                         ],
-
-                        const SizedBox(height: 16),
-
-                        // Содержимое / Статья со всеми блоками
-                        _buildBodyContent(skin, isDark),
-                      ],
+                      ),
                     ),
                   ),
                 ),
@@ -302,26 +315,14 @@ class InboxTriageModal extends StatelessWidget {
 
                 // Нижняя панель действий (Triage actions)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Кнопка: Открыть в редакторе
-                          if (onOpenInEditor != null) ...[
-                            _TriageActionButton(
-                              icon: AppIcons.pencil,
-                              label: 'В редактор',
-                              tooltip: 'Открыть полный документ в редакторе',
-                              onTap: () {
-                                Navigator.of(context).pop();
-                                onOpenInEditor?.call(page.id);
-                              },
-                            ),
-                            const SizedBox(width: 8),
-                          ],
-
                           // Кнопка: Преобразовать в документ проекта
                           _TriageActionButton(
                             icon: AppIcons.folder,
@@ -338,9 +339,9 @@ class InboxTriageModal extends StatelessWidget {
 
                           const SizedBox(width: 8),
 
-                          // Кнопка: В архив / Обработано
+                          // Кнопка: В архив / Во входящие
                           _TriageActionButton(
-                            icon: meta.isArchived ? AppIcons.tray : AppIcons.checkmark,
+                            icon: meta.isArchived ? AppIcons.tray : AppIcons.archivebox,
                             label: meta.isArchived ? 'Во входящие' : 'В архив',
                             tooltip: meta.isArchived
                                 ? 'Вернуть в активные входящие'
@@ -368,6 +369,8 @@ class InboxTriageModal extends StatelessWidget {
                                 ? Colors.white.withValues(alpha: 0.10)
                                 : Colors.black.withValues(alpha: 0.08),
                           ),
+
+                          const SizedBox(width: 4),
 
                           // Кнопка: Удалить
                           _TriageActionButton(
@@ -402,7 +405,9 @@ class InboxTriageModal extends StatelessWidget {
   }
 
   Widget _buildBodyContent(Skin skin, bool isDark) {
-    if (cardData.blocks.isEmpty) {
+    final displayBlocks = _filterDisplayBlocks(cardData.blocks);
+
+    if (displayBlocks.isEmpty) {
       if (cardData.textSnippet.isEmpty) return const SizedBox.shrink();
       return Container(
         padding: const EdgeInsets.all(14),
@@ -430,8 +435,53 @@ class InboxTriageModal extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: cardData.blocks.map((b) => _buildBlockItem(b, skin, isDark)).toList(),
+      children: displayBlocks.map((b) => _buildBlockItem(b, skin, isDark)).toList(),
     );
+  }
+
+  List<Block> _filterDisplayBlocks(List<Block> blocks) {
+    if (blocks.isEmpty) return blocks;
+
+    int startIndex = 0;
+    while (startIndex < blocks.length) {
+      final b = blocks[startIndex];
+      if (_isMetadataBlock(b)) {
+        startIndex++;
+        continue;
+      }
+      if (b.type == 'divider' && startIndex > 0) {
+        startIndex++;
+        continue;
+      }
+      break;
+    }
+
+    return blocks.sublist(startIndex);
+  }
+
+  bool _isMetadataBlock(Block b) {
+    if (b.type == 'quote' || b.type == 'callout' || b.type == 'paragraph' || b.type == 'text') {
+      try {
+        final decoded = jsonDecode(b.content);
+        if (decoded is Map && decoded['data'] is Map) {
+          final delta = decoded['data']['delta'];
+          if (delta is List) {
+            final text = delta.map((op) => op['insert']?.toString() ?? '').join().trim();
+            final lower = text.toLowerCase();
+            if (lower.startsWith('🔗 источник:') ||
+                lower.startsWith('источник:') ||
+                lower.startsWith('source:') ||
+                lower.startsWith('🌐 http') ||
+                (lower.startsWith('🌐') && lower.contains('http')) ||
+                lower.startsWith('http://') ||
+                lower.startsWith('https://')) {
+              return true;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+    return false;
   }
 
   Widget _buildBlockItem(Block b, Skin skin, bool isDark) {
@@ -663,6 +713,52 @@ class InboxTriageModal extends StatelessWidget {
   }
 }
 
+class _SubtleUrlLink extends StatefulWidget {
+  final String url;
+  final VoidCallback onTap;
+
+  const _SubtleUrlLink({
+    required this.url,
+    required this.onTap,
+  });
+
+  @override
+  State<_SubtleUrlLink> createState() => _SubtleUrlLinkState();
+}
+
+class _SubtleUrlLinkState extends State<_SubtleUrlLink> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final isDark = skin.isDark;
+
+    // text-[12.5px] text-[#6B7280] hover:text-[#1A73E8] truncate
+    final defaultColor = isDark ? skin.muted : const Color(0xFF6B7280);
+    final hoverColor = isDark ? Palette.accent : const Color(0xFF1A73E8);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Text(
+          widget.url,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w400,
+            color: _hovered ? hoverColor : defaultColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TriageActionButton extends StatefulWidget {
   final IconData icon;
   final String label;
@@ -695,13 +791,20 @@ class _TriageActionButtonState extends State<_TriageActionButton> {
     Color fg;
 
     if (widget.isDestructive) {
-      bg = _hover ? Colors.red.withValues(alpha: 0.12) : Colors.transparent;
-      fg = _hover ? const Color(0xFFDC2626) : skin.muted;
+      // text-[#6B7280] hover:bg-red-500/10 hover:text-red-600
+      bg = _hover
+          ? Colors.red.withValues(alpha: isDark ? 0.20 : 0.10)
+          : Colors.transparent;
+      fg = _hover
+          ? const Color(0xFFDC2626)
+          : (isDark ? skin.muted : const Color(0xFF6B7280));
     } else {
       bg = _hover
-          ? (isDark ? Colors.white.withValues(alpha: 0.10) : Colors.black.withValues(alpha: 0.06))
+          ? (isDark ? Colors.white.withValues(alpha: 0.09) : Colors.black.withValues(alpha: 0.06))
           : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03));
-      fg = _hover ? skin.text : skin.muted;
+      fg = _hover
+          ? (isDark ? skin.text : const Color(0xFF111827))
+          : (isDark ? skin.muted : const Color(0xFF6B7280));
     }
 
     return Tooltip(
@@ -716,15 +819,17 @@ class _TriageActionButtonState extends State<_TriageActionButton> {
           onTapUp: (_) => setState(() => _pressed = false),
           onTapCancel: () => setState(() => _pressed = false),
           child: AnimatedScale(
-            scale: _pressed ? 0.96 : 1.0,
-            duration: const Duration(milliseconds: 90),
+            scale: _pressed ? 0.98 : 1.0, // active:scale-[0.98]
+            duration: const Duration(milliseconds: 100),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              duration: const Duration(milliseconds: 140),
+              height: 32, // h-8
+              padding: const EdgeInsets.symmetric(horizontal: 12), // px-3
               decoration: BoxDecoration(
                 color: bg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8), // rounded-lg
               ),
+              alignment: Alignment.center,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -780,19 +885,21 @@ class _TriageCloseButtonState extends State<_TriageCloseButton> {
         onTapUp: (_) => setState(() => _pressed = false),
         onTapCancel: () => setState(() => _pressed = false),
         child: AnimatedScale(
-          scale: _pressed ? 0.98 : 1.0,
+          scale: _pressed ? 0.98 : 1.0, // active:scale-[0.98]
           duration: const Duration(milliseconds: 100),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            duration: const Duration(milliseconds: 140),
+            height: 32, // h-8
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             decoration: BoxDecoration(
               color: bg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8), // rounded-lg
             ),
+            alignment: Alignment.center,
             child: Text(
               'Закрыть',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: isDark ? Colors.white : const Color(0xFF111827),
               ),

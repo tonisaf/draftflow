@@ -144,11 +144,7 @@ export function buildMarkdownForClip(params: {
 
   // Content body depending on mode
   if (mode === 'article') {
-    parts.push(`> 🔗 Источник: [${title}](${url})`);
-    parts.push(`> 🌐 [${url}](${url})`);
-    parts.push('');
     if (articleMarkdown && articleMarkdown.trim()) {
-      parts.push('---');
       parts.push(articleMarkdown);
     } else {
       parts.push('*[Текст статьи не удалось извлечь со страницы. Сохранена ссылка.]*');
