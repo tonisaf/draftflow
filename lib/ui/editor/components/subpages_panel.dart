@@ -512,6 +512,7 @@ class _SubpageLinkState extends State<_SubpageLink> {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
