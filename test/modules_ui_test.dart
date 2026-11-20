@@ -12,6 +12,7 @@ import 'package:notes_here/modules/core/module_manager.dart';
 import 'package:notes_here/modules/core/module_scope.dart';
 import 'package:notes_here/ui/home_screen.dart';
 import 'package:notes_here/ui/settings/settings_dialog.dart';
+import 'package:notes_here/ui/settings/settings_widgets.dart';
 import 'package:notes_here/ui/sidebar/sidebar.dart';
 import 'package:notes_here/ui/theme.dart';
 
@@ -156,7 +157,7 @@ void main() {
     expect(find.text('Описание тестового модуля'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
-        (w) => w is CupertinoSwitch || w is Switch,
+        (w) => w is CupertinoSwitch || w is Switch || w is MacOSToggleSwitch,
       ),
       findsWidgets,
     );
