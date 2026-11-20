@@ -578,7 +578,7 @@ class _ActionPillState extends State<ActionPill> {
         onTap: widget.onTap,
         onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
         onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
-        onTapCancel: enabled ? (_) => setState(() => _pressed = false) : null,
+        onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
         child: AnimatedScale(
           scale: _pressed ? 0.98 : 1.0,
           duration: const Duration(milliseconds: 100),

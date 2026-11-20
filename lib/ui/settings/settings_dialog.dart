@@ -11,7 +11,6 @@ import '../../l10n/locale_controller.dart';
 import '../../main.dart' show ThemeController, ThemeScope;
 import '../../services/app_update_service.dart' show currentAppVersion;
 import '../common/app_dialog.dart';
-import '../common/quiet_button.dart';
 import '../theme.dart';
 import 'modules_section.dart';
 import 'settings_widgets.dart';

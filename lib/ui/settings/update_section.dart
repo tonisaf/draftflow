@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../services/app_update_service.dart';
-import '../common/app_icons.dart';
 import '../common/status_pill.dart';
 import '../theme.dart';
 import 'settings_widgets.dart';
