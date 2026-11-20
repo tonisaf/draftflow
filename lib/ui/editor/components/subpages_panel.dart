@@ -109,8 +109,8 @@ class _SubpagesPanelState extends State<SubpagesPanel> {
                   spacing: UiSpace.s8,
                   runSpacing: UiSpace.s4,
                   children: [
-                    Container(
-                      margin: const EdgeInsets.only(left: -8.0),
+                    Transform.translate(
+                      offset: const Offset(-8.0, 0),
                       child: _SubpagesHeaderAction(
                         label: context.l10n.subpagesCount(children.length),
                         icon: _expanded
@@ -444,21 +444,23 @@ class _SubpageLinkState extends State<_SubpageLink> {
         onTapDown: widget.onTap != null ? (_) => setState(() => _pressed = true) : null,
         onTapUp: widget.onTap != null ? (_) => setState(() => _pressed = false) : null,
         onTapCancel: widget.onTap != null ? () => setState(() => _pressed = false) : null,
-        child: AnimatedScale(
-          scale: _pressed ? 0.995 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOutCubic,
-            margin: const EdgeInsets.symmetric(horizontal: -10.0, vertical: 1.0),
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
-            decoration: ShapeDecoration(
-              color: _hover
-                  ? (skin.isDark ? skin.hover : const Color(0x09000000))
-                  : Palette.transparent,
-              shape: UiRadius.squircle(UiRadius.control),
-            ),
-            child: Row(
+        child: Transform.translate(
+          offset: const Offset(-10.0, 0),
+          child: AnimatedScale(
+            scale: _pressed ? 0.995 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              margin: const EdgeInsets.symmetric(vertical: 1.0),
+              padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+              decoration: ShapeDecoration(
+                color: _hover
+                    ? (skin.isDark ? skin.hover : const Color(0x09000000))
+                    : Palette.transparent,
+                shape: UiRadius.squircle(UiRadius.control),
+              ),
+              child: Row(
               children: [
                 SizedBox.square(
                   dimension: 18.0,

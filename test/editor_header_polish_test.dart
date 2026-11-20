@@ -61,7 +61,7 @@ void main() {
       await tester.pump();
       final label = tester.widget<Text>(find.text('Getting Started ⚡'));
       expect(label.style!.decoration, TextDecoration.none);
-      expect(label.style!.color, Skin.of(Brightness.light).text);
+      expect(label.style!.color, Skin.of(Brightness.light).hint);
       await tester.tap(find.text('Getting Started ⚡'));
       expect(opened, true);
       await mouse.removePointer();

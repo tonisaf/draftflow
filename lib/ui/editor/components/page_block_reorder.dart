@@ -281,9 +281,9 @@ double blockHandleTopOffset(Node node) {
       final level = (node.attributes['level'] as int?) ?? 1;
       final isFirst = node.path.length == 1 && node.path.first == 0;
       return switch (level) {
-        1 => (isFirst ? UiSpace.s8 : UiSpace.s24) + UiSpace.s2,
-        2 => isFirst ? UiSpace.s6 : 20.0,
-        3 => isFirst ? UiSpace.s4 : 16.0 - UiSpace.s2_5,
+        1 => (isFirst ? UiSpace.s6 : UiSpace.s24) + UiSpace.s2,
+        2 => isFirst ? UiSpace.s6 : UiSpace.s18,
+        3 => isFirst ? UiSpace.s2 : UiSpace.s11_5,
         _ => isFirst ? 0.0 : UiSpace.s6,
       };
     case 'bulleted_list':

@@ -96,11 +96,11 @@ class BreadcrumbItem extends StatelessWidget {
       required bool focus,
       bool pressed = false,
     }) {
-      final color = isCurrent || hover ? skin.text : skin.hint;
-      return AnimatedContainer(
+      final color = isCurrent ? skin.text : skin.hint;
+      final pill = AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOutCubic,
-        margin: EdgeInsets.only(left: isFirst ? -6.0 : 0.0),
+        margin: const EdgeInsets.symmetric(horizontal: 1.0),
         decoration: ShapeDecoration(
           color: hover || focus
               ? (skin.isDark ? skin.hover : const Color(0x0D000000))
@@ -150,6 +150,14 @@ class BreadcrumbItem extends StatelessWidget {
           ),
         ),
       );
+
+      if (isFirst) {
+        return Transform.translate(
+          offset: const Offset(-6.0, 0),
+          child: pill,
+        );
+      }
+      return pill;
     }
 
     if (onTap == null) {
