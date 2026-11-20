@@ -620,8 +620,7 @@ class _SidebarItemState extends State<SidebarItem> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (widget.node.page.icon != null &&
-                      widget.node.page.icon!.isNotEmpty) ...[
+                  if (hasCustomIcon) ...[
                     PageIconView(
                       icon: widget.node.page.icon!,
                       size: 13.0,
@@ -634,9 +633,16 @@ class _SidebarItemState extends State<SidebarItem> {
                       color: Palette.accent,
                     ),
                     const SizedBox(width: UiSpace.s6),
+                  ] else ...[
+                    Icon(
+                      AppIcons.docText,
+                      size: 13.5,
+                      color: Palette.accent,
+                    ),
+                    const SizedBox(width: UiSpace.s6),
                   ],
                   Text(
-                    title,
+                    cleanTitle,
                     style: TextStyle(
                       fontSize: 13.0,
                       fontWeight: FontWeight.w500,
