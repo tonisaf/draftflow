@@ -7,7 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import '../modules/core/url_utils.dart';
 
-const String currentAppVersion = '1.0.23';
+const String currentAppVersion = '1.0.24';
 const String gitHubRepoOwner = 'tonisaf';
 const String gitHubRepoName = 'draftflow';
 

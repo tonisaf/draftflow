@@ -147,16 +147,18 @@ class SupabaseAccountAuth implements AccountAuth, AccountSyncProvider {
       return null;
     }
     try {
-      if (cached.isExpired) return _identity(cached, requiresSignIn: true);
       final response = await client.auth.recoverSession(saved);
       final session = response.session;
-      if (session == null) return null;
+      if (session == null) {
+        if (cached.isExpired) return _identity(cached, requiresSignIn: true);
+        return null;
+      }
       await _persist(session);
       return _identity(session);
     } on SocketException {
-      return _identity(cached, requiresSignIn: true);
+      return _identity(cached, requiresSignIn: cached.isExpired);
     } on TimeoutException {
-      return _identity(cached, requiresSignIn: true);
+      return _identity(cached, requiresSignIn: cached.isExpired);
     } on AuthException catch (e) {
       final status = int.tryParse(e.statusCode ?? '');
       if (status != null && status >= 400 && status < 500 && status != 429) {
