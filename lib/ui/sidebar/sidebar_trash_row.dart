@@ -65,7 +65,9 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                   child: Icon(
                     AppIcons.trash,
                     size: UiSpace.s16,
-                    color: widget.isSelected ? skin.text : skin.muted,
+                    color: widget.isSelected
+                        ? Palette.accent
+                        : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                   ),
                 ),
               ),
@@ -79,7 +81,9 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                         ? FontWeight.w500
                         : FontWeight.w400,
                     letterSpacing: -0.1,
-                    color: widget.isSelected ? skin.text : skin.muted,
+                    color: widget.isSelected
+                        ? skin.text
+                        : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                   ),
                 ),
               ),
@@ -90,7 +94,11 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                     vertical: UiSpace.s1_5,
                   ),
                   decoration: BoxDecoration(
-                    color: skin.hover,
+                    color: widget.isSelected
+                        ? Palette.accent.withValues(alpha: 0.15)
+                        : (skin.isDark
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : const Color(0x0F000000)),
                     borderRadius: BorderRadius.circular(UiRadius.badge),
                   ),
                   child: Text(
@@ -98,7 +106,9 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                     style: TextStyle(
                       fontSize: UiType.small,
                       fontWeight: FontWeight.w600,
-                      color: skin.muted,
+                      color: widget.isSelected
+                          ? Palette.accent
+                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                     ),
                   ),
                 ),

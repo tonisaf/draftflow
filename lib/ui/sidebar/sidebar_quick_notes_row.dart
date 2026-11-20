@@ -67,7 +67,7 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                       size: UiSpace.s16,
                       color: widget.isSelected
                           ? Palette.accent
-                          : (widget.pinnedCount > 0 ? Palette.accent : skin.muted),
+                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                     ),
                   ),
                 ),
@@ -81,7 +81,9 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                           ? FontWeight.w500
                           : FontWeight.w400,
                       letterSpacing: -0.1,
-                      color: widget.isSelected ? skin.text : skin.muted,
+                      color: widget.isSelected
+                          ? skin.text
+                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                     ),
                   ),
                 ),
@@ -94,7 +96,9 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                     decoration: BoxDecoration(
                       color: widget.isSelected
                           ? Palette.accent.withValues(alpha: 0.15)
-                          : skin.hover,
+                          : (skin.isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : const Color(0x0F000000)),
                       borderRadius: BorderRadius.circular(UiRadius.badge),
                     ),
                     child: Text(
@@ -102,7 +106,9 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                       style: TextStyle(
                         fontSize: UiType.small,
                         fontWeight: FontWeight.w600,
-                        color: widget.isSelected ? Palette.accent : skin.muted,
+                        color: widget.isSelected
+                            ? Palette.accent
+                            : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                         fontFeatures: UiType.tabular,
                       ),
                     ),

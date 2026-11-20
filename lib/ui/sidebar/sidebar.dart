@@ -395,8 +395,18 @@ class _SidebarState extends State<Sidebar> {
                   ),
           ),
 
-          // New page & settings row at bottom (matching Tasks Here)
-          Padding(
+          // Sticky sidebar footer: New page & settings with hairline border
+          Container(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: skin.isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : const Color(0x0F000000), // border-black/[0.06]
+                  width: 1.0,
+                ),
+              ),
+            ),
             padding: const EdgeInsets.fromLTRB(
               UiSpace.s12,
               UiSpace.s8,
@@ -409,7 +419,7 @@ class _SidebarState extends State<Sidebar> {
                   child: TextButton.icon(
                     onPressed: widget.onNewRootPage,
                     style: TextButton.styleFrom(
-                      foregroundColor: skin.muted,
+                      foregroundColor: skin.isDark ? skin.muted : const Color(0xFF6B7280),
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(
                         horizontal: UiSpace.s8,
@@ -420,44 +430,102 @@ class _SidebarState extends State<Sidebar> {
                         borderRadius: BorderRadius.circular(UiRadius.small),
                       ),
                     ),
-                    icon: const Icon(
+                    icon: Icon(
                       AppIcons.plus,
                       size: DesktopUx.sidebarIconSize,
+                      color: skin.isDark ? skin.muted : const Color(0xFF6B7280),
                     ),
                     label: Text(
                       context.l10n.newPage,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: UiType.title,
                         fontWeight: FontWeight.w500,
+                        color: skin.isDark ? skin.muted : const Color(0xFF6B7280),
                       ),
                     ),
                   ),
                 ),
-                IconButton(
+                _SidebarSettingsButton(
                   tooltip: context.l10n.settings,
-                  onPressed:
-                      widget.onOpenSettings ??
+                  onTap: widget.onOpenSettings ??
                       () => showSettings(
-                        context,
-                        onOpenBackup: widget.onOpenBackup,
-                      ),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints.tightFor(
-                    width: UiSpace.s32,
-                    height: UiSpace.s32,
-                  ),
-                  icon: Icon(
-                    Icons.settings_outlined,
-                    size: 19,
-                    color: defaultTargetPlatform == TargetPlatform.macOS
-                        ? skin.text
-                        : skin.muted,
-                  ),
+                            context,
+                            onOpenBackup: widget.onOpenBackup,
+                          ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SidebarSettingsButton extends StatefulWidget {
+  final String tooltip;
+  final VoidCallback onTap;
+
+  const _SidebarSettingsButton({
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  @override
+  State<_SidebarSettingsButton> createState() => _SidebarSettingsButtonState();
+}
+
+class _SidebarSettingsButtonState extends State<_SidebarSettingsButton> {
+  bool _hovered = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final isDark = skin.isDark;
+
+    final Color iconColor = _hovered
+        ? (isDark ? skin.text : const Color(0xFF111827))
+        : (isDark ? skin.muted : const Color(0xFF6B7280));
+
+    final Color bgColor = _hovered
+        ? (isDark
+            ? Colors.white.withValues(alpha: 0.08)
+            : const Color(0x0D000000)) // bg-black/[0.05]
+        : Colors.transparent;
+
+    return Tooltip(
+      message: widget.tooltip,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          child: AnimatedScale(
+            scale: _pressed ? 0.95 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 28.0, // w-7
+              height: 28.0, // h-7
+              decoration: BoxDecoration(
+                color: bgColor,
+                borderRadius: BorderRadius.circular(8.0), // rounded-lg
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.settings_outlined,
+                  size: 17.5,
+                  color: iconColor,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

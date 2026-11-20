@@ -295,9 +295,42 @@ class _SidebarItemState extends State<SidebarItem> {
     final skin = context.skin;
     final depth = widget.node.depth;
     final hasChildren = widget.node.hasChildren;
-    final title = widget.node.page.title.trim().isEmpty
-        ? context.l10n.untitled
-        : widget.node.page.title;
+    final hasCustomIcon = widget.node.page.icon != null &&
+        widget.node.page.icon!.isNotEmpty;
+
+    // Deduplicate leading emoji from title if rendered as custom icon
+    String cleanTitle = widget.node.page.title.trim();
+    if (cleanTitle.isEmpty) {
+      cleanTitle = context.l10n.untitled;
+    } else if (hasCustomIcon) {
+      final icon = widget.node.page.icon!.trim();
+      while (icon.isNotEmpty && cleanTitle.startsWith(icon)) {
+        cleanTitle = cleanTitle.substring(icon.length).trimLeft();
+      }
+      final normIcon = icon.replaceAll(RegExp(r'[\uFE0E\uFE0F]'), '');
+      if (normIcon.isNotEmpty) {
+        while (cleanTitle.replaceAll(RegExp(r'[\uFE0E\uFE0F]'), '').startsWith(normIcon)) {
+          final runes = cleanTitle.runes.toList();
+          final iconRunes = normIcon.runes.toSet();
+          int idx = 0;
+          while (idx < runes.length &&
+              (iconRunes.contains(runes[idx]) ||
+                  runes[idx] == 0xFE0F ||
+                  runes[idx] == 0xFE0E ||
+                  runes[idx] == 0x20)) {
+            idx++;
+          }
+          if (idx > 0) {
+            cleanTitle = String.fromCharCodes(runes.sublist(idx)).trimLeft();
+          } else {
+            break;
+          }
+        }
+      }
+      if (cleanTitle.isEmpty) {
+        cleanTitle = widget.node.page.title.trim();
+      }
+    }
 
     Color fill;
     Border? border;
@@ -316,18 +349,7 @@ class _SidebarItemState extends State<SidebarItem> {
       border = null;
     }
 
-    final hasCustomIcon = widget.node.page.icon != null &&
-        widget.node.page.icon!.isNotEmpty;
-
-    // Align child notes without icons directly under the parent folder's text
-    final double leftPadding;
-    if (hasCustomIcon || hasChildren) {
-      leftPadding = UiSpace.s8 + (depth * DesktopUx.treeIndent);
-    } else if (depth > 0) {
-      leftPadding = UiSpace.s8 + ((depth - 1) * DesktopUx.treeIndent) + 16.0 + UiSpace.s6;
-    } else {
-      leftPadding = UiSpace.s8 + 16.0 + UiSpace.s6;
-    }
+    final double leftPadding = UiSpace.s8 + (depth * DesktopUx.treeIndent);
 
     final FontWeight textWeight;
     if (hasChildren) {
@@ -388,6 +410,36 @@ class _SidebarItemState extends State<SidebarItem> {
             ),
             child: Row(
               children: [
+                // Folder disclosure chevron or alignment spacer
+                if (hasChildren) ...[
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      _hideHoverCard();
+                      widget.onToggleExpand();
+                    },
+                    child: SizedBox(
+                      width: 14.0,
+                      height: 16.0,
+                      child: Center(
+                        child: AnimatedRotation(
+                          turns: widget.isExpanded ? 0.25 : 0.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: Icon(
+                            AppIcons.chevronRight,
+                            size: 11.5,
+                            color: skin.isDark
+                                ? skin.muted
+                                : const Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 2.0),
+                ] else ...[
+                  const SizedBox(width: 16.0),
+                ],
                 if (hasCustomIcon) ...[
                   SizedBox.square(
                     dimension: 16.0,
@@ -411,10 +463,24 @@ class _SidebarItemState extends State<SidebarItem> {
                     ),
                   ),
                   const SizedBox(width: UiSpace.s6),
+                ] else ...[
+                  SizedBox.square(
+                    dimension: 16.0,
+                    child: Center(
+                      child: Icon(
+                        AppIcons.docText,
+                        size: 13.5,
+                        color: widget.isSelected
+                            ? skin.text
+                            : (skin.isDark ? skin.muted : const Color(0xFF9CA3AF)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: UiSpace.s6),
                 ],
                 Expanded(
                   child: Text(
-                    title,
+                    cleanTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

@@ -380,7 +380,7 @@ abstract final class DesktopUx {
   static const menuWidth = 200.0;
   static const popoverWidth = 280.0;
   static const dialogWidth = 420.0;
-  static const treeIndent = 14.0;
+  static const treeIndent = 13.0;
   static const searchRowHeight = 44.0;
   static const linkRowHeight = 40.0;
   static const databaseRowHeight = 36.0;

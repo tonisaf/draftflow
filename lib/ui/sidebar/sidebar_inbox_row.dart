@@ -67,7 +67,7 @@ class _SidebarInboxRowState extends State<SidebarInboxRow> {
                       size: UiSpace.s16,
                       color: widget.isSelected
                           ? Palette.accent
-                          : (widget.unreadCount > 0 ? Palette.accent : skin.muted),
+                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                     ),
                   ),
                 ),
@@ -81,7 +81,9 @@ class _SidebarInboxRowState extends State<SidebarInboxRow> {
                           ? FontWeight.w500
                           : FontWeight.w400,
                       letterSpacing: -0.1,
-                      color: widget.isSelected ? skin.text : skin.muted,
+                      color: widget.isSelected
+                          ? skin.text
+                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                     ),
                   ),
                 ),
@@ -95,8 +97,8 @@ class _SidebarInboxRowState extends State<SidebarInboxRow> {
                       color: widget.isSelected
                           ? Palette.accent.withValues(alpha: 0.15)
                           : (skin.isDark
-                              ? Colors.white.withValues(alpha: 0.10)
-                              : Colors.black.withValues(alpha: 0.06)),
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : const Color(0x0F000000)),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -104,7 +106,9 @@ class _SidebarInboxRowState extends State<SidebarInboxRow> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
-                        color: widget.isSelected ? Palette.accent : skin.muted,
+                        color: widget.isSelected
+                            ? Palette.accent
+                            : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
                       ),
                     ),
                   ),
