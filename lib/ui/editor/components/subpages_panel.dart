@@ -287,8 +287,8 @@ class _SubpagesNewPageButtonState extends State<_SubpagesNewPageButton> {
 
     return MouseRegion(
       cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      onEnter: enabled ? (_) => setState(() => _hover = true),
-      onExit: enabled ? (_) => setState(() => _hover = false),
+      onEnter: enabled ? (_) => setState(() => _hover = true) : null,
+      onExit: enabled ? (_) => setState(() => _hover = false) : null,
       child: GestureDetector(
         onTap: widget.onTap,
         onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
