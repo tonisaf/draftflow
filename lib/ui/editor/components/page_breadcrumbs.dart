@@ -56,6 +56,7 @@ class PageBreadcrumbsBar extends StatelessWidget {
                     title: displayTitle,
                     icon: breadcrumbs[i].icon,
                     isCurrent: isCurrent,
+                    isFirst: i == 0,
                     onTap: !isCurrent && onNavigateToPage != null
                         ? () => onNavigateToPage!(breadcrumbs[i].id)
                         : null,
@@ -74,6 +75,7 @@ class BreadcrumbItem extends StatelessWidget {
   final String title;
   final String? icon;
   final bool isCurrent;
+  final bool isFirst;
   final VoidCallback? onTap;
 
   const BreadcrumbItem({
@@ -81,62 +83,74 @@ class BreadcrumbItem extends StatelessWidget {
     required this.title,
     this.icon,
     required this.isCurrent,
+    this.isFirst = false,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    final color = isCurrent ? skin.text : skin.hint;
 
-    Widget content({required bool hover, required bool focus}) => DecoratedBox(
-      decoration: ShapeDecoration(
-        color: hover || focus ? skin.hover : Palette.transparent,
-        shape: UiRadius.squircle(
-          UiRadius.small,
-          side: focus
-              ? BorderSide(color: skin.outline)
-              : BorderSide.none,
+    Widget content({
+      required bool hover,
+      required bool focus,
+      bool pressed = false,
+    }) {
+      final color = isCurrent || hover ? skin.text : skin.hint;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutCubic,
+        margin: EdgeInsets.only(left: isFirst ? -6.0 : 0.0),
+        decoration: ShapeDecoration(
+          color: hover || focus
+              ? (skin.isDark ? skin.hover : const Color(0x0D000000))
+              : Palette.transparent,
+          shape: UiRadius.squircle(
+            UiRadius.control,
+            side: focus
+                ? BorderSide(color: skin.outline)
+                : BorderSide.none,
+          ),
         ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: UiSpace.s6,
-          vertical: UiSpace.s5,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (icon != null && icon!.isNotEmpty) ...[
-              SizedBox.square(
-                dimension: UiSpace.s16,
-                child: Center(
-                  child: Text(
-                    icon!,
-                    style: const TextStyle(
-                      fontSize: UiType.caption,
-                      height: 1,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: 6.0,
+            vertical: 2.0,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (icon != null && icon!.isNotEmpty) ...[
+                SizedBox.square(
+                  dimension: UiSpace.s16,
+                  child: Center(
+                    child: Text(
+                      icon!,
+                      style: const TextStyle(
+                        fontSize: UiType.caption,
+                        height: 1,
+                      ),
                     ),
                   ),
                 ),
+                const SizedBox(width: UiSpace.s4),
+              ],
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: UiType.caption,
+                  height: 1.2,
+                  fontWeight: isCurrent ? FontWeight.w500 : FontWeight.w400,
+                  color: color,
+                  decoration: TextDecoration.none,
+                ),
               ),
-              const SizedBox(width: UiSpace.s4),
             ],
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: UiType.caption,
-                height: 1,
-                fontWeight: isCurrent ? FontWeight.w500 : FontWeight.w400,
-                color: color,
-                decoration: TextDecoration.none,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
-    );
+      );
+    }
 
     if (onTap == null) {
       return content(hover: false, focus: false);
@@ -146,7 +160,7 @@ class BreadcrumbItem extends StatelessWidget {
       label: title,
       onTap: onTap,
       builder: (context, {required hover, required focus, required pressed}) =>
-          content(hover: hover, focus: focus),
+          content(hover: hover, focus: focus, pressed: pressed),
     );
   }
 }

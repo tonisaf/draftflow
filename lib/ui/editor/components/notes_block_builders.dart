@@ -38,7 +38,7 @@ Map<String, BlockComponentBuilder> buildNotesBlockComponentBuilders(
     ),
     ParagraphBlockKeys.type: NotesParagraphBlockComponentBuilder(
       configuration: standardBlockComponentConfiguration.copyWith(
-        padding: (_) => const EdgeInsets.symmetric(vertical: UiSpace.s3),
+        padding: (_) => const EdgeInsets.symmetric(vertical: UiSpace.s4),
         placeholderTextStyle: (_, {textSpan}) => hintStyle,
       ),
     ),
@@ -137,13 +137,12 @@ Map<String, BlockComponentBuilder> buildNotesBlockComponentBuilders(
 EdgeInsets _headingPadding(Node node) {
   final level = (node.attributes[HeadingBlockKeys.level] as int?) ?? 1;
   final isFirstTopLevel = node.path.length == 1 && node.path.first == 0;
-  final top = switch (level) {
-    1 => isFirstTopLevel ? UiSpace.s6 : UiSpace.s24,
-    2 => isFirstTopLevel ? UiSpace.s6 : UiSpace.s18,
-    3 => isFirstTopLevel ? UiSpace.s4 : UiSpace.s14,
-    _ => isFirstTopLevel ? UiSpace.s4 : UiSpace.s10,
+  final (top, bottom) = switch (level) {
+    1 => (isFirstTopLevel ? UiSpace.s8 : 24.0, 8.0),
+    2 => (isFirstTopLevel ? UiSpace.s6 : 20.0, 6.0),
+    3 => (isFirstTopLevel ? UiSpace.s4 : 16.0, 4.0),
+    _ => (isFirstTopLevel ? UiSpace.s4 : 10.0, 2.0),
   };
-  final bottom = level <= 2 ? UiSpace.s4 : UiSpace.s2;
   return EdgeInsets.only(top: top, bottom: bottom);
 }
 
@@ -206,41 +205,44 @@ class _BulletedListMarker extends StatelessWidget {
     final shapeIndex = _depth % 3;
 
     return Container(
-      constraints: BoxConstraints(
-        minWidth: UiSpace.s24,
-        minHeight: lineHeight,
-      ) * textScaleFactor,
-      padding: const EdgeInsets.only(right: UiSpace.s4),
-      alignment: Alignment.center,
-      child: switch (shapeIndex) {
-        0 => Container(
-          width: UiSpace.s6 * textScaleFactor,
-          height: UiSpace.s6 * textScaleFactor,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: skin.text.withValues(alpha: 0.78),
-          ),
-        ),
-        1 => Container(
-          width: UiSpace.s6 * textScaleFactor,
-          height: UiSpace.s6 * textScaleFactor,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color: skin.text.withValues(alpha: 0.7),
-              width: UiSpace.s1_3,
+      width: 24.0 * textScaleFactor,
+      height: lineHeight,
+      padding: EdgeInsets.only(left: 6.0 * textScaleFactor),
+      alignment: Alignment.centerLeft,
+      child: SizedBox(
+        width: 18.0 * textScaleFactor,
+        child: Center(
+          child: switch (shapeIndex) {
+            0 => Container(
+              width: UiSpace.s6 * textScaleFactor,
+              height: UiSpace.s6 * textScaleFactor,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: skin.text.withValues(alpha: 0.78),
+              ),
             ),
-          ),
+            1 => Container(
+              width: UiSpace.s6 * textScaleFactor,
+              height: UiSpace.s6 * textScaleFactor,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: skin.text.withValues(alpha: 0.7),
+                  width: UiSpace.s1_3,
+                ),
+              ),
+            ),
+            _ => Container(
+              width: UiSpace.s5 * textScaleFactor,
+              height: UiSpace.s5 * textScaleFactor,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(UiRadius.hairline),
+                color: skin.text.withValues(alpha: 0.62),
+              ),
+            ),
+          },
         ),
-        _ => Container(
-          width: UiSpace.s5 * textScaleFactor,
-          height: UiSpace.s5 * textScaleFactor,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(UiRadius.hairline),
-            color: skin.text.withValues(alpha: 0.62),
-          ),
-        ),
-      },
+      ),
     );
   }
 }
@@ -268,7 +270,7 @@ class _TodoCheckboxIconState extends State<_TodoCheckboxIcon> {
     final skin = context.skin;
     final textScaleFactor =
         context.read<EditorState>().editorStyle.textScaleFactor;
-    final boxSize = UiSpace.s16 * textScaleFactor;
+    final boxSize = 16.0 * textScaleFactor;
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
@@ -278,40 +280,43 @@ class _TodoCheckboxIconState extends State<_TodoCheckboxIcon> {
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         child: Container(
-          constraints: BoxConstraints(
-            minWidth: UiSpace.s26,
-            minHeight: widget.lineHeight,
-          ) * textScaleFactor,
-          padding: const EdgeInsets.only(right: UiSpace.s4),
-          alignment: Alignment.center,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            curve: Curves.easeOutCubic,
-            width: boxSize,
-            height: boxSize,
-            decoration: ShapeDecoration(
-              color: widget.checked
-                  ? Palette.accent
-                  : (_hover ? skin.hover : Palette.transparent),
-              shape: UiRadius.squircle(
-                UiSpace.s4 + UiSpace.s0_6,
-                side: widget.checked
-                    ? BorderSide.none
-                    : BorderSide(
-                        color: _hover ? skin.text : skin.outline,
-                        width: UiSpace.s1_5,
-                      ),
+          width: 24.0 * textScaleFactor,
+          height: widget.lineHeight,
+          padding: EdgeInsets.only(left: 4.0 * textScaleFactor),
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: 18.0 * textScaleFactor,
+            child: Center(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                curve: Curves.easeOutCubic,
+                width: boxSize,
+                height: boxSize,
+                decoration: ShapeDecoration(
+                  color: widget.checked
+                      ? Palette.accent
+                      : (_hover ? skin.hover : Palette.transparent),
+                  shape: UiRadius.squircle(
+                    UiSpace.s4 + UiSpace.s0_6,
+                    side: widget.checked
+                        ? BorderSide.none
+                        : BorderSide(
+                            color: _hover ? skin.text : skin.outline,
+                            width: UiSpace.s1_5,
+                          ),
+                  ),
+                ),
+                child: widget.checked
+                    ? Center(
+                        child: Icon(
+                          AppIcons.checkMark,
+                          size: UiSpace.s11 * textScaleFactor,
+                          color: Palette.onAccent,
+                        ),
+                      )
+                    : null,
               ),
             ),
-            child: widget.checked
-                ? Center(
-                    child: Icon(
-                      AppIcons.checkMark,
-                      size: UiSpace.s11 * textScaleFactor,
-                      color: Palette.onAccent,
-                    ),
-                  )
-                : null,
           ),
         ),
       ),

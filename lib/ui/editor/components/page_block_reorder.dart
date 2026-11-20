@@ -281,9 +281,9 @@ double blockHandleTopOffset(Node node) {
       final level = (node.attributes['level'] as int?) ?? 1;
       final isFirst = node.path.length == 1 && node.path.first == 0;
       return switch (level) {
-        1 => (isFirst ? UiSpace.s6 : UiSpace.s24) + UiSpace.s2,
-        2 => isFirst ? UiSpace.s6 : UiSpace.s18,
-        3 => isFirst ? UiSpace.s2 : UiSpace.s11_5,
+        1 => (isFirst ? UiSpace.s8 : UiSpace.s24) + UiSpace.s2,
+        2 => isFirst ? UiSpace.s6 : 20.0,
+        3 => isFirst ? UiSpace.s4 : 16.0 - UiSpace.s2_5,
         _ => isFirst ? 0.0 : UiSpace.s6,
       };
     case 'bulleted_list':
@@ -487,7 +487,10 @@ class _PageBlockReorderFrameState extends State<PageBlockReorderFrame> {
           children: [
             Opacity(opacity: _dragging ? 0.4 : 1, child: widget.child),
             Positioned(
-              left: (widget.contentLeft - 30).clamp(0, double.infinity),
+              left: (widget.node.type == HeadingBlockKeys.type
+                      ? widget.contentLeft - 44
+                      : widget.contentLeft - 30)
+                  .clamp(0, double.infinity),
               top:
                   widget.editor.editorStyle.padding.top +
                   blockHandleTopOffset(widget.node),

@@ -99,7 +99,7 @@ class _SubpagesPanelState extends State<SubpagesPanel> {
           final skin = context.skin;
           return Padding(
             key: ValueKey('subpages_${layout.name}'),
-            padding: const EdgeInsets.only(bottom: UiSpace.s16),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -109,19 +109,21 @@ class _SubpagesPanelState extends State<SubpagesPanel> {
                   spacing: UiSpace.s8,
                   runSpacing: UiSpace.s4,
                   children: [
-                    _SubpagesHeaderAction(
-                      label: context.l10n.subpagesCount(children.length),
-                      icon: _expanded
-                          ? AppIcons.chevronDown
-                          : AppIcons.chevronRight,
-                      expanded: _expanded,
-                      onTap: () => setState(() => _expanded = !_expanded),
+                    Container(
+                      margin: const EdgeInsets.only(left: -8.0),
+                      child: _SubpagesHeaderAction(
+                        label: context.l10n.subpagesCount(children.length),
+                        icon: _expanded
+                            ? AppIcons.chevronDown
+                            : AppIcons.chevronRight,
+                        expanded: _expanded,
+                        onTap: () => setState(() => _expanded = !_expanded),
+                      ),
                     ),
-                    _SubpagesHeaderAction(
+                    _SubpagesNewPageButton(
                       label: _creating
                           ? context.l10n.creating
                           : context.l10n.newPage,
-                      icon: AppIcons.plus,
                       onTap: _creating ? null : _create,
                     ),
                   ],
@@ -180,14 +182,15 @@ class _SubpagesPanelState extends State<SubpagesPanel> {
                     ),
                   ),
                 ],
-                Padding(
-                  padding: const EdgeInsets.only(top: UiSpace.s14),
-                  child: Divider(
-                    height: 1,
-                    thickness: UiSpace.s1,
-                    color: skin.hairlineBorder,
-                  ),
+                const SizedBox(height: 18),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: skin.isDark
+                      ? skin.hairlineBorder
+                      : const Color(0x0F000000),
                 ),
+                const SizedBox(height: 24),
               ],
             ),
           );
@@ -259,7 +262,74 @@ class _SubpagesHeaderAction extends StatelessWidget {
   }
 }
 
-class _SubpageLink extends StatelessWidget {
+class _SubpagesNewPageButton extends StatefulWidget {
+  final String label;
+  final VoidCallback? onTap;
+
+  const _SubpagesNewPageButton({
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  State<_SubpagesNewPageButton> createState() => _SubpagesNewPageButtonState();
+}
+
+class _SubpagesNewPageButtonState extends State<_SubpagesNewPageButton> {
+  bool _hover = false;
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final enabled = widget.onTap != null;
+    final foreground = _hover ? skin.text : skin.muted;
+
+    return MouseRegion(
+      cursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      onEnter: enabled ? (_) => setState(() => _hover = true),
+      onExit: enabled ? (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
+        onTapUp: enabled ? (_) => setState(() => _pressed = false) : null,
+        onTapCancel: enabled ? () => setState(() => _pressed = false) : null,
+        child: AnimatedScale(
+          scale: _pressed ? 0.95 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+            decoration: ShapeDecoration(
+              color: _hover
+                  ? (skin.isDark ? skin.hover : const Color(0x0D000000))
+                  : Palette.transparent,
+              shape: UiRadius.squircle(UiRadius.small),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(AppIcons.plus, size: 12.0, color: foreground),
+                const SizedBox(width: 4.0),
+                Text(
+                  widget.label,
+                  style: TextStyle(
+                    fontSize: 12.0,
+                    fontWeight: FontWeight.w500,
+                    color: foreground,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubpageLink extends StatefulWidget {
   const _SubpageLink({
     required this.page,
     required this.cards,
@@ -268,89 +338,177 @@ class _SubpageLink extends StatelessWidget {
   final Page page;
   final bool cards;
   final VoidCallback? onTap;
+
+  @override
+  State<_SubpageLink> createState() => _SubpageLinkState();
+}
+
+class _SubpageLinkState extends State<_SubpageLink> {
+  bool _hover = false;
+  bool _pressed = false;
+
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    final title = page.title.trim().isEmpty
+    final title = widget.page.title.trim().isEmpty
         ? context.l10n.untitled
-        : page.title;
-    return Padding(
-      padding: EdgeInsets.only(bottom: cards ? 0 : UiSpace.s2),
-      child: QuietButton(
-        key: ValueKey('subpage_${page.id}'),
-        label: title,
-        onTap: onTap,
-        builder: (context, {required hover, required focus, required pressed}) =>
-            DecoratedBox(
-              decoration: ShapeDecoration(
-                color: hover
-                    ? skin.sidebarSelected
-                    : (cards ? skin.hover : Palette.transparent),
-                shape: UiRadius.squircle(
-                  cards ? UiRadius.card : UiRadius.small,
-                  side: focus
-                      ? BorderSide(color: skin.outline)
-                      : (cards
-                            ? BorderSide(color: skin.hairlineBorder)
-                            : BorderSide.none),
+        : widget.page.title;
+
+    if (widget.cards) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 0),
+        child: QuietButton(
+          key: ValueKey('subpage_${widget.page.id}'),
+          label: title,
+          onTap: widget.onTap,
+          builder: (context, {required hover, required focus, required pressed}) =>
+              DecoratedBox(
+                decoration: ShapeDecoration(
+                  color: hover
+                      ? skin.sidebarSelected
+                      : skin.hover,
+                  shape: UiRadius.squircle(
+                    UiRadius.card,
+                    side: BorderSide(
+                      color: focus ? skin.outline : skin.hairlineBorder,
+                    ),
+                  ),
                 ),
-              ),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: cards
-                      ? UiLayout.subpageCardHeight
-                      : DesktopUx.sidebarRowHeight,
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(cards ? UiSpace.s14 : UiSpace.s10),
-                  child: Row(
-                    children: [
-                      SizedBox.square(
-                        dimension: cards ? UiSpace.s24 : UiSpace.s18,
-                        child: Center(
-                          child: page.icon?.isNotEmpty == true
-                              ? Text(
-                                  page.icon!,
-                                  style: TextStyle(
-                                    fontSize: cards
-                                        ? UiType.editorBody
-                                        : UiType.title,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    minHeight: UiLayout.subpageCardHeight,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(UiSpace.s14),
+                    child: Row(
+                      children: [
+                        SizedBox.square(
+                          dimension: UiSpace.s24,
+                          child: Center(
+                            child: widget.page.icon?.isNotEmpty == true
+                                ? Text(
+                                    widget.page.icon!,
+                                    style: const TextStyle(
+                                      fontSize: UiType.editorBody,
+                                    ),
+                                  )
+                                : Icon(
+                                    AppIcons.docText,
+                                    size: UiSpace.s16,
+                                    color: skin.muted,
                                   ),
-                                )
-                              : Icon(
-                                  AppIcons.docText,
-                                  size: UiSpace.s16,
-                                  color: skin.muted,
-                                ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: UiSpace.s10),
-                      Expanded(
-                        child: Tooltip(
-                          message: title,
-                          child: Text(
-                            title,
-                            maxLines: cards ? 2 : 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: UiType.title,
-                              fontWeight: FontWeight.w400,
-                              color: skin.text,
+                        const SizedBox(width: UiSpace.s10),
+                        Expanded(
+                          child: Tooltip(
+                            message: title,
+                            child: Text(
+                              title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: UiType.title,
+                                fontWeight: FontWeight.w400,
+                                color: skin.text,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: UiSpace.s8),
-                      Icon(
-                        AppIcons.chevronRight,
-                        size: UiSpace.s16,
-                        color: skin.muted,
-                      ),
-                    ],
+                        const SizedBox(width: UiSpace.s8),
+                        Icon(
+                          AppIcons.chevronRight,
+                          size: UiSpace.s16,
+                          color: skin.muted,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
+        ),
+      );
+    }
+
+    // List view: px-2.5 py-2 -mx-2.5 rounded-xl hover:bg-black/[0.035] active:scale-[0.995]
+    return MouseRegion(
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        key: ValueKey('subpage_${widget.page.id}'),
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        onTapDown: widget.onTap != null ? (_) => setState(() => _pressed = true) : null,
+        onTapUp: widget.onTap != null ? (_) => setState(() => _pressed = false) : null,
+        onTapCancel: widget.onTap != null ? () => setState(() => _pressed = false) : null,
+        child: AnimatedScale(
+          scale: _pressed ? 0.995 : 1.0,
+          duration: const Duration(milliseconds: 100),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOutCubic,
+            margin: const EdgeInsets.symmetric(horizontal: -10.0, vertical: 1.0),
+            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 8.0),
+            decoration: ShapeDecoration(
+              color: _hover
+                  ? (skin.isDark ? skin.hover : const Color(0x09000000))
+                  : Palette.transparent,
+              shape: UiRadius.squircle(UiRadius.control),
             ),
+            child: Row(
+              children: [
+                SizedBox.square(
+                  dimension: 18.0,
+                  child: Center(
+                    child: widget.page.icon?.isNotEmpty == true
+                        ? Text(
+                            widget.page.icon!,
+                            style: const TextStyle(
+                              fontSize: UiType.title,
+                              height: 1,
+                            ),
+                          )
+                        : Icon(
+                            AppIcons.docText,
+                            size: 15.0,
+                            color: _hover ? skin.text : skin.muted,
+                          ),
+                  ),
+                ),
+                const SizedBox(width: 10.0),
+                Expanded(
+                  child: Tooltip(
+                    message: title,
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: UiType.title,
+                        fontWeight: FontWeight.w400,
+                        color: skin.text,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8.0),
+                AnimatedSlide(
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.easeOutCubic,
+                  offset: Offset(_hover ? 0.15 : 0.0, 0),
+                  child: Icon(
+                    AppIcons.chevronRight,
+                    size: 14.0,
+                    color: _hover ? skin.muted : skin.hint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

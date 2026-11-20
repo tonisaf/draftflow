@@ -753,8 +753,11 @@ class _PageEditorViewState extends State<PageEditorView>
                         style: IconButton.styleFrom(
                           backgroundColor: attentionBg,
                           foregroundColor: attentionFg,
-                          shape: const StadiumBorder(),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
                           minimumSize: const Size(UiSpace.s28, UiSpace.s28),
+                          maximumSize: const Size(UiSpace.s28, UiSpace.s28),
                           padding: EdgeInsets.zero,
                         ),
                         onPressed: status == SaveStatus.conflict
@@ -767,9 +770,15 @@ class _PageEditorViewState extends State<PageEditorView>
                         message: message,
                         child: Semantics(
                           label: message,
-                          child: SizedBox.square(
+                          child: AnimatedContainer(
                             key: const Key('page_save_status'),
-                            dimension: UiSpace.s32,
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOutCubic,
+                            width: UiSpace.s28,
+                            height: UiSpace.s28,
+                            decoration: ShapeDecoration(
+                              shape: UiRadius.squircle(UiRadius.control),
+                            ),
                             child: Center(child: indicator),
                           ),
                         ),

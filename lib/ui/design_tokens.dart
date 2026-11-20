@@ -57,7 +57,7 @@ abstract final class UiType {
   static const sectionTitle = 26.0;
   static const editorBody = 14.0;
   static const code = 12.0;
-  static const editorLineHeight = 1.4;
+  static const editorLineHeight = 1.48;
   static const codeLineHeight = 1.4;
   static const editorTitle = 16.0;
   static const heading = 20.0;

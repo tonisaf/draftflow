@@ -145,57 +145,70 @@ class _CollapsibleHeadingBlockComponentWidgetState
       child: Container(
         width: double.infinity,
         alignment: alignment,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.start,
-          textDirection: textDirection,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.centerLeft,
           children: [
-            // Стрелочка сворачивания/разворачивания заголовка
-            _HeadingChevronButton(
-              isCollapsed: isCollapsed,
-              visible: isCollapsed || _hovered,
-              onTap: _toggleCollapsed,
-            ),
-            const SizedBox(width: 4),
-            Flexible(
-              child: AppFlowyRichText(
-                key: forwardKey,
-                delegate: this,
-                node: widget.node,
-                editorState: editorState,
-                textAlign: alignment?.toTextAlign ?? textAlign,
-                textSpanDecorator: (textSpan) {
-                  var result = textSpan.updateTextStyle(
-                    textStyleWithTextSpan(textSpan: textSpan),
-                  );
-                  result = result.updateTextStyle(
-                    widget.textStyleBuilder?.call(level) ??
-                        defaultTextStyle(level),
-                  );
-                  return result;
-                },
-                placeholderText: placeholderText,
-                placeholderTextSpanDecorator: (textSpan) => textSpan
-                    .updateTextStyle(
-                      widget.textStyleBuilder?.call(level) ??
-                          defaultTextStyle(level),
-                    )
-                    .updateTextStyle(
-                      placeholderTextStyleWithTextSpan(textSpan: textSpan),
-                    ),
-                textDirection: textDirection,
-                cursorColor: editorState.editorStyle.cursorColor,
-                selectionColor: editorState.editorStyle.selectionColor,
-                cursorWidth: editorState.editorStyle.cursorWidth,
+            // Стрелочка сворачивания/разворачивания заголовка вынесена в левый гаттер,
+            // чтобы заголовок лежал на одной вертикальной оси с обычным текстом (Notion/Craft).
+            Positioned(
+              left: -22.0,
+              top: 0,
+              bottom: 0,
+              child: Center(
+                child: _HeadingChevronButton(
+                  isCollapsed: isCollapsed,
+                  visible: isCollapsed || _hovered,
+                  onTap: _toggleCollapsed,
+                ),
               ),
             ),
-            if (isCollapsed) ...[
-              const SizedBox(width: 8),
-              _CollapsedSectionIndicator(
-                onTap: _toggleCollapsed,
-              ),
-            ],
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
+              textDirection: textDirection,
+              children: [
+                Flexible(
+                  child: AppFlowyRichText(
+                    key: forwardKey,
+                    delegate: this,
+                    node: widget.node,
+                    editorState: editorState,
+                    textAlign: alignment?.toTextAlign ?? textAlign,
+                    textSpanDecorator: (textSpan) {
+                      var result = textSpan.updateTextStyle(
+                        textStyleWithTextSpan(textSpan: textSpan),
+                      );
+                      result = result.updateTextStyle(
+                        widget.textStyleBuilder?.call(level) ??
+                            defaultTextStyle(level),
+                      );
+                      return result;
+                    },
+                    placeholderText: placeholderText,
+                    placeholderTextSpanDecorator: (textSpan) => textSpan
+                        .updateTextStyle(
+                          widget.textStyleBuilder?.call(level) ??
+                              defaultTextStyle(level),
+                        )
+                        .updateTextStyle(
+                          placeholderTextStyleWithTextSpan(textSpan: textSpan),
+                        ),
+                    textDirection: textDirection,
+                    cursorColor: editorState.editorStyle.cursorColor,
+                    selectionColor: editorState.editorStyle.selectionColor,
+                    cursorWidth: editorState.editorStyle.cursorWidth,
+                  ),
+                ),
+                if (isCollapsed) ...[
+                  const SizedBox(width: 8),
+                  _CollapsedSectionIndicator(
+                    onTap: _toggleCollapsed,
+                  ),
+                ],
+              ],
+            ),
           ],
         ),
       ),
@@ -266,8 +279,8 @@ class _HeadingChevronButtonState extends State<_HeadingChevronButton> {
             onTap: widget.onTap,
             behavior: HitTestBehavior.opaque,
             child: Container(
-              width: 20,
-              height: 20,
+              width: 18,
+              height: 18,
               decoration: ShapeDecoration(
                 color: _btnHover
                     ? skin.hover
@@ -283,7 +296,7 @@ class _HeadingChevronButtonState extends State<_HeadingChevronButton> {
                   turns: widget.isCollapsed ? 0.0 : 0.25,
                   child: Icon(
                     AppIcons.chevronRight,
-                    size: 13,
+                    size: 12,
                     color: widget.isCollapsed
                         ? Palette.accent
                         : (_btnHover ? skin.text : skin.muted),

@@ -46,6 +46,9 @@ class PageMoreActionsButton extends StatefulWidget {
 }
 
 class _PageMoreActionsButtonState extends State<PageMoreActionsButton> {
+  bool _hover = false;
+  bool _pressed = false;
+
   void _showMenu(BuildContext context) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null) return;
@@ -223,25 +226,42 @@ class _PageMoreActionsButtonState extends State<PageMoreActionsButton> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
-    return IconButton(
-      key: const Key('page_more_actions_button'),
-      tooltip: context.l10n.pageOptions,
-      onPressed: () => _showMenu(context),
-      icon: Icon(
-        AppIcons.ellipsis,
-        size: UiSpace.s16,
-        color: widget.iconColor ?? skin.hint,
-      ),
-      padding: EdgeInsets.zero,
-      constraints: const BoxConstraints.tightFor(
-        width: UiSpace.s32,
-        height: UiSpace.s32,
-      ),
-      style: IconButton.styleFrom(
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        visualDensity: VisualDensity.standard,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(UiRadius.compact),
+    return Tooltip(
+      message: context.l10n.pageOptions,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hover = true),
+        onExit: (_) => setState(() => _hover = false),
+        child: GestureDetector(
+          key: const Key('page_more_actions_button'),
+          behavior: HitTestBehavior.opaque,
+          onTap: () => _showMenu(context),
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          child: AnimatedScale(
+            scale: _pressed ? 0.95 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
+              width: 28.0,
+              height: 28.0,
+              decoration: ShapeDecoration(
+                color: _hover
+                    ? (skin.isDark ? skin.hover : const Color(0x0D000000))
+                    : Palette.transparent,
+                shape: UiRadius.squircle(UiRadius.control),
+              ),
+              child: Center(
+                child: Icon(
+                  AppIcons.ellipsis,
+                  size: UiSpace.s16,
+                  color: widget.iconColor ?? (_hover ? skin.text : skin.hint),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

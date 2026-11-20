@@ -106,8 +106,8 @@ void main() {
       final thirdHeadingPadding =
           headingBuilder.configuration.padding(doc.root.children[2]);
 
-      expect(firstHeadingPadding.top, equals(UiSpace.s6));
-      expect(thirdHeadingPadding.top, equals(UiSpace.s14));
+      expect(firstHeadingPadding.top, equals(UiSpace.s8));
+      expect(thirdHeadingPadding.top, equals(UiSpace.s16));
       expect(
         thirdHeadingPadding.top,
         greaterThan(thirdHeadingPadding.bottom),
