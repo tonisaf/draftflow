@@ -30,6 +30,11 @@ class WindowNavToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
+    final gap = isWindows ? 4.0 : 14.0;
+    final arrowGap = isWindows ? 4.0 : 6.0;
+    final mod = isWindows ? 'Ctrl' : '⌘';
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -41,37 +46,39 @@ class WindowNavToolbar extends StatelessWidget {
             isSidebarVisible: isSidebarVisible,
           ),
           tooltip: isSidebarVisible
-              ? '${l10n.hideSidebar} (⌘\\)'
-              : '${l10n.showSidebar} (⌘\\)',
+              ? '${l10n.hideSidebar} ($mod\\)'
+              : '${l10n.showSidebar} ($mod\\)',
           onTap: onToggleSidebar,
         ),
         // Расстояние между переключателем сайдбара и историей навигации
-        const SizedBox(width: 14.0),
+        SizedBox(width: gap),
         // Стрелка «Назад»
         _NavIconButton(
           key: ValueKey('${keyPrefix}nav_back'),
           icon: AppIcons.arrowLeft,
-          tooltip: '${l10n.navBack} (⌘[)',
+          tooltip: '${l10n.navBack} ($mod[)',
           onTap: onNavigateBack,
           enabled: canNavigateBack,
         ),
         // Минимальное расстояние в паре «Назад / Вперёд»
-        const SizedBox(width: 6.0),
+        SizedBox(width: arrowGap),
         // Стрелка «Вперёд»
         _NavIconButton(
           key: ValueKey('${keyPrefix}nav_forward'),
           icon: AppIcons.arrowRight,
-          tooltip: '${l10n.navForward} (⌘])',
+          tooltip: '${l10n.navForward} ($mod])',
           onTap: onNavigateForward,
           enabled: canNavigateForward,
         ),
         // Расстояние перед кнопкой глобального поиска
-        const SizedBox(width: 14.0),
+        SizedBox(width: gap),
         // Поиск
         _NavIconButton(
           key: ValueKey('${keyPrefix}nav_search'),
           icon: AppIcons.search,
-          tooltip: '${l10n.search} (⌘K)',
+          tooltip: isWindows
+              ? '${l10n.search} (Ctrl+K)'
+              : '${l10n.search} (⌘K)',
           onTap: onOpenSearch,
         ),
       ],
@@ -185,6 +192,16 @@ class _NavIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
+    final disabledColor = isWindows
+        ? (skin.isDark
+            ? Colors.white.withValues(alpha: 0.24)
+            : Colors.black.withValues(alpha: 0.24))
+        : skin.faint;
+    final normalColor = isWindows && !skin.isDark
+        ? const Color(0xFF4B5563)
+        : skin.muted;
+
     return Tooltip(
       message: tooltip,
       waitDuration: Motion.tooltipDelay,
@@ -195,20 +212,28 @@ class _NavIconButton extends StatelessWidget {
         onTap: enabled ? onTap : null,
         builder: (context, {required hover, required focus, required pressed}) {
           final color = enabled
-              ? (hover ? skin.text : skin.muted)
-              : skin.faint;
+              ? (hover ? skin.text : normalColor)
+              : disabledColor;
           return Container(
             width: UiSpace.s28,
             height: UiSpace.s28,
-            decoration: ShapeDecoration(
-              color: enabled && (hover || focus)
-                  ? skin.hover
-                  : Palette.transparent,
-              shape: UiRadius.squircle(
-                UiRadius.small,
-                side: focus ? BorderSide(color: skin.outline) : BorderSide.none,
-              ),
-            ),
+            decoration: isWindows
+                ? BoxDecoration(
+                    color: enabled && (hover || focus)
+                        ? skin.hover
+                        : Palette.transparent,
+                    borderRadius: BorderRadius.circular(6.0),
+                    border: focus ? Border.all(color: skin.outline) : null,
+                  )
+                : ShapeDecoration(
+                    color: enabled && (hover || focus)
+                        ? skin.hover
+                        : Palette.transparent,
+                    shape: UiRadius.squircle(
+                      UiRadius.small,
+                      side: focus ? BorderSide(color: skin.outline) : BorderSide.none,
+                    ),
+                  ),
             child: Center(
               child: customIcon != null
                   ? customIcon!(color)

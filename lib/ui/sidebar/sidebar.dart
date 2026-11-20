@@ -349,10 +349,21 @@ class _SidebarState extends State<Sidebar> {
           ...() {
             final moduleManager = AppModuleScope.maybeOf(context);
             if (moduleManager == null || moduleManager.enabledModules.isEmpty) {
-              return const <Widget>[];
+              return const <Widget>[const SizedBox(height: UiSpace.s16)];
             }
+            final divider = Container(
+              height: 1.0,
+              margin: const EdgeInsets.symmetric(
+                horizontal: UiSpace.s12,
+                vertical: UiSpace.s6,
+              ),
+              color: skin.isDark
+                  ? Colors.white.withValues(alpha: 0.08)
+                  : Colors.black.withValues(alpha: 0.06),
+            );
             return [
-              const SizedBox(height: UiSpace.s8),
+              const SizedBox(height: UiSpace.s2),
+              divider,
               for (final mod in moduleManager.enabledModules) ...[
                 const SizedBox(height: UiSpace.s4),
                 Padding(
@@ -364,9 +375,10 @@ class _SidebarState extends State<Sidebar> {
                   ),
                 ),
               ],
+              divider,
+              const SizedBox(height: UiSpace.s8),
             ];
           }(),
-          const SizedBox(height: UiSpace.s16),
 
           // Pages list tree
           Expanded(
@@ -395,66 +407,77 @@ class _SidebarState extends State<Sidebar> {
           ),
 
           // Sticky sidebar footer: New page & settings with hairline border
-          Container(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: skin.isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : const Color(0x0F000000), // border-black/[0.06]
-                  width: 1.0,
-                ),
-              ),
-            ),
-            padding: const EdgeInsets.fromLTRB(
-              UiSpace.s12,
-              UiSpace.s8,
-              UiSpace.s12,
-              UiSpace.s12,
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextButton.icon(
-                    onPressed: widget.onNewRootPage,
-                    style: TextButton.styleFrom(
-                      foregroundColor: skin.isDark ? skin.muted : const Color(0xFF6B7280),
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: UiSpace.s8,
-                        vertical: UiSpace.s6,
-                      ),
-                      minimumSize: const Size(0, DesktopUx.sidebarSearchHeight),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(UiRadius.small),
-                      ),
-                    ),
-                    icon: Icon(
-                      AppIcons.plus,
-                      size: DesktopUx.sidebarIconSize,
-                      color: skin.isDark ? skin.muted : const Color(0xFF6B7280),
-                    ),
-                    label: Text(
-                      context.l10n.newPage,
-                      style: TextStyle(
-                        fontSize: UiType.title,
-                        fontWeight: FontWeight.w500,
-                        color: skin.isDark ? skin.muted : const Color(0xFF6B7280),
-                      ),
+          ...() {
+            final isWindows =
+                Theme.of(context).platform == TargetPlatform.windows;
+            final secondaryFooterColor = skin.isDark
+                ? skin.muted
+                : (isWindows
+                    ? const Color(0xFF4B5563)
+                    : const Color(0xFF6B7280));
+            return [
+              Container(
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: skin.isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0x0F000000), // border-black/[0.06]
+                      width: 1.0,
                     ),
                   ),
                 ),
-                _SidebarSettingsButton(
-                  tooltip: context.l10n.settings,
-                  onTap: widget.onOpenSettings ??
-                      () => showSettings(
-                            context,
-                            onOpenBackup: widget.onOpenBackup,
-                          ),
+                padding: const EdgeInsets.fromLTRB(
+                  UiSpace.s12,
+                  UiSpace.s8,
+                  UiSpace.s12,
+                  UiSpace.s12,
                 ),
-              ],
-            ),
-          ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextButton.icon(
+                        onPressed: widget.onNewRootPage,
+                        style: TextButton.styleFrom(
+                          foregroundColor: secondaryFooterColor,
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: UiSpace.s8,
+                            vertical: UiSpace.s6,
+                          ),
+                          minimumSize: const Size(0, DesktopUx.sidebarSearchHeight),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(UiRadius.small),
+                          ),
+                        ),
+                        icon: Icon(
+                          AppIcons.plus,
+                          size: DesktopUx.sidebarIconSize,
+                          color: secondaryFooterColor,
+                        ),
+                        label: Text(
+                          context.l10n.newPage,
+                          style: TextStyle(
+                            fontSize: UiType.title,
+                            fontWeight: FontWeight.w500,
+                            color: secondaryFooterColor,
+                          ),
+                        ),
+                      ),
+                    ),
+                    _SidebarSettingsButton(
+                      tooltip: context.l10n.settings,
+                      onTap: widget.onOpenSettings ??
+                          () => showSettings(
+                                context,
+                                onOpenBackup: widget.onOpenBackup,
+                              ),
+                    ),
+                  ],
+                ),
+              ),
+            ];
+          }(),
         ],
       ),
     );
@@ -482,10 +505,13 @@ class _SidebarSettingsButtonState extends State<_SidebarSettingsButton> {
   Widget build(BuildContext context) {
     final skin = context.skin;
     final isDark = skin.isDark;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
 
     final Color iconColor = _hovered
         ? (isDark ? skin.text : const Color(0xFF111827))
-        : (isDark ? skin.muted : const Color(0xFF6B7280));
+        : (isDark
+            ? skin.muted
+            : (isWindows ? const Color(0xFF4B5563) : const Color(0xFF6B7280)));
 
     final Color bgColor = _hovered
         ? (isDark

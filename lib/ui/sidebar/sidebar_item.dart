@@ -293,6 +293,7 @@ class _SidebarItemState extends State<SidebarItem> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
     final depth = widget.node.depth;
     final hasChildren = widget.node.hasChildren;
     final hasCustomIcon = widget.node.page.icon != null &&
@@ -430,7 +431,9 @@ class _SidebarItemState extends State<SidebarItem> {
                             size: 11.5,
                             color: skin.isDark
                                 ? skin.muted
-                                : const Color(0xFF9CA3AF),
+                                : (isWindows
+                                    ? const Color(0xFF6B7280)
+                                    : const Color(0xFF9CA3AF)),
                           ),
                         ),
                       ),
@@ -458,7 +461,13 @@ class _SidebarItemState extends State<SidebarItem> {
                       child: Icon(
                         Icons.folder_outlined,
                         size: 15.0,
-                        color: widget.isSelected ? skin.text : skin.muted,
+                        color: widget.isSelected
+                            ? skin.text
+                            : (skin.isDark
+                                ? skin.muted
+                                : (isWindows
+                                    ? const Color(0xFF4B5563)
+                                    : skin.muted)),
                       ),
                     ),
                   ),
@@ -472,7 +481,11 @@ class _SidebarItemState extends State<SidebarItem> {
                         size: 13.5,
                         color: widget.isSelected
                             ? skin.text
-                            : (skin.isDark ? skin.muted : const Color(0xFF9CA3AF)),
+                            : (skin.isDark
+                                ? skin.muted
+                                : (isWindows
+                                    ? const Color(0xFF6B7280)
+                                    : const Color(0xFF9CA3AF))),
                       ),
                     ),
                   ),

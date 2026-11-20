@@ -1,6 +1,7 @@
 import 'package:appflowy_editor/appflowy_editor.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:notes_here/ui/theme.dart';
+import 'editor_link_popover.dart';
 
 /// Crisp Retina-native typography and Cupertino glyphs for the editor floating bubble toolbar.
 /// Replaces low-res 16x16 SVGs that suffer from aliasing / scaling artifacts.
@@ -126,7 +127,8 @@ final retinaLinkItem = ToolbarItem(
 
     final color = isHref ? highlightColor : (iconColor ?? context.skin.text);
     final child = _RetinaToolbarButton(
-      onPressed: () => showLinkMenu(context, editorState, selection, isHref),
+      onPressed: () =>
+          showModernLinkPopover(context, editorState, selection, isHref),
       child: Icon(
         CupertinoIcons.link,
         size: 15.0,

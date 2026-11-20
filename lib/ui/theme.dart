@@ -59,16 +59,24 @@ class Skin extends ThemeExtension<Skin> {
     required this.toastText,
   });
 
-  factory Skin.of(Brightness brightness, {bool mica = false}) {
-    final transparentSidebar =
-        mica || defaultTargetPlatform == TargetPlatform.macOS;
+  factory Skin.of(
+    Brightness brightness, {
+    bool mica = false,
+    TargetPlatform? platform,
+  }) {
+    final p = platform ?? defaultTargetPlatform;
+    final transparentSidebar = mica || p == TargetPlatform.macOS;
     return switch ((brightness, transparentSidebar)) {
       (Brightness.light, false) => _light.copyWith(
-        sidebarSelected: const Color(0x0C000000),
+        sidebarSelected: p == TargetPlatform.windows
+            ? const Color(0x13000000)
+            : const Color(0x0C000000),
       ),
       (Brightness.light, true) => _light.copyWith(
         sidebar: const Color(0x00FFFFFF),
-        sidebarSelected: const Color(0x0D000000),
+        sidebarSelected: p == TargetPlatform.windows
+            ? const Color(0x13000000)
+            : const Color(0x0D000000),
       ),
       (Brightness.dark, false) => _dark.copyWith(
         sidebarSelected: const Color(0x14FFFFFF),
@@ -315,7 +323,11 @@ class Skin extends ThemeExtension<Skin> {
 
 extension SkinOf on BuildContext {
   Skin get skin =>
-      Theme.of(this).extension<Skin>() ?? Skin.of(Theme.of(this).brightness);
+      Theme.of(this).extension<Skin>() ??
+      Skin.of(
+        Theme.of(this).brightness,
+        platform: Theme.of(this).platform,
+      );
 }
 
 abstract final class Motion {
@@ -410,10 +422,16 @@ abstract final class DesktopUx {
   static const captionSize = 12.0;
 }
 
-ThemeData buildTheme(Brightness brightness, {bool mica = false}) {
-  final skin = Skin.of(brightness, mica: mica);
+ThemeData buildTheme(
+  Brightness brightness, {
+  bool mica = false,
+  TargetPlatform? platform,
+}) {
+  final targetPlatform = platform ?? defaultTargetPlatform;
+  final skin = Skin.of(brightness, mica: mica, platform: targetPlatform);
   final base = ThemeData(
     useMaterial3: true,
+    platform: targetPlatform,
     brightness: brightness,
     colorScheme: ColorScheme.fromSeed(
       seedColor: Palette.accent,

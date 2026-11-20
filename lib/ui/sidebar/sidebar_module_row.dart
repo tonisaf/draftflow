@@ -26,6 +26,10 @@ class _SidebarModuleRowState extends State<SidebarModuleRow> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
+    final secondaryIconColor = isWindows && !skin.isDark
+        ? const Color(0xFF4B5563)
+        : skin.muted;
     final fill = widget.isSelected
         ? skin.sidebarSelected
         : (_hover ? skin.hover : Palette.transparent);
@@ -59,7 +63,7 @@ class _SidebarModuleRowState extends State<SidebarModuleRow> {
                 Icon(
                   widget.module.icon,
                   size: UiSpace.s16,
-                  color: widget.isSelected ? Palette.accent : skin.muted,
+                  color: widget.isSelected ? Palette.accent : secondaryIconColor,
                 ),
                 const SizedBox(width: UiSpace.s8),
                 Expanded(

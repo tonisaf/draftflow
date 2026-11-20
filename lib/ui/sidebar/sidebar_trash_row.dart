@@ -29,6 +29,10 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
+    final secondaryColor = isWindows && !skin.isDark
+        ? const Color(0xFF4B5563)
+        : (skin.isDark ? skin.muted : const Color(0xFF6B7280));
     final fill = widget.isSelected
         ? skin.sidebarSelected
         : (_hover ? skin.hover : Palette.transparent);
@@ -65,9 +69,7 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                   child: Icon(
                     AppIcons.trash,
                     size: UiSpace.s16,
-                    color: widget.isSelected
-                        ? Palette.accent
-                        : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
+                    color: widget.isSelected ? Palette.accent : secondaryColor,
                   ),
                 ),
               ),
@@ -81,9 +83,7 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                         ? FontWeight.w500
                         : FontWeight.w400,
                     letterSpacing: -0.1,
-                    color: widget.isSelected
-                        ? skin.text
-                        : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
+                    color: widget.isSelected ? skin.text : secondaryColor,
                   ),
                 ),
               ),
@@ -106,9 +106,8 @@ class _SidebarTrashRowState extends State<SidebarTrashRow> {
                     style: TextStyle(
                       fontSize: UiType.small,
                       fontWeight: FontWeight.w600,
-                      color: widget.isSelected
-                          ? Palette.accent
-                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
+                      color:
+                          widget.isSelected ? Palette.accent : secondaryColor,
                     ),
                   ),
                 ),

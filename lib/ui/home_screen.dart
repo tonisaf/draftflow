@@ -711,28 +711,70 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Padding(
                                 padding: EdgeInsets.only(
-                                  top: _isMacOS ? 7.0 : UiSpace.s6,
-                                  bottom: 5.0,
+                                  top: _isMacOS ? 7.0 : 0.0,
+                                  bottom: _isMacOS ? 5.0 : 0.0,
                                   left: _isMacOS ? 92.0 : UiSpace.s12,
                                   right: UiSpace.s12,
                                 ),
-                                child: Row(
-                                  children: [
-                                    WindowNavToolbar(
-                                      onToggleSidebar: _handleToggleSidebar,
-                                      isSidebarVisible: _isSidebarVisible,
-                                      onNavigateBack: _canNavigateBack
-                                          ? _navigateBack
-                                          : null,
-                                      canNavigateBack: _canNavigateBack,
-                                      onNavigateForward: _canNavigateForward
-                                          ? _navigateForward
-                                          : null,
-                                      canNavigateForward: _canNavigateForward,
-                                      onOpenSearch: _handleOpenSearch,
-                                    ),
-                                  ],
-                                ),
+                                child: !_isMacOS && _isSidebarVisible
+                                    ? SizedBox(
+                                        width: macosSidebarWidth - UiSpace.s12,
+                                        height: 40.0,
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              'DraftFlow',
+                                              style: TextStyle(
+                                                fontSize: 13.0,
+                                                fontWeight: FontWeight.w600,
+                                                letterSpacing: -0.2,
+                                                color: skin.text,
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            WindowNavToolbar(
+                                              onToggleSidebar:
+                                                  _handleToggleSidebar,
+                                              isSidebarVisible:
+                                                  _isSidebarVisible,
+                                              onNavigateBack: _canNavigateBack
+                                                  ? _navigateBack
+                                                  : null,
+                                              canNavigateBack: _canNavigateBack,
+                                              onNavigateForward:
+                                                  _canNavigateForward
+                                                      ? _navigateForward
+                                                      : null,
+                                              canNavigateForward:
+                                                  _canNavigateForward,
+                                              onOpenSearch: _handleOpenSearch,
+                                            ),
+                                          ],
+                                        ),
+                                      )
+                                    : SizedBox(
+                                        height: _isMacOS ? null : 40.0,
+                                        child: Row(
+                                          children: [
+                                            WindowNavToolbar(
+                                              onToggleSidebar:
+                                                  _handleToggleSidebar,
+                                              isSidebarVisible: _isSidebarVisible,
+                                              onNavigateBack: _canNavigateBack
+                                                  ? _navigateBack
+                                                  : null,
+                                              canNavigateBack: _canNavigateBack,
+                                              onNavigateForward:
+                                                  _canNavigateForward
+                                                      ? _navigateForward
+                                                      : null,
+                                              canNavigateForward:
+                                                  _canNavigateForward,
+                                              onOpenSearch: _handleOpenSearch,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                               ),
                               Expanded(
                                 child: Row(

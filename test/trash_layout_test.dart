@@ -80,7 +80,7 @@ void main() {
       expect(t.getSize(row).width, 720);
       expect(t.getRect(row).center.dx, 700);
       expect(t.getSize(row).height, 48);
-      expect(t.getSize(find.byKey(const Key('trash_empty_button'))).height, 32);
+      expect(t.getSize(find.byKey(const Key('trash_empty_button'))).height, 36);
       expect(find.text('Работа'), findsNWidgets(2));
       expect(find.text('Проектные SQL'), findsNWidgets(2));
       expect(find.text('Восстановить'), findsNothing);

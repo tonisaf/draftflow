@@ -29,6 +29,10 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isWindows = Theme.of(context).platform == TargetPlatform.windows;
+    final secondaryColor = skin.isDark
+        ? skin.muted
+        : (isWindows ? const Color(0xFF4B5563) : const Color(0xFF6B7280));
     final fill = widget.isSelected
         ? skin.sidebarSelected
         : (_hover ? skin.hover : Palette.transparent);
@@ -67,7 +71,7 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                       size: UiSpace.s16,
                       color: widget.isSelected
                           ? Palette.accent
-                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
+                          : secondaryColor,
                     ),
                   ),
                 ),
@@ -83,7 +87,7 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                       letterSpacing: -0.1,
                       color: widget.isSelected
                           ? skin.text
-                          : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
+                          : secondaryColor,
                     ),
                   ),
                 ),
@@ -108,7 +112,7 @@ class _SidebarQuickNotesRowState extends State<SidebarQuickNotesRow> {
                         fontWeight: FontWeight.w600,
                         color: widget.isSelected
                             ? Palette.accent
-                            : (skin.isDark ? skin.muted : const Color(0xFF6B7280)),
+                            : secondaryColor,
                         fontFeatures: UiType.tabular,
                       ),
                     ),

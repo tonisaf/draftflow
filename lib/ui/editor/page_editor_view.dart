@@ -32,6 +32,7 @@ import 'components/draft_conflict_dialog.dart';
 import 'components/code_block_component.dart';
 import 'components/database_block_component.dart';
 import 'components/editor_flowy_config.dart';
+import 'components/editor_link_popover.dart';
 import 'components/image_paste.dart';
 import 'components/page_breadcrumbs.dart';
 import 'components/page_header.dart';
@@ -990,6 +991,7 @@ class _PageEditorViewState extends State<PageEditorView>
                         onNavigateToPage: widget.onNavigateToPage,
                       ),
                       commandShortcutEvents: [
+                        modernLinkMenuCommand,
                         codeBlockPasteCommand,
                         codeBlockPasteWithoutFormattingCommand,
                         exitCodeBlockOnShiftEnterCommand,
@@ -999,7 +1001,11 @@ class _PageEditorViewState extends State<PageEditorView>
                         smartCopyCommand,
                         smartCutCommand,
                         smartLinkPasteCommand,
-                        ...standardCommandShortcutEvents,
+                        ...standardCommandShortcutEvents.where(
+                          (cmd) =>
+                              cmd.key != 'link menu' &&
+                              !cmd.key.toLowerCase().contains('link menu'),
+                        ),
                       ],
                       editorStyle: EditorStyle.desktop(
                         maxWidth: pageSettings.fullWidth
