@@ -33,7 +33,7 @@ enum InboxItemType {
       case InboxItemType.link:
         return AppIcons.link;
       case InboxItemType.quote:
-        return AppIcons.textformat;
+        return AppIcons.quote;
       case InboxItemType.screenshot:
         return AppIcons.photo;
       case InboxItemType.note:

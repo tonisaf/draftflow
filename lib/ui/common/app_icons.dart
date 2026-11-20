@@ -45,6 +45,7 @@ abstract final class AppIcons {
   static const docTextSearch = CupertinoIcons.doc_text_search;
   static const ellipsis = CupertinoIcons.ellipsis;
   static const exclamationmarkCircle = CupertinoIcons.exclamationmark_circle;
+  static const externalLink = CupertinoIcons.arrow_up_right_square;
   static const eye = CupertinoIcons.eye;
   static const folder = CupertinoIcons.folder;
   static const globe = CupertinoIcons.globe;
@@ -64,6 +65,7 @@ abstract final class AppIcons {
   static const pinFill = CupertinoIcons.pin_fill;
   static const plus = CupertinoIcons.plus;
   static const plusCircle = CupertinoIcons.plus_circle;
+  static const quote = Icons.format_quote_rounded;
   static const rectangleSplit3x1 = CupertinoIcons.rectangle_split_3x1;
   static const scissors = CupertinoIcons.scissors;
   static const search = CupertinoIcons.search;

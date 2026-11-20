@@ -253,9 +253,10 @@ class _InboxViewState extends State<InboxView> {
 
                     const SizedBox(height: 16),
 
-                    // Панель фильтров: Типы материалов + Архив + Источник + Сортировка на одной линии
+                    // Панель фильтров: Категории слева, Домен/Сортировка справа (ml-auto)
                     Row(
                       children: [
+                        // Вкладки типов контента + Архив слева
                         Expanded(
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
@@ -282,6 +283,7 @@ class _InboxViewState extends State<InboxView> {
                                           _selectedTypeFilter == t ? null : t;
                                     }),
                                     icon: t.icon,
+                                    iconSize: t == InboxItemType.quote ? 14.0 : 13.0,
                                   ),
                                   const SizedBox(width: 4),
                                 ],
@@ -289,8 +291,10 @@ class _InboxViewState extends State<InboxView> {
                                 const SizedBox(width: 8),
                                 Container(
                                   width: 1,
-                                  height: 14,
-                                  color: skin.divider,
+                                  height: 16,
+                                  color: skin.isDark
+                                      ? Colors.white.withValues(alpha: 0.10)
+                                      : const Color(0x14000000), // bg-black/[0.08]
                                 ),
                                 const SizedBox(width: 8),
 
@@ -305,22 +309,6 @@ class _InboxViewState extends State<InboxView> {
                                   }),
                                   icon: AppIcons.archivebox,
                                 ),
-
-                                const SizedBox(width: 8),
-                                Container(
-                                  width: 1,
-                                  height: 14,
-                                  color: skin.divider,
-                                ),
-                                const SizedBox(width: 8),
-
-                                // Селектор источника (Домена)
-                                _buildDomainDropdown(sortedDomains, domainCounts, skin),
-
-                                const SizedBox(width: 4),
-
-                                // Переключатель сортировки
-                                _buildSortButton(skin),
 
                                 if (hasActiveFilters) ...[
                                   const SizedBox(width: 8),
@@ -355,6 +343,18 @@ class _InboxViewState extends State<InboxView> {
                               ],
                             ),
                           ),
+                        ),
+
+                        const SizedBox(width: 8),
+
+                        // Контролы домена и сортировки справа (ml-auto flex items-center gap-1.5)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _buildDomainDropdown(sortedDomains, domainCounts, skin),
+                            const SizedBox(width: 6),
+                            _buildSortButton(skin),
+                          ],
                         ),
                       ],
                     ),
@@ -514,6 +514,7 @@ class _InboxViewState extends State<InboxView> {
     bool isSelected,
     VoidCallback onTap, {
     IconData? icon,
+    double iconSize = 13.0,
   }) {
     final skin = context.skin;
 
@@ -543,7 +544,7 @@ class _InboxViewState extends State<InboxView> {
               if (icon != null) ...[
                 Icon(
                   icon,
-                  size: 13,
+                  size: iconSize,
                   color: isSelected ? Palette.accent : skin.muted,
                 ),
                 const SizedBox(width: 5),
@@ -590,10 +591,13 @@ class _InboxViewState extends State<InboxView> {
     Skin skin,
   ) {
     final hasSelection = _selectedDomainFilter != null;
+    final triggerTextColor = hasSelection
+        ? Palette.accent
+        : (skin.isDark ? skin.muted : const Color(0xFF4B5563));
 
     return PopupMenuButton<String?>(
       tooltip: 'Источник / Домен',
-      offset: const Offset(0, 36),
+      offset: const Offset(0, 32),
       color: skin.glassSurface,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(UiRadius.control),
@@ -651,91 +655,59 @@ class _InboxViewState extends State<InboxView> {
             ),
           ),
       ],
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: ShapeDecoration(
-            color: hasSelection
-                ? Palette.accent.withValues(alpha: 0.10)
-                : Colors.transparent,
-            shape: StadiumBorder(
-              side: BorderSide(
-                color: hasSelection
-                    ? Palette.accent.withValues(alpha: 0.25)
-                    : Colors.transparent,
-                width: 1.0,
+      child: _SecondaryTriggerButton(
+        isActive: hasSelection,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              AppIcons.globe,
+              size: 13,
+              color: triggerTextColor,
+            ),
+            const SizedBox(width: 5),
+            Text(
+              _selectedDomainFilter ?? 'Все сайты',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: triggerTextColor,
               ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                AppIcons.globe,
-                size: 13,
-                color: hasSelection ? Palette.accent : skin.muted,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                _selectedDomainFilter ?? 'Все сайты',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: hasSelection ? Palette.accent : skin.text,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(AppIcons.chevronDown, size: 10, color: skin.muted),
-            ],
-          ),
+            const SizedBox(width: 4),
+            Icon(AppIcons.chevronDown, size: 10, color: triggerTextColor),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildSortButton(Skin skin) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => setState(() => _sortByDomain = !_sortByDomain),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: ShapeDecoration(
-            color: _sortByDomain
-                ? Palette.accent.withValues(alpha: 0.10)
-                : Colors.transparent,
-            shape: StadiumBorder(
-              side: BorderSide(
-                color: _sortByDomain
-                    ? Palette.accent.withValues(alpha: 0.25)
-                    : Colors.transparent,
-                width: 1.0,
-              ),
+    final triggerTextColor = _sortByDomain
+        ? Palette.accent
+        : (skin.isDark ? skin.muted : const Color(0xFF4B5563));
+
+    return _SecondaryTriggerButton(
+      isActive: _sortByDomain,
+      onTap: () => setState(() => _sortByDomain = !_sortByDomain),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            AppIcons.lineHorizontal3Decrease,
+            size: 13,
+            color: triggerTextColor,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            _sortByDomain ? 'По сайту (A-Z)' : 'Сначала новые',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: triggerTextColor,
             ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                AppIcons.lineHorizontal3Decrease,
-                size: 13,
-                color: _sortByDomain ? Palette.accent : skin.muted,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                _sortByDomain ? 'По сайту (A-Z)' : 'Сначала новые',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: _sortByDomain ? Palette.accent : skin.text,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -805,3 +777,63 @@ class _InboxViewState extends State<InboxView> {
     );
   }
 }
+
+class _SecondaryTriggerButton extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final bool isActive;
+
+  const _SecondaryTriggerButton({
+    required this.child,
+    this.onTap,
+    this.isActive = false,
+  });
+
+  @override
+  State<_SecondaryTriggerButton> createState() => _SecondaryTriggerButtonState();
+}
+
+class _SecondaryTriggerButtonState extends State<_SecondaryTriggerButton> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final skin = context.skin;
+    final isDark = skin.isDark;
+
+    // h-7 px-2.5 rounded-lg bg-black/[0.03] hover:bg-black/[0.06] text-[12px] font-medium text-[#4B5563] transition-colors
+    final defaultBg = isDark
+        ? Colors.white.withValues(alpha: 0.04)
+        : const Color(0x08000000); // bg-black/[0.03]
+    final hoverBg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : const Color(0x0F000000); // hover:bg-black/[0.06]
+    final activeBg = Palette.accent.withValues(alpha: 0.12);
+
+    final bg = widget.isActive ? activeBg : (_hovered ? hoverBg : defaultBg);
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          height: 28, // h-7
+          padding: const EdgeInsets.symmetric(horizontal: 10), // px-2.5
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(8), // rounded-lg
+            border: widget.isActive
+                ? Border.all(color: Palette.accent.withValues(alpha: 0.25), width: 1)
+                : null,
+          ),
+          alignment: Alignment.center,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+

@@ -56,6 +56,31 @@ class _InboxCardState extends State<InboxCard> {
     }
   }
 
+  Widget _buildTypeBadge(InboxItemType type, Skin skin) {
+    // Soft tinted micro-pill: px-1.5 py-0.5 rounded-md text-[10.5px] font-medium bg-blue-500/[0.08] text-[#1A73E8]
+    final isDark = skin.isDark;
+    final badgeColor = isDark ? Palette.accent : const Color(0xFF1A73E8);
+    final badgeBg = isDark
+        ? Palette.accent.withValues(alpha: 0.15)
+        : const Color(0xFF1A73E8).withValues(alpha: 0.08);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: badgeBg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        type.label,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
+          color: badgeColor,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
@@ -157,26 +182,9 @@ class _InboxCardState extends State<InboxCard> {
                         ),
                       )
                     else
-                      Text(
-                        type.label.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: UiType.small,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
-                          color: type == InboxItemType.article ? Palette.accent : skin.muted,
-                        ),
-                      ),
+                      const SizedBox.shrink(),
 
-                    if (domain.isNotEmpty)
-                      Text(
-                        type.label.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: UiType.small,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.4,
-                          color: type == InboxItemType.article ? Palette.accent : skin.muted,
-                        ),
-                      ),
+                    _buildTypeBadge(type, skin),
                   ],
                 ),
               ),
@@ -229,57 +237,44 @@ class _InboxCardState extends State<InboxCard> {
                 ),
               ],
 
-              const SizedBox(height: UiSpace.s10),
+              const SizedBox(height: 12),
 
-              // Подвал карточки: Hover-действия слева, Дата справа (как в Quick Notes)
+              // Подвал карточки: Дата слева, Hover Triage Actions справа
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Text(
+                    _formatDate(meta.savedAt ?? page.createdAt),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: skin.isDark ? skin.muted : const Color(0xFF9CA3AF),
+                    ),
+                  ),
                   IgnorePointer(
                     ignoring: !_hovered,
                     child: AnimatedOpacity(
                       opacity: _hovered ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 140),
+                      duration: const Duration(milliseconds: 150),
+                      curve: Curves.easeInOut,
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           if (meta.url != null && meta.url!.isNotEmpty) ...[
                             _CardIconButton(
-                              icon: AppIcons.link,
-                              tooltip: 'Перейти на сайт',
+                              icon: AppIcons.externalLink,
+                              tooltip: 'Открыть ссылку',
                               onTap: _handleOpenLink,
                             ),
-                            const SizedBox(width: UiSpace.s4),
+                            const SizedBox(width: 4),
                           ],
                           _CardIconButton(
-                            icon: meta.isArchived ? AppIcons.tray : AppIcons.checkmark,
+                            icon: meta.isArchived ? AppIcons.tray : AppIcons.archivebox,
                             tooltip: meta.isArchived ? 'Во входящие' : 'В архив',
                             onTap: () => widget.onToggleArchive?.call(),
                           ),
-                          if (widget.onConvertToDoc != null) ...[
-                            const SizedBox(width: UiSpace.s4),
-                            _CardIconButton(
-                              icon: AppIcons.folder,
-                              tooltip: 'Преобразовать в проект',
-                              onTap: () => widget.onConvertToDoc?.call(),
-                            ),
-                          ],
-                          if (widget.onDelete != null) ...[
-                            const SizedBox(width: UiSpace.s4),
-                            _CardIconButton(
-                              icon: AppIcons.trash,
-                              tooltip: 'Удалить',
-                              onTap: () => widget.onDelete?.call(),
-                            ),
-                          ],
                         ],
                       ),
-                    ),
-                  ),
-                  Text(
-                    _formatDate(meta.savedAt ?? page.createdAt),
-                    style: TextStyle(
-                      fontSize: UiType.small,
-                      color: skin.muted,
                     ),
                   ),
                 ],
@@ -296,13 +291,13 @@ class _CardIconButton extends StatefulWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback onTap;
-  final Color? iconColor;
+  final double iconSize;
 
   const _CardIconButton({
     required this.icon,
     required this.tooltip,
     required this.onTap,
-    this.iconColor,
+    this.iconSize = 13.0,
   });
 
   @override
@@ -311,35 +306,52 @@ class _CardIconButton extends StatefulWidget {
 
 class _CardIconButtonState extends State<_CardIconButton> {
   bool _hovered = false;
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
     final skin = context.skin;
+    final isDark = skin.isDark;
+
+    final defaultColor = isDark ? skin.muted : const Color(0xFF6B7280);
+    final activeColor = isDark ? skin.text : const Color(0xFF111827);
+    final hoverBg = isDark
+        ? Colors.white.withValues(alpha: 0.10)
+        : const Color(0x0F000000);
+
     return Tooltip(
       message: widget.tooltip,
       preferBelow: false,
-      verticalOffset: UiSpace.s12,
+      verticalOffset: 14,
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _hovered = true),
-        onExit: (_) => setState(() => _hovered = false),
+        onExit: (_) => setState(() {
+          _hovered = false;
+          _pressed = false;
+        }),
         child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
           onTap: widget.onTap,
           behavior: HitTestBehavior.opaque,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            curve: Curves.easeOutCubic,
-            width: UiSpace.s24,
-            height: UiSpace.s24,
-            decoration: ShapeDecoration(
-              color: _hovered ? skin.controlHover : Palette.transparent,
-              shape: UiRadius.squircle(UiRadius.control),
-            ),
-            child: Center(
+          child: AnimatedScale(
+            scale: _pressed ? 0.95 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: _hovered ? hoverBg : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              alignment: Alignment.center,
               child: Icon(
                 widget.icon,
-                size: UiSpace.s14,
-                color: widget.iconColor ?? (_hovered ? skin.text : skin.muted),
+                size: widget.iconSize,
+                color: _hovered ? activeColor : defaultColor,
               ),
             ),
           ),
