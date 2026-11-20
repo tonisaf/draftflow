@@ -505,7 +505,8 @@ Selection resolveLinkSelection(EditorState editorState, Selection selection) {
   if (!selection.isCollapsed) return selection;
   try {
     final node = editorState.getNodeAtPath(selection.start.path);
-    final delta = node?.delta;
+    if (node == null) return selection;
+    final delta = node.delta;
     if (delta != null) {
       final offset = selection.start.offset;
       int cur = 0;

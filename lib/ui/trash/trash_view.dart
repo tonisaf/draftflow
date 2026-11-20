@@ -77,9 +77,9 @@ class _TrashViewState extends State<TrashView> {
       },
     );
 
-    if (confirmed == true && mounted) {
-      await _runAction(context, widget.repository.emptyTrash);
-    }
+    if (confirmed != true) return;
+    if (!mounted) return;
+    await _runAction(context, widget.repository.emptyTrash);
   }
 
   @override
@@ -118,7 +118,6 @@ class _TrashViewState extends State<TrashView> {
                     (constraints.maxWidth - UiLayout.trashContentWidth) / 2,
                   );
 
-            final hasItems = entries.isNotEmpty;
             final hasSearch = _searchQuery.trim().isNotEmpty;
             final totalCount = allEntries.isEmpty
                 ? 2

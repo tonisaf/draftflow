@@ -1,9 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:notes_here/ui/editor/components/editor_link_popover.dart';
-import 'package:notes_here/ui/theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

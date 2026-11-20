@@ -706,6 +706,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             );
                           }
 
+                          final skin = context.skin;
+
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [

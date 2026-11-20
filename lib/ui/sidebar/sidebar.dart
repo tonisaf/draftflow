@@ -349,7 +349,7 @@ class _SidebarState extends State<Sidebar> {
           ...() {
             final moduleManager = AppModuleScope.maybeOf(context);
             if (moduleManager == null || moduleManager.enabledModules.isEmpty) {
-              return const <Widget>[const SizedBox(height: UiSpace.s16)];
+              return const <Widget>[SizedBox(height: UiSpace.s16)];
             }
             final divider = Container(
               height: 1.0,
